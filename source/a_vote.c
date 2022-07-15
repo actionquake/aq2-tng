@@ -171,7 +171,6 @@ static void Votemap(edict_t *ent, const char *mapname)
 {
 	char *oldvote;
 	int voteWaitTime;
-	int mapvoteNextTime;
 	int gametime = 0;
 	int rsecs = 0;
 	int remaining = 0;
