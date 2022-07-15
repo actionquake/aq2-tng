@@ -171,26 +171,27 @@ static void Votemap(edict_t *ent, const char *mapname)
 {
 	char *oldvote;
 	int voteWaitTime;
-	int gametime = 0;
-	int rsecs = 0;
-	int remaining = 0;
+	int mapvoteNextTime;
+	// int gametime = 0;
+	// int rsecs = 0;
+	// int remaining = 0;
 
-	gametime = level.matchTime;
-	remaining = (timelimit->value * 60) - gametime;
-	if( remaining >= 0 )
-	{
-		rsecs = remaining % 60;
-	}
+	// gametime = level.matchTime;
+	// remaining = (timelimit->value * 60) - gametime;
+	// if( remaining >= 0 )
+	// {
+	// 	rsecs = remaining % 60;
+	// }
 
 	if (!use_mapvote->value) {
 		gi.cprintf(ent, PRINT_HIGH, "Map voting is disabled.\n");
 		return;
 	}
 	// If timelimit is set and if mapvote_next is 2, and the remaining time is less than the mapvote_next_time, do not allow the mapvote
-	if (timelimit->value && mapvote_next->value == 2 && rsecs < mapvote_next_time->value){
-		gi.cprintf(ent, PRINT_HIGH, "It is too late to vote for the next map.\n");
-		return;
-	}
+	// if (timelimit->value && mapvote_next->value == 2 && rsecs < mapvote_next_time->value){
+	// 	gi.cprintf(ent, PRINT_HIGH, "It is too late to vote for the next map.\n");
+	// 	return;
+	// }
 
 	if (!*mapname) {
 		MapVoteMenu( ent, NULL );
@@ -207,6 +208,14 @@ static void Votemap(edict_t *ent, const char *mapname)
 	{
 		gi.cprintf(ent, PRINT_HIGH, "Mapvote currently blocked - Please vote again in %d seconds\n",
 			(voteWaitTime + HZ - level.realFramenum) / HZ );
+		return;
+	}
+	mapvoteNextTime = (int)(mapvote_next_time->value * HZ);
+	if (level.realFramenum > mapvoteNextTime)
+	{
+		gi.cprintf(ent, PRINT_HIGH, "Mapvote currently blocked - It is too late to vote for the next map.\n");
+		gi.cprintf(ent, PRINT_HIGH, "mapvoteNextTime is %d\n", mapvoteNextTime);
+		gi.cprintf(ent, PRINT_HIGH, "level.realFramenum is %d\n", level.realFramenum);
 		return;
 	}
 
