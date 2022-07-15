@@ -185,7 +185,7 @@ static void Votemap(edict_t *ent, const char *mapname)
 	}
 
 	if (mapvote_next->value == 2 && rsecs < mapvote_next_time->value){
-		gi.cprintf(ent, PRINT_HIGH, "It is too late to vote for the next map");
+		gi.cprintf(ent, PRINT_HIGH, "It is too late to vote for the next map.\n");
 		return;
 	}
 
