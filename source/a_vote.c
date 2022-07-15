@@ -186,13 +186,15 @@ static void Votemap(edict_t *ent, const char *mapname)
 		gi.cprintf(ent, PRINT_HIGH, "Map voting is disabled.\n");
 		return;
 	}
+
+	gi.cprintf(ent, PRINT_HIGH, "mapvoteNextTime is %d\n", rsecs);
+
 	// If timelimit is set and if mapvote_next is 2, and the remaining time is less than the mapvote_next_time, do not allow the mapvote
 	if (timelimit->value && mapvote_next->value == 2 && rsecs < mapvote_next_time->value){
 		gi.cprintf(ent, PRINT_HIGH, "It is too late to vote for the next map.\n");
 		return;
 	}
 
-	gi.cprintf(ent, PRINT_HIGH, "mapvoteNextTime is %d\n", rsecs);
 
 	if (!*mapname) {
 		MapVoteMenu( ent, NULL );
