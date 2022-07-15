@@ -193,6 +193,10 @@ static void Votemap(edict_t *ent, const char *mapname)
 	// 	return;
 	// }
 
+	mapvoteNextTime = (int)(mapvote_next_time->value * HZ);
+	gi.cprintf(ent, PRINT_HIGH, "mapvoteNextTime is %d\n", mapvoteNextTime);
+	gi.cprintf(ent, PRINT_HIGH, "level.realFramenum is %d\n", level.realFramenum);
+
 	if (!*mapname) {
 		MapVoteMenu( ent, NULL );
 		return;
