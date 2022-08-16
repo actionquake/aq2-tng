@@ -487,8 +487,10 @@ void Cmd_Statmode_f(edict_t* ent)
 	stuffcmd(ent, stuff);
 }
 
+
 #if USE_AQTION
 #include <curl/curl.h>
+
 // AQtion stats addon
 // Utilizes AWS API Gateway and AWS SQS
 // Review documentation to understand their use
@@ -518,27 +520,45 @@ void StatSend(const char *payload, ...)
 	vsnprintf (text, sizeof(text), payload, argptr);
 	va_end (argptr);
 
-	CURL *curl = curl_easy_init();
+	CURL *curl;
+	CURLM *multi_handle;
+	int still_running = 0;
 	struct curl_slist *headers = NULL;
-	headers = curl_slist_append(headers, "Accept: application/json");
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-	headers = curl_slist_append(headers, apikeyheader);
 
-	curl_easy_setopt(curl, CURLOPT_URL, apiurl);
-	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, text);
+	curl = curl_easy_init();
+	multi_handle = curl_multi_init();
 
-	// Do not print responses from curl request
-	// Comment below if you are debugging responses
-	// Hint: Forbidden would mean your stat_url is malformed,
-	// and a key error indicates your api key is bad or expired
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+	if(curl && multi_handle) {
+		headers = curl_slist_append(headers, "Accept: application/json");
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		headers = curl_slist_append(headers, apikeyheader);
 
-	// Run it!
-	curl_easy_perform(curl);
-	curl_easy_cleanup(curl);
-	curl_global_cleanup();
+		curl_easy_setopt(curl, CURLOPT_URL, apiurl);
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, text);
+		// Do not print responses from curl request
+		// Comment below if you are debugging responses
+		// Hint: Forbidden would mean your stat_url is malformed,
+		// and a key error indicates your api key is bad or expired
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+
+		curl_multi_add_handle(multi_handle, curl);
+
+		do {
+			CURLMcode mc = curl_multi_perform(multi_handle, &still_running);
+
+			if(still_running)
+			  mc = curl_multi_poll(multi_handle, NULL, 0, 1000, NULL);
+
+			if(mc)
+			  break;
+		} while(still_running);
+		// Run it!
+		curl_multi_cleanup(multi_handle);
+		curl_easy_cleanup(curl);
+		curl_slist_free_all(headerlist);
+	}
 }
 
 int Gamemode(void) // These are distinct game modes; you cannot have a teamdm tourney mode, for example
