@@ -557,7 +557,7 @@ void StatSend(const char *payload, ...)
 		// Run it!
 		curl_multi_cleanup(multi_handle);
 		curl_easy_cleanup(curl);
-		curl_slist_free_all(headerlist);
+		curl_slist_free_all(headers);
 	}
 }
 
