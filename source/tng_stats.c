@@ -689,7 +689,7 @@ LogWorldKill
 void LogWorldKill(edict_t *self)
 {
 	int mod;
-	int loc = 16;
+	int loc = 128;
 	int gametime = 0;
 	int roundNum;
 	int eventtime;
@@ -748,7 +748,7 @@ void LogWorldKill(edict_t *self)
 			vt,
 			vl,
 			mod,
-			16, // No attacker for world death, setting to 16 as a 'dummy' value
+			128, // No attacker for world death, setting to 16 as a 'dummy' value
 			loc,
 			0, // No killstreak for world death, setting to 0 permanently as we aren't tracking world death kill streaks
 			Gamemode(),

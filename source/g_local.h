@@ -652,7 +652,14 @@ typedef struct itemList_s
 	int		flag;
 } itemList_t;
 
+typedef struct itemKitList_s
+{
+	int		index;
+	int		flag;
+} itemKitList_t;
+
 extern itemList_t items[ITEM_MAX_NUM];
+extern itemKitList_t itemKit[ITEM_MAX_NUM];
 
 // sniper modes
 #define SNIPER_1X		0

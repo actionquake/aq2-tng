@@ -2171,6 +2171,7 @@ void SP_item_health_mega (edict_t * self)
 
 
 itemList_t items[ITEM_MAX_NUM];
+itemKitList_t itemKits[ITEM_MAX_NUM];
 
 void InitItems (void)
 {

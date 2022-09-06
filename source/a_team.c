@@ -944,7 +944,7 @@ pmenu_t itemmenu[] = {
 pmenu_t itemkitmenu[] = {
   {"*" TNG_TITLE, PMENU_ALIGN_CENTER, NULL, NULL},
   {"\x9D\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9F", PMENU_ALIGN_CENTER, NULL, NULL},
-  {"Select your Item", PMENU_ALIGN_CENTER, NULL, NULL},
+  {"Select your Item or Kit", PMENU_ALIGN_CENTER, NULL, NULL},
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},	// "Kevlar Vest", SelectItem1
   {COMMANDO_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit1},	// Commando Kit, "Bandolier + Kevlar Helmet"
