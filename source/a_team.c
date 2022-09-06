@@ -495,7 +495,11 @@ void SelectWeapon2(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(MP5_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/mp5slide.wav"), 1.0);
 }
 
@@ -503,7 +507,11 @@ void SelectWeapon3(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(M3_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/m3in.wav"), 1.0);
 }
 
@@ -511,7 +519,11 @@ void SelectWeapon4(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(HC_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/cclose.wav"), 1.0);
 }
 
@@ -519,7 +531,11 @@ void SelectWeapon5(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(SNIPER_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/ssgbolt.wav"), 1.0);
 }
 
@@ -527,7 +543,11 @@ void SelectWeapon6(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(M4_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/m4a1slide.wav"), 1.0);
 }
 
@@ -535,7 +555,11 @@ void SelectWeapon0(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(KNIFE_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/swish.wav"), 1.0);
 }
 
@@ -543,7 +567,11 @@ void SelectWeapon9(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenWeapon = GET_ITEM(DUAL_NUM);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 	unicastSound(ent, gi.soundindex("weapons/mk23slide.wav"), 1.0);
 }
 
@@ -1493,11 +1521,9 @@ void OpenWeaponMenu (edict_t * ent)
 
 	if (kit_mode->value) {
 		OpenItemKitMenu(ent);
-	} 
-	// else 
-	// {
-	// 	OpenItemMenu(ent);
-	// }
+	} else {
+		OpenItemMenu(ent);
+	}
 }
 
 // AQ2:TNG Deathwatch - Updated this for the new menu
