@@ -612,7 +612,11 @@ bind 6 "use Sniper Rifle"
 
 #define GRAPPLE_NUM				23
 
-#define ITEM_MAX_NUM			24
+#define COMMANDO_KIT			24
+#define STEALTH_KIT				25
+#define ASSASSIN_KIT			26
+
+#define ITEM_MAX_NUM			27
 
 #define WEAPON_COUNT			9
 #define ITEM_COUNT				6
@@ -1204,6 +1208,7 @@ extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
+extern cvar_t *kit_mode; // Toggle kit mode
 
 // Discord SDK integration with Q2Pro
 extern cvar_t *cl_discord;

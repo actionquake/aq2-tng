@@ -589,6 +589,30 @@ void SelectItem6(edict_t *ent, pmenu_t *p)
 	unicastSound(ent, gi.soundindex("misc/veston.wav"), 1.0);
 }
 
+void SelectKit1(edict_t *ent, pmenu_t *p)
+{
+	ent->client->pers.chosenItem = GET_ITEM(BAND_NUM);
+	ent->client->pers.chosenItem = GET_ITEM(HELM_NUM);
+	PMenu_Close(ent);
+	unicastSound(ent, gi.soundindex("misc/veston.wav"), 1.0);
+}
+
+void SelectKit2(edict_t *ent, pmenu_t *p)
+{
+	ent->client->pers.chosenItem = GET_ITEM(SLIP_NUM);
+	ent->client->pers.chosenItem = GET_ITEM(SIL_NUM);
+	PMenu_Close(ent);
+	unicastSound(ent, gi.soundindex("misc/screw.wav"), 1.0);
+}
+
+void SelectKit3(edict_t *ent, pmenu_t *p)
+{
+	ent->client->pers.chosenItem = GET_ITEM(LASER_NUM);
+	ent->client->pers.chosenItem = GET_ITEM(SIL_NUM);
+	PMenu_Close(ent);
+	unicastSound(ent, gi.soundindex("misc/lasersight.wav"), 1.0);
+}
+
 // newrand returns n, where 0 >= n < top
 int newrand (int top)
 {
@@ -888,6 +912,27 @@ pmenu_t itemmenu[] = {
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {"v" VERSION, PMENU_ALIGN_RIGHT, NULL, NULL},
 };
+
+pmenu_t itemkitmenu[] = {
+  {"*" TNG_TITLE, PMENU_ALIGN_CENTER, NULL, NULL},
+  {"\x9D\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9F", PMENU_ALIGN_CENTER, NULL, NULL},
+  {"Select your Item", PMENU_ALIGN_CENTER, NULL, NULL},
+  {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
+  //AQ2:TNG Igor adding itm_flags
+  {NULL, PMENU_ALIGN_LEFT, NULL, NULL},	// "Kevlar Vest", SelectItem1
+  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit1},	// Commando Kit, "Bandolier + Kevlar Helmet"
+  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit2},	// Stealth Kit, "Stealth Slippers + Silencer"
+  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit3},	// Assassin Kit, "Laser Sight + Silencer"
+  {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
+  //AQ2:TNG end adding itm_flags
+  {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
+  {"Use [ and ] to move cursor", PMENU_ALIGN_LEFT, NULL, NULL},
+  {"ENTER to select", PMENU_ALIGN_LEFT, NULL, NULL},
+  {"TAB to exit menu", PMENU_ALIGN_LEFT, NULL, NULL},
+  {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
+  {"v" VERSION, PMENU_ALIGN_RIGHT, NULL, NULL},
+};
+
 
 pmenu_t randmenu[] = {
   {"*" TNG_TITLE, PMENU_ALIGN_CENTER, NULL, NULL},
@@ -1302,6 +1347,45 @@ typedef struct menuentry_s
 	void (*SelectFunc) (edict_t * ent, struct pmenu_s * entry);
 } menuentry_t;
 
+void OpenItemKitMenu (edict_t * ent)
+{
+	menuentry_t *menuEntry, menu_items[] = {
+		{ KEV_NUM, SelectItem1 },
+		{ COMMANDO_KIT, SelectKit1 },
+		{ STEALTH_KIT, SelectKit2 },
+		{ ASSASSIN_KIT, SelectKit3 }
+		};
+	int i, count, pos = 4;
+
+	count = sizeof( menu_items ) / sizeof( menu_items[0] );
+
+	if ((int)itm_flags->value & ITF_MASK)
+	{
+		for (menuEntry = menu_items, i = 0; i < count; i++, menuEntry++) {
+			if (!ITF_ALLOWED(menuEntry->itemNum))
+				continue;
+
+			itemkitmenu[pos].text = menu_itemnames[menuEntry->itemNum];
+			itemkitmenu[pos].SelectFunc = menuEntry->SelectFunc;
+			pos++;
+		}
+
+		if ( pos > 4 )
+		{
+			for (; pos < 10; pos++)
+			{
+				itemkitmenu[pos].text = NULL;
+				itemkitmenu[pos].SelectFunc = NULL;
+			}
+
+			PMenu_Open(ent, itemkitmenu, 4, sizeof(itemkitmenu) / sizeof(pmenu_t));
+			return;
+		}
+	}
+
+	PMenu_Close(ent);
+}
+
 void OpenItemMenu (edict_t * ent)
 {
 	menuentry_t *menuEntry, menu_items[] = {
@@ -1388,7 +1472,11 @@ void OpenWeaponMenu (edict_t * ent)
 		}
 	}
 
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 }
 
 // AQ2:TNG Deathwatch - Updated this for the new menu
