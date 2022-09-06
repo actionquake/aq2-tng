@@ -565,8 +565,9 @@ void InitGame( void )
     g_spawn_items = gi.cvar( "g_spawn_items", "0", CVAR_LATCH);
 	kit_mode = gi.cvar("kit_mode", "0", CVAR_LATCH);
 	if (kit_mode->value) {
-		gi.dprintf( "Turning itm_flags off.\n" );
+		gi.dprintf( "Turning itm_flags off, unique_items to 2.\n" );
 		gi.cvar_forceset( "itm_flags", ITF_DEFAULT_STR );
+		gi.cvar_forceset( "unique_items", "2");
 	}
 
 	// Discord SDK integration with Q2Pro

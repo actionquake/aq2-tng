@@ -2195,6 +2195,11 @@ void InitItems (void)
 		items[ITEM_FIRST + i].flag = 1 << i;
 
 	}
+	for (i = 0; i<KIT_COUNT; i++) {
+
+		items[KIT_FIRST + i].flag = 1 << i;
+
+	}
 	items[MK23_ANUM].flag = items[MK23_NUM].flag | items[DUAL_NUM].flag;
 	items[MP5_ANUM].flag = items[MP5_NUM].flag;
 	items[M4_ANUM].flag = items[M4_NUM].flag;

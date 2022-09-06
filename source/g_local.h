@@ -624,12 +624,15 @@ bind 6 "use Sniper Rifle"
 #define WEAPON_COUNT			9
 #define ITEM_COUNT				6
 #define AMMO_COUNT				5
+#define KIT_COUNT				3
 #define WEAPON_FIRST			1
 #define WEAPON_MAX				WEAPON_FIRST+WEAPON_COUNT
 #define ITEM_FIRST				WEAPON_MAX
 #define ITEM_MAX				ITEM_FIRST+ITEM_COUNT
 #define AMMO_FIRST				ITEM_MAX
 #define AMMO_MAX				AMMO_FIRST+AMMO_COUNT
+#define KIT_FIRST				24
+#define KIT_MAX					KIT_FIRST+KIT_COUNT
 
 //AQ2:TNG - Igor adding wp_flags/itm_flags
 #define STRINGIFY(x) #x
