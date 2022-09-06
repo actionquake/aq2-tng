@@ -674,7 +674,11 @@ void SelectRandomWeapon(edict_t *ent, pmenu_t *p)
 	unicastSound(ent, gi.soundindex(selected_weapon.sound), 1.0);
 	gi.centerprintf(ent, "You selected %s", selected_weapon.name);
 	PMenu_Close(ent);
-	OpenItemMenu(ent);
+	if (kit_mode->value) {
+		OpenItemKitMenu(ent);
+	} else {
+		OpenItemMenu(ent);
+	}
 }
 
 void SelectRandomItem(edict_t *ent, pmenu_t *p)
@@ -1400,32 +1404,29 @@ void OpenItemKitMenu (edict_t * ent)
 		{ STEALTH_KIT, SelectKit2 },
 		{ ASSASSIN_KIT, SelectKit3 }
 		};
-	int i, count, pos = 1;
+	int i, count, pos = 4;
 
 	count = sizeof( menu_items ) / sizeof( menu_items[0] );
 
-	if ((int)itm_flags->value & ITF_MASK)
+	// kit_mode ignores itm_flags
+
+	for (menuEntry = menu_items, i = 0; i < count; i++, menuEntry++) {
+
+		itemkitmenu[pos].text = menu_itemkitnames[menuEntry->itemNum];
+		itemkitmenu[pos].SelectFunc = menuEntry->SelectFunc;
+		pos++;
+	}
+
+	if ( pos > 4 )
 	{
-		for (menuEntry = menu_items, i = 0; i < count; i++, menuEntry++) {
-			if (!ITF_ALLOWED(menuEntry->itemNum))
-				continue;
-
-			itemkitmenu[pos].text = menu_itemkitnames[menuEntry->itemNum];
-			itemkitmenu[pos].SelectFunc = menuEntry->SelectFunc;
-			pos++;
-		}
-
-		if ( pos > 4 )
+		for (; pos < 10; pos++)
 		{
-			for (; pos < 10; pos++)
-			{
-				itemkitmenu[pos].text = NULL;
-				itemkitmenu[pos].SelectFunc = NULL;
-			}
-
-			PMenu_Open(ent, itemkitmenu, 4, sizeof(itemkitmenu) / sizeof(pmenu_t));
-			return;
+			itemkitmenu[pos].text = NULL;
+			itemkitmenu[pos].SelectFunc = NULL;
 		}
+
+		PMenu_Open(ent, itemkitmenu, 4, sizeof(itemkitmenu) / sizeof(pmenu_t));
+		return;
 	}
 
 	PMenu_Close(ent);

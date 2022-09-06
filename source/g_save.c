@@ -564,6 +564,10 @@ void InitGame( void )
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
     g_spawn_items = gi.cvar( "g_spawn_items", "0", CVAR_LATCH);
 	kit_mode = gi.cvar("kit_mode", "0", CVAR_LATCH);
+	if (kit_mode->value) {
+		gi.dprintf( "Turning itm_flags off.\n" );
+		gi.cvar_forceset( "itm_flags", ITF_DEFAULT_STR );
+	}
 
 	// Discord SDK integration with Q2Pro
 	cl_discord = gi.cvar("cl_discord", "0", 0);
