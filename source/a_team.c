@@ -619,24 +619,30 @@ void SelectItem6(edict_t *ent, pmenu_t *p)
 
 void SelectKit1(edict_t *ent, pmenu_t *p)
 {
-	ent->client->pers.chosenItem = GET_ITEM(BAND_NUM);
-	ent->client->pers.chosenItem = GET_ITEM(HELM_NUM);
+	ent->client->inventory[ITEM_INDEX(GET_ITEM(BAND_NUM))];
+	ent->client->inventory[ITEM_INDEX(GET_ITEM(HELM_NUM))];
+	ent->client->pers.chosenItem = GET_ITEM(COMMANDO_KIT);
+	gi.centerprintf(ent, "You have selected the Commando Kit: Bandolier and Kevlar Helmet");
 	PMenu_Close(ent);
 	unicastSound(ent, gi.soundindex("misc/veston.wav"), 1.0);
 }
 
 void SelectKit2(edict_t *ent, pmenu_t *p)
 {
-	ent->client->pers.chosenItem = GET_ITEM(SLIP_NUM);
-	ent->client->pers.chosenItem = GET_ITEM(SIL_NUM);
+	ent->client->inventory[ITEM_INDEX(GET_ITEM(SLIP_NUM))];
+	ent->client->inventory[ITEM_INDEX(GET_ITEM(SIL_NUM))];
+	ent->client->pers.chosenItem = GET_ITEM(STEALTH_KIT);
+	gi.centerprintf(ent, "You have selected the Stealth Kit: Stealth Slippers and Silencer");
 	PMenu_Close(ent);
 	unicastSound(ent, gi.soundindex("misc/screw.wav"), 1.0);
 }
 
 void SelectKit3(edict_t *ent, pmenu_t *p)
 {
-	ent->client->pers.chosenItem = GET_ITEM(LASER_NUM);
-	ent->client->pers.chosenItem = GET_ITEM(SIL_NUM);
+	ent->client->inventory[ITEM_INDEX(GET_ITEM(LASER_NUM))];
+	ent->client->inventory[ITEM_INDEX(GET_ITEM(SIL_NUM))];
+	ent->client->pers.chosenItem = GET_ITEM(ASSASSIN_KIT);
+	gi.centerprintf(ent, "You have selected the Assassin Kit: Lasersight and Silencer");
 	PMenu_Close(ent);
 	unicastSound(ent, gi.soundindex("misc/lasersight.wav"), 1.0);
 }
