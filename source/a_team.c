@@ -946,13 +946,11 @@ pmenu_t itemkitmenu[] = {
   {"\x9D\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9E\x9F", PMENU_ALIGN_CENTER, NULL, NULL},
   {"Select your Item", PMENU_ALIGN_CENTER, NULL, NULL},
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
-  //AQ2:TNG Igor adding itm_flags
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},	// "Kevlar Vest", SelectItem1
-  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit1},	// Commando Kit, "Bandolier + Kevlar Helmet"
-  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit2},	// Stealth Kit, "Stealth Slippers + Silencer"
-  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit3},	// Assassin Kit, "Laser Sight + Silencer"
+  {COMMANDO_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit1},	// Commando Kit, "Bandolier + Kevlar Helmet"
+  {STEALTH_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit2},	// Stealth Kit, "Stealth Slippers + Silencer"
+  {ASSASSIN_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit3},	// Assassin Kit, "Laser Sight + Silencer"
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
-  //AQ2:TNG end adding itm_flags
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {"Use [ and ] to move cursor", PMENU_ALIGN_LEFT, NULL, NULL},
   {"ENTER to select", PMENU_ALIGN_LEFT, NULL, NULL},
