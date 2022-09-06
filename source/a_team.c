@@ -951,9 +951,9 @@ pmenu_t itemkitmenu[] = {
   {"Select your Item or Kit", PMENU_ALIGN_CENTER, NULL, NULL},
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},	// "Kevlar Vest", SelectItem1
-  {COMMANDO_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit1},	// Commando Kit, "Bandolier + Kevlar Helmet"
-  {STEALTH_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit2},	// Stealth Kit, "Stealth Slippers + Silencer"
-  {ASSASSIN_NAME, PMENU_ALIGN_LEFT, NULL, SelectKit3},	// Assassin Kit, "Laser Sight + Silencer"
+  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit1},	// Commando Kit, "Bandolier + Kevlar Helmet"
+  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit2},	// Stealth Kit, "Stealth Slippers + Silencer"
+  {NULL, PMENU_ALIGN_LEFT, NULL, SelectKit3},	// Assassin Kit, "Laser Sight + Silencer"
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {"Use [ and ] to move cursor", PMENU_ALIGN_LEFT, NULL, NULL},
@@ -1428,7 +1428,6 @@ void OpenItemKitMenu (edict_t * ent)
 		PMenu_Open(ent, itemkitmenu, 4, sizeof(itemkitmenu) / sizeof(pmenu_t));
 		return;
 	}
-
 	PMenu_Close(ent);
 }
 
