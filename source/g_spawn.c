@@ -1073,6 +1073,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		gi.cvar_forceset(gm->name, "tp");
 		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
 	}
+	else if (use_randoms->value)
+	{
+		gi.dprintf("use_randoms enabled, forcing kit_mode off");
+		gi.cvar_forceset(kit_mode->name, "0");
+	}
 	else { //Its deathmatch
 		gi.cvar_forceset(gm->name, "dm");
 		gameSettings |= GS_DEATHMATCH;

@@ -1359,8 +1359,8 @@ char *menu_itemkitnames[ITEM_MAX_NUM] = {
 	GRENADE_NAME,
 
 	COMMANDO_NAME,
-	STEALTH_KIT,
-	ASSASSIN_KIT,
+	STEALTH_NAME,
+	ASSASSIN_NAME,
 	KEV_NAME,
 	""
 };
@@ -1400,7 +1400,7 @@ void OpenItemKitMenu (edict_t * ent)
 		{ STEALTH_KIT, SelectKit2 },
 		{ ASSASSIN_KIT, SelectKit3 }
 		};
-	int i, count, pos = 4;
+	int i, count, pos = 1;
 
 	count = sizeof( menu_items ) / sizeof( menu_items[0] );
 

@@ -1604,6 +1604,7 @@ static void dmflagsSettings( char *s, size_t size, int flags )
 }
 
 extern char *menu_itemnames[ITEM_MAX_NUM];
+extern char *menu_itemkitnames[ITEM_MAX_NUM];
 
 static void wpflagsSettings( char *s, size_t size, int flags )
 {
