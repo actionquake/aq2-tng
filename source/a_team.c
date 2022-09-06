@@ -1493,9 +1493,11 @@ void OpenWeaponMenu (edict_t * ent)
 
 	if (kit_mode->value) {
 		OpenItemKitMenu(ent);
-	} else {
-		OpenItemMenu(ent);
-	}
+	} 
+	// else 
+	// {
+	// 	OpenItemMenu(ent);
+	// }
 }
 
 // AQ2:TNG Deathwatch - Updated this for the new menu
