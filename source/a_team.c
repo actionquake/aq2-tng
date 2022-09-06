@@ -1320,6 +1320,25 @@ void ReturnToMain (edict_t * ent, pmenu_t * p)
 	OpenJoinMenu (ent);
 }
 
+char *menu_itemkitnames[ITEM_MAX_NUM] = {
+	"",
+	MK23_NAME,
+	MP5_NAME,
+	M4_NAME,
+	M3_NAME,
+	HC_NAME,
+	"SSG 3000 Sniper Rifle",
+	"Akimbo Pistols",
+	"Combat Knives",
+	GRENADE_NAME,
+
+	COMMANDO_NAME,
+	STEALTH_KIT,
+	ASSASSIN_KIT,
+	KEV_NAME,
+	""
+};
+
 char *menu_itemnames[ITEM_MAX_NUM] = {
 	"",
 	MK23_NAME,
@@ -1365,7 +1384,7 @@ void OpenItemKitMenu (edict_t * ent)
 			if (!ITF_ALLOWED(menuEntry->itemNum))
 				continue;
 
-			itemkitmenu[pos].text = menu_itemnames[menuEntry->itemNum];
+			itemkitmenu[pos].text = menu_itemkitnames[menuEntry->itemNum];
 			itemkitmenu[pos].SelectFunc = menuEntry->SelectFunc;
 			pos++;
 		}

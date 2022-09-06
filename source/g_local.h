@@ -581,6 +581,9 @@ bind 6 "use Sniper Rifle"
 #define KEV_NAME     "Kevlar Vest"
 #define HELM_NAME    "Kevlar Helmet"
 #define LASER_NAME   "Lasersight"
+#define COMMANDO_NAME "Commando Kit"
+#define STEALTH_NAME  "Stealth Kit"
+#define ASSASSIN_NAME "Assassin Kit"
 
 #define NO_NUM					0
 
