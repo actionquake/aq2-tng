@@ -619,9 +619,14 @@ void SelectItem6(edict_t *ent, pmenu_t *p)
 
 void SelectKit1(edict_t *ent, pmenu_t *p)
 {
-	ent->client->inventory[ITEM_INDEX(GET_ITEM(BAND_NUM))];
-	ent->client->inventory[ITEM_INDEX(GET_ITEM(HELM_NUM))];
-	ent->client->pers.chosenItem = GET_ITEM(COMMANDO_KIT);
+	edict_t etemp;
+	gitem_t *it;
+
+	it += BAND_NUM;
+	it += HELM_NUM;
+	etemp.item = it;
+
+	Pickup_Special(&etemp, ent);
 	gi.centerprintf(ent, "You have selected the Commando Kit: Bandolier and Kevlar Helmet");
 	PMenu_Close(ent);
 	unicastSound(ent, gi.soundindex("misc/veston.wav"), 1.0);
