@@ -2226,17 +2226,13 @@ void PlayWeaponSound(edict_t* ent)
 			if (cl_actionsounds->value) {
 				if (cl_ssg_sound->value == 1) {
 					gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire1.wav"), 1, ATTN_LOUD, 0);
-					gi.dprintf("Firing sound ssgfire1.wav\n");
 				} else if (cl_ssg_sound->value == 2) {
 					gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire2.wav"), 1, ATTN_LOUD, 0);
-					gi.dprintf("Firing sound ssgfire2.wav\n");
 				} else {
 					gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire.wav"), 1, ATTN_LOUD, 0);
-					gi.dprintf("Firing sound ssgfire.wav\n");
 				}
 			} else {
 				gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire.wav"), 1, ATTN_LOUD, 0);
-				gi.dprintf("Firing sound ssgfire (else)\n");
 			}
 		#else
 			gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire.wav"), 1, ATTN_LOUD, 0);
