@@ -939,13 +939,12 @@ void LogEndMatchStats()
 	for (i = 0; i < totalClients; i++){
 		cl = sortedClients[i];
 		shots = min( cl->resp.shotsTotal, 9999 );
+		secs = (level.framenum - cl->resp.enterframe) / HZ;
 
 		if (shots)
 				accuracy = (double)cl->resp.hitsTotal * 100.0 / (double)cl->resp.shotsTotal;
 			else
 				accuracy = 0;
-
-			secs = (level.framenum - cl->resp.enterframe) / HZ;
 			if (secs > 0)
 				fpm = (double)cl->resp.score * 60.0 / (double)secs;
 			else
@@ -955,7 +954,7 @@ void LogEndMatchStats()
 		Q_strncpyz(discordid, Info_ValueForKey(cl->pers.userinfo, "cl_discord_id"), sizeof(discordid));
 		Q_strncpyz(
 			msg,
-			"{\"matchstats\":{\"sid\":\"%s\",\"mid\":\"%s\",\"s\":\"%s\",\"sc\":%i,\"sh\":%i,\"a\":%f,\"f\":%f,\"dd\":%i,\"d\":%i,\"k\":%i,\"ctfc\":%i,\"ctfcs\":%i,\"ht\":%i,\"tk\":%i,\"t\":%i,\"hks\":%i,\"hhs\":%i,\"dis\":\"%s\"}}\n",
+			"{\"matchstats\":{\"sid\":\"%s\",\"mid\":\"%s\",\"s\":\"%s\",\"sc\":%i,\"sh\":%i,\"a\":%f,\"f\":%f,\"dd\":%i,\"d\":%i,\"k\":%i,\"ctfc\":%i,\"ctfcs\":%i,\"ht\":%i,\"tk\":%i,\"t\":%i,\"hks\":%i,\"hhs\":%i,\"dis\":\"%s\",\"pt\":%i}}\n",
 			sizeof(msg)
 		);
 
@@ -978,7 +977,8 @@ void LogEndMatchStats()
 			cl->resp.team,
 			cl->resp.streakKillsHighest,
 			cl->resp.streakHSHighest,
-			discordid
+			discordid,
+			secs
 		);
 	}
 }
