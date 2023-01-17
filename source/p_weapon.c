@@ -2119,38 +2119,38 @@ void PlayWeaponSound(edict_t* ent)
 	else if (llsound->value)
 		MuzzleFlash(ent, ent->client->weapon_sound);
 
-	else switch (ent->client->weapon_sound)
-	{
-	case MZ_BLASTER:
-		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/mk23fire.wav"), 1, ATTN_LOUD, 0);
-		MuzzleFlash(ent, MZ_MACHINEGUN);
-		break;
-	case MZ_MACHINEGUN:
-		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/mp5fire1.wav"), 1, ATTN_LOUD, 0);
-		MuzzleFlash(ent, MZ_MACHINEGUN);
-		break;
-	case MZ_ROCKET:
-		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/m4a1fire.wav"), 1, ATTN_LOUD, 0);
-		MuzzleFlash(ent, MZ_MACHINEGUN);
-		break;
-	case MZ_SHOTGUN:
-		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/shotgf1b.wav"), 1, ATTN_LOUD, 0);
-		MuzzleFlash(ent, MZ_SHOTGUN);
-		break;
-	case MZ_SSHOTGUN:
-		if (!ent->client->pers.hc_mode)
-			// Both barrels: sound on both WEAPON and ITEM to produce a louder boom.
-			gi.sound(ent, CHAN_ITEM, gi.soundindex("weapons/cannon_fire.wav"), 1, ATTN_NORM, 0);
-		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/cannon_fire.wav"), 1, ATTN_LOUD, 0);
-		MuzzleFlash(ent, MZ_SSHOTGUN);
-		break;
-	case MZ_HYPERBLASTER:
-		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire.wav"), 1, ATTN_LOUD, 0);
-		MuzzleFlash(ent, MZ_MACHINEGUN);
-		break;
-	default:
-		MuzzleFlash(ent, ent->client->weapon_sound);
-	}
+	// else switch (ent->client->weapon_sound)
+	// {
+	// case MZ_BLASTER:
+	// 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/mk23fire.wav"), 1, ATTN_LOUD, 0);
+	// 	MuzzleFlash(ent, MZ_MACHINEGUN);
+	// 	break;
+	// case MZ_MACHINEGUN:
+	// 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/mp5fire1.wav"), 1, ATTN_LOUD, 0);
+	// 	MuzzleFlash(ent, MZ_MACHINEGUN);
+	// 	break;
+	// case MZ_ROCKET:
+	// 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/m4a1fire.wav"), 1, ATTN_LOUD, 0);
+	// 	MuzzleFlash(ent, MZ_MACHINEGUN);
+	// 	break;
+	// case MZ_SHOTGUN:
+	// 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/shotgf1b.wav"), 1, ATTN_LOUD, 0);
+	// 	MuzzleFlash(ent, MZ_SHOTGUN);
+	// 	break;
+	// case MZ_SSHOTGUN:
+	// 	if (!ent->client->pers.hc_mode)
+	// 		// Both barrels: sound on both WEAPON and ITEM to produce a louder boom.
+	// 		gi.sound(ent, CHAN_ITEM, gi.soundindex("weapons/cannon_fire.wav"), 1, ATTN_NORM, 0);
+	// 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/cannon_fire.wav"), 1, ATTN_LOUD, 0);
+	// 	MuzzleFlash(ent, MZ_SSHOTGUN);
+	// 	break;
+	// case MZ_HYPERBLASTER:
+	// 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/ssgfire.wav"), 1, ATTN_LOUD, 0);
+	// 	MuzzleFlash(ent, MZ_MACHINEGUN);
+	// 	break;
+	// default:
+	// 	MuzzleFlash(ent, ent->client->weapon_sound);
+	// }
 
 	ent->client->weapon_sound = 0;
 	level.weapon_sound_framenum = level.framenum;
