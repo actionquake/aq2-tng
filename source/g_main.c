@@ -326,7 +326,6 @@ cvar_t *rrot;			// Random Rotation
 cvar_t *empty_rotate;   // Minutes of empty server to automatically rotate map.
 cvar_t *empty_exec;     // Config to exec when empty rotation occurs.
 cvar_t *strtwpn;		// Start DM Weapon
-cvar_t *llsound;
 cvar_t *loud_guns;
 cvar_t *sync_guns;
 cvar_t *silentwalk;

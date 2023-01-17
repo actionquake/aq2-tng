@@ -2116,8 +2116,8 @@ void PlayWeaponSound(edict_t* ent)
 		// Silencer suppresses both sound and muzzle flash.
 		gi.sound(ent, CHAN_WEAPON, level.snd_silencer, 1, ATTN_NORM, 0);
 
-	else if (llsound->value)
-		MuzzleFlash(ent, ent->client->weapon_sound);
+	// Play the weapon sound
+	MuzzleFlash(ent, ent->client->weapon_sound);
 
 	// else switch (ent->client->weapon_sound)
 	// {

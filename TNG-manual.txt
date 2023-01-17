@@ -188,6 +188,8 @@ Features
 
   Commands:
   llsound [0/1] - When on (1), Low Lag Sounds will be used.
+  Note:  This feature is deprecated in AQtion, where it is default enforced (not cvar adjustable anymore).
+  Keeping it in the manual for historical review.
 
 * Announcer
   The announcer that says "Lights, Camera, Action!" has his vocabulary increased by several words, announcing

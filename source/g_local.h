@@ -1022,7 +1022,6 @@ extern cvar_t *rrot;
 extern cvar_t *empty_rotate;
 extern cvar_t *empty_exec;
 extern cvar_t *strtwpn;
-extern cvar_t *llsound;
 extern cvar_t *loud_guns;
 extern cvar_t *sync_guns;
 extern cvar_t *silentwalk;
