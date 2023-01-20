@@ -52,6 +52,7 @@
 #define	CONFIG_FILE_VERSION 1
 
 void	ClientBeginDeathmatch( edict_t *ent );
+void	ClientBegin (edict_t *ent);
 void	AllItems( edict_t *ent );
 void	AllWeapons( edict_t *ent );
 void	EquipClient( edict_t *ent );
