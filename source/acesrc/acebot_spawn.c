@@ -602,7 +602,9 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 	else
 		ClientConnect( bot, userinfo );
 	
-	ClientBeginDeathmatch( bot );
+	// This is a test
+	ClientBegin( bot );
+	//ClientBeginDeathmatch( bot );
 	
 	// Balance the teams!
 	if( teamplay->value )
