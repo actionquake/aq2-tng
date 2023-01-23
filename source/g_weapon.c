@@ -112,7 +112,7 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 
 
 	POSTTRACE ();
-	if (!(tr.fraction < 1.0) || trp.tr.fraction < 1.0)
+	if (!(tr.fraction < 1.0) || !(trp.tr.fraction < 1.0))
 	{
 		vectoangles (aimdir, dir);
 		AngleVectors (dir, forward, right, up);
@@ -142,11 +142,18 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 
 		// glass fx
 		// catch case of firing thru one or breakable glasses
-		while (((tr.fraction < 1.0) || trp.tr.fraction < 1.0) && (tr.surface->flags & (SURF_TRANS33|SURF_TRANS66))
-			&& tr.ent && !Q_stricmp(tr.ent->classname, "func_explosive"))
+		while (((tr.fraction < 1.0) || (trp.tr.fraction < 1.0)) 
+		    && ((tr.surface->flags & (SURF_TRANS33|SURF_TRANS66) || (trp.tr.surface->flags & (SURF_TRANS33|SURF_TRANS66))))
+			&& (tr.ent || trp.tr.ent)
+			&& (!Q_stricmp(tr.ent->classname, "func_explosive") || !Q_stricmp(trp.tr.ent->classname, "func_explosive")))
 		{
-			// break glass  
-			CGF_SFX_ShootBreakableGlass (tr.ent, self, &tr, mod);
+			// break glass
+			if (true_hitbox->value) {
+				// Paril's SPAQ enabled if true_hitbox != 0
+				CGF_SFX_ShootBreakableGlass (trp.tr.ent, self, &tr, mod);
+			} else {
+				CGF_SFX_ShootBreakableGlass (tr.ent, self, &tr, mod);
+			}
 			// continue trace from current endpos to start
 			PRETRACE();
 			if (true_hitbox->value) {
@@ -161,25 +168,29 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 		// ---
 
 		// see if we hit water
-		if (tr.contents & MASK_WATER)
+		if ((tr.contents & MASK_WATER || trp.tr.contents & MASK_WATER))
 		{
 			int color;
 
 			water = true;
-			VectorCopy (tr.endpos, water_start);
+			if (true_hitbox->value) {
+				VectorCopy (trp.tr.endpos, water_start);
+			} else {
+				VectorCopy (tr.endpos, water_start);
+			}
 
-			if (!VectorCompare(start, tr.endpos))
+			if ((!VectorCompare(start, tr.endpos) || !VectorCompare(start, trp.tr.endpos)))
 			{
-				if (tr.contents & CONTENTS_WATER)
+				if ((tr.contents & CONTENTS_WATER || trp.tr.contents & CONTENTS_WATER))
 				{
-					if (strcmp(tr.surface->name, "*brwater") == 0)
+					if ((strcmp(tr.surface->name, "*brwater") || strcmp(trp.tr.surface->name, "*brwater")) == 0)
 						color = SPLASH_BROWN_WATER;
 					else
 						color = SPLASH_BLUE_WATER;
 				}
-				else if (tr.contents & CONTENTS_SLIME)
+				else if ((tr.contents & CONTENTS_SLIME || trp.tr.contents & CONTENTS_SLIME))
 					color = SPLASH_SLIME;
-				else if (tr.contents & CONTENTS_LAVA)
+				else if ((tr.contents & CONTENTS_LAVA || trp.tr.contents & CONTENTS_LAVA))
 					color = SPLASH_LAVA;
 				else
 					color = SPLASH_UNKNOWN;
