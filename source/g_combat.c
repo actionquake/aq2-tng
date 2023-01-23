@@ -511,7 +511,7 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 				from_top = targ_maxs2 - z_rel;
 				if (from_top < 0.0)	//FB 6/1/99
 					from_top = 0.0;	//Slightly negative values were being handled wrong
-			};
+			}
 			bleeding = 1;
 			instant_dam = 0;
 
@@ -519,11 +519,10 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 				if (part == COLLISION_PART_HEAD) {
 				head_success = 1;
 			}
-				else if (part == COLLISION_PART_NONE)
-			};
+			// 	else if (part == COLLISION_PART_NONE)
+			// }
 
-			if (from_top < 2 * HEAD_HEIGHT)
-			{
+			else if (from_top < 2 * HEAD_HEIGHT) {
 				vec3_t new_point;
 				VerifyHeadShot(point, dir, HEAD_HEIGHT, new_point);
 				VectorSubtract(new_point, targ->s.origin, new_point);
@@ -751,6 +750,7 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 			//bleeding = 1; for testing
 		}
 	}
+}
 
 
 	// friendly fire avoidance
