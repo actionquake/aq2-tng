@@ -473,9 +473,9 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 
 	targ_maxs2 = targ->maxs[2];
 
+	g_partid_t part;
 	// Paril's SPAQ collision code
 	if (true_hitbox->value) {
-		g_partid_t part;
 		Col_DecodeDamage(dflags, part);
 	}
 	// End SPAQ
