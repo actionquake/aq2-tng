@@ -505,6 +505,8 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 		case MOD_SNIPER:
 		case MOD_KNIFE:
 		case MOD_KNIFE_THROWN:
+			bleeding = 1;
+			instant_dam = 0;
 
 			if (!true_hitbox->value) {
 				z_rel = point[2] - targ->s.origin[2];
@@ -512,9 +514,6 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 				if (from_top < 0.0)	//FB 6/1/99
 					from_top = 0.0;	//Slightly negative values were being handled wrong
 			
-				bleeding = 1;
-				instant_dam = 0;
-
 				if (from_top < 2 * HEAD_HEIGHT)
 				{
 					vec3_t new_point;
@@ -770,8 +769,6 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 			//bleeding = 1; for testing
 		}
 	}
-}
-
 
 	// friendly fire avoidance
 	// if enabled you can't hurt teammates (but you can hurt yourself)
