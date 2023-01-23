@@ -432,6 +432,7 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 	float from_top;
 	vec_t dist;
 	float targ_maxs2;		//FB 6/1/99
+	g_partid_t part;		// Paril SPAQ collision code
 
 	// do this before teamplay check
 	if (!targ->takedamage)
@@ -473,7 +474,6 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 
 	targ_maxs2 = targ->maxs[2];
 
-	g_partid_t part;
 	// Paril's SPAQ collision code
 	if (true_hitbox->value) {
 		Col_DecodeDamage(dflags, part);
@@ -506,42 +506,52 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 		case MOD_KNIFE:
 		case MOD_KNIFE_THROWN:
 
-			// if (!true_hitbox->value) {
-			// 	z_rel = point[2] - targ->s.origin[2];
-			// 	from_top = targ_maxs2 - z_rel;
-			// 	if (from_top < 0.0)	//FB 6/1/99
-			// 		from_top = 0.0;	//Slightly negative values were being handled wrong
-			// }
-			bleeding = 1;
-			instant_dam = 0;
-
-			if (true_hitbox->value) {
-				if (part == COLLISION_PART_HEAD) {
-				head_success = 1;
-			} else if (part == COLLISION_PART_NONE) {
-
-			// else if (from_top < 2 * HEAD_HEIGHT) {
-
+			if (!true_hitbox->value) {
 				z_rel = point[2] - targ->s.origin[2];
 				from_top = targ_maxs2 - z_rel;
-				if (from_top < 0.0)	{ //FB 6/1/99
+				if (from_top < 0.0)	//FB 6/1/99
 					from_top = 0.0;	//Slightly negative values were being handled wrong
+			
+				bleeding = 1;
+				instant_dam = 0;
 
-				float head_height = targ->head_height ? targ->head_height : HEAD_HEIGHT;
-				}
-			}
-			if ((!true_hitbox->value) && from_top < 2 * HEAD_HEIGHT) {
-
-				if (from_top < 2 * HEAD_HEIGHT) {
+				if (from_top < 2 * HEAD_HEIGHT)
+				{
 					vec3_t new_point;
 					VerifyHeadShot(point, dir, HEAD_HEIGHT, new_point);
 					VectorSubtract(new_point, targ->s.origin, new_point);
+					//gi.cprintf(attacker, PRINT_HIGH, "z: %d y: %d x: %d\n", (int)(targ_maxs2 - new_point[2]),(int)(new_point[1]) , (int)(new_point[0]) );
 
 					if ((targ_maxs2 - new_point[2]) < HEAD_HEIGHT
 						&& (abs (new_point[1])) < HEAD_HEIGHT * .8
 						&& (abs (new_point[0])) < HEAD_HEIGHT * .8)
 					{
 						head_success = 1;
+					}
+				}
+			} else {
+				if (part == COLLISION_PART_HEAD)
+					head_success = 1;
+				else if (part == COLLISION_PART_NONE) {
+					z_rel = point[2] - targ->s.origin[2];
+					from_top = targ_maxs2 - z_rel;
+					if (from_top < 0.0)	//FB 6/1/99
+						from_top = 0.0;	//Slightly negative values were being handled wrong
+
+					float head_height = targ->head_height ? targ->head_height : HEAD_HEIGHT;
+
+					if (from_top < 2 * head_height) {
+						vec3_t new_point;
+						VerifyHeadShot(point, dir, head_height, new_point);
+						VectorSubtract(new_point, targ->s.origin, new_point);
+						//gi.cprintf(attacker, PRINT_HIGH, "z: %d y: %d x: %d\n", (int)(targ_maxs2 - new_point[2]),(int)(new_point[1]) , (int)(new_point[0]) );
+
+						if ((targ_maxs2 - new_point[2]) < head_height
+							&& (abs (new_point[1])) < head_height * .8
+							&& (abs (new_point[0])) < head_height * .8)
+						{
+							head_success = 1;
+						}
 					}
 				}
 			}
@@ -634,7 +644,7 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 					do_sparks = 1;
 				}
 			}
-			else if (z_rel < LEG_DAMAGE)
+			else if ((z_rel < LEG_DAMAGE) || (part == COLLISION_PART_NONE && z_rel < LEG_DAMAGE) || part == COLLISION_PART_LEG)
 			{
 				damage_type = LOC_LDAM;
 				damage = damage * .25;
@@ -649,7 +659,7 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 				gi.cprintf(targ, PRINT_HIGH, "Leg damage\n");
 				ClientLegDamage(targ);
 			}
-			else if (z_rel < STOMACH_DAMAGE)
+			else if ((z_rel < STOMACH_DAMAGE) || (part == COLLISION_PART_NONE && z_rel < STOMACH_DAMAGE) || part == COLLISION_PART_STOMACH)
 			{
 				damage_type = LOC_SDAM;
 				damage = damage * .4;
