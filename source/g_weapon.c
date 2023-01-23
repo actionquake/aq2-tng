@@ -94,6 +94,7 @@ This is an internal support routine used for bullet/pellet based weapons.
 static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
 {
 	trace_t tr;
+	trace_precise_t trp;
 	vec3_t dir, forward, right, up, end;
 	float r, u;
 	vec3_t water_start;
@@ -101,9 +102,17 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 	int content_mask = MASK_SHOT | MASK_WATER;
 
 	PRETRACE ();
-	tr = gi.trace (self->s.origin, NULL, NULL, start, self, MASK_SHOT);
+	// Paril's SPAQ enabled if true_hitbox != 0
+	if (true_hitbox->value){
+		trp = Col_PreciseTrace(self->s.origin, start, self, MASK_SHOT);
+	} else {
+		// Original code
+		tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SHOT);
+	};
+
+
 	POSTTRACE ();
-	if (!(tr.fraction < 1.0))
+	if (!(tr.fraction < 1.0) || trp.tr.fraction < 1.0)
 	{
 		vectoangles (aimdir, dir);
 		AngleVectors (dir, forward, right, up);
@@ -122,19 +131,31 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 		}
 
 		PRETRACE();
-		tr = gi.trace (start, NULL, NULL, end, self, content_mask);
+		if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+			trp = Col_PreciseTrace(start, end, self, content_mask);
+		} else {
+			// Original code
+			tr = gi.trace(start, NULL, NULL, end, self, content_mask);
+		};
 		POSTTRACE();
 
 		// glass fx
 		// catch case of firing thru one or breakable glasses
-		while ((tr.fraction < 1.0) && (tr.surface->flags & (SURF_TRANS33|SURF_TRANS66))
+		while (((tr.fraction < 1.0) || trp.tr.fraction < 1.0) && (tr.surface->flags & (SURF_TRANS33|SURF_TRANS66))
 			&& tr.ent && !Q_stricmp(tr.ent->classname, "func_explosive"))
 		{
 			// break glass  
 			CGF_SFX_ShootBreakableGlass (tr.ent, self, &tr, mod);
 			// continue trace from current endpos to start
 			PRETRACE();
-			tr = gi.trace (tr.endpos, NULL, NULL, end, tr.ent, content_mask);
+			if (true_hitbox->value) {
+				// Paril's SPAQ enabled if true_hitbox != 0
+				trp = Col_PreciseTrace(trp.tr.endpos, end, trp.tr.ent, content_mask);
+			} else {
+				// Original code
+				tr = gi.trace(tr.endpos, NULL, NULL, end, tr.ent, content_mask);
+			}
 			POSTTRACE();
 		}
 		// ---
@@ -168,10 +189,17 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 					gi.WriteByte(svc_temp_entity);
 					gi.WriteByte(TE_SPLASH);
 					gi.WriteByte(8);
-					gi.WritePosition(tr.endpos);
-					gi.WriteDir(tr.plane.normal);
-					gi.WriteByte(color);
-					gi.multicast(tr.endpos, MULTICAST_PVS);
+					if (true_hitbox->value) {
+						gi.WritePosition(trp.tr.endpos);
+						gi.WriteDir(trp.tr.plane.normal);
+						gi.WriteByte(color);
+						gi.multicast(trp.tr.endpos, MULTICAST_PVS);
+					} else {
+						gi.WritePosition(tr.endpos);
+						gi.WriteDir(tr.plane.normal);
+						gi.WriteByte(color);
+						gi.multicast(tr.endpos, MULTICAST_PVS);
+					}
 				}
 
 				// change bullet's course when it enters water
@@ -187,7 +215,12 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 
 			// re-trace ignoring water this time
 			PRETRACE();
-			tr = gi.trace(water_start, NULL, NULL, end, self, MASK_SHOT);
+			if (true_hitbox->value) {
+				// Paril's SPAQ enabled if true_hitbox != 0
+				trp = Col_PreciseTrace(water_start, end, trp.tr.ent, MASK_SHOT);
+			} else {
+				tr = gi.trace(water_start, NULL, NULL, end, self, MASK_SHOT);
+			}
 			POSTTRACE();
 		}
 	}
@@ -211,12 +244,24 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 				{
 					gi.WriteByte(svc_temp_entity);
 					gi.WriteByte(te_impact);
-					gi.WritePosition (tr.endpos);
-					gi.WriteDir(tr.plane.normal);
-					gi.multicast(tr.endpos, MULTICAST_PVS);
+					if (true_hitbox->value) {
+						// Paril's SPAQ enabled if true_hitbox != 0
+						gi.WritePosition (trp.tr.endpos);
+						gi.WriteDir(trp.tr.plane.normal);
+						gi.multicast(trp.tr.endpos, MULTICAST_PVS);
+					} else {
+						gi.WritePosition (tr.endpos);
+						gi.WriteDir(tr.plane.normal);
+						gi.multicast(tr.endpos, MULTICAST_PVS);
+					}
 
 					if (self->client)
-						PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+						if (true_hitbox->value) {
+							// Paril's SPAQ enabled if true_hitbox != 0
+							PlayerNoise(self, trp.tr.endpos, PNOISE_IMPACT);
+						} else {
+							PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+						}
 				}
 			}
 		}
@@ -227,24 +272,48 @@ static void fire_lead (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 	{
 		vec3_t pos;
 
-		VectorSubtract (tr.endpos, water_start, dir);
-		VectorNormalize (dir);
-		VectorMA (tr.endpos, -2, dir, pos);
-		if (gi.pointcontents(pos) & MASK_WATER) {
-			VectorCopy (pos, tr.endpos);
+		if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+			VectorSubtract (trp.tr.endpos, water_start, dir);
+			VectorNormalize (dir);
+			VectorMA (trp.tr.endpos, -2, dir, pos);
+			if (gi.pointcontents(pos) & MASK_WATER) {
+				VectorCopy (pos, trp.tr.endpos);
+			} else {
+				PRETRACE();
+				trp = Col_PreciseTrace(pos, water_start, trp.tr.ent, MASK_WATER);
+				POSTTRACE();
+			}
 		} else {
-			PRETRACE();
-			tr = gi.trace(pos, NULL, NULL, water_start, tr.ent, MASK_WATER);
-			POSTTRACE();
+			VectorSubtract (tr.endpos, water_start, dir);
+			VectorNormalize (dir);
+			VectorMA (tr.endpos, -2, dir, pos);
+			if (gi.pointcontents(pos) & MASK_WATER) {
+				VectorCopy (pos, tr.endpos);
+			} else {
+				PRETRACE();
+				tr = gi.trace(pos, NULL, NULL, water_start, tr.ent, MASK_WATER);
+				POSTTRACE();
+			}
 		}
 
-		VectorAdd(water_start, tr.endpos, pos);
+		if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+			VectorAdd(water_start, trp.tr.endpos, pos);
+		} else {
+			VectorAdd(water_start, tr.endpos, pos);
+		}
 		VectorScale(pos, 0.5, pos);
 
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BUBBLETRAIL);
 		gi.WritePosition(water_start);
-		gi.WritePosition(tr.endpos);
+		if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+			gi.WritePosition(trp.tr.endpos);
+		} else {
+			gi.WritePosition(tr.endpos);
+		}
 		gi.multicast(pos, MULTICAST_PVS);
 	}
 }
@@ -268,9 +337,9 @@ void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kic
 
 
 // zucc fire_load_ap for rounds that pass through soft targets and keep going
-static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod)
-{
+static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int te_impact, int hspread, int vspread, int mod) {
 	trace_t tr;
+	trace_precise_t trp;
 	vec3_t dir, forward, right, up, end;
 	float r, u;
 	vec3_t water_start;
@@ -311,43 +380,58 @@ static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 
 		PRETRACE();
 		//tr = gi.trace (from, NULL, NULL, end, ignore, mask);
-		tr = gi.trace(from, NULL, NULL, end, ignore, content_mask);
+		if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+			trp = Col_PreciseTrace(from, end, ignore, content_mask);
+		} else {
+			tr = gi.trace(from, NULL, NULL, end, ignore, content_mask);
+		}
 		POSTTRACE();
 
 		// glass fx
 		// catch case of firing thru one or breakable glasses
-		while (tr.fraction < 1.0 && (tr.surface->flags & (SURF_TRANS33|SURF_TRANS66))
-			&& (tr.ent) && (0 == Q_stricmp (tr.ent->classname, "func_explosive")))
+		while ((tr.fraction < 1.0 || trp.tr.fraction < 1.0) && (tr.surface->flags & (SURF_TRANS33|SURF_TRANS66))
+			&& (tr.ent || trp.tr.ent) && (0 == Q_stricmp (tr.ent->classname, "func_explosive")))
 		{
-			// break glass  
-			CGF_SFX_ShootBreakableGlass(tr.ent, self, &tr, mod);
+			// break glass
+			if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+				CGF_SFX_ShootBreakableGlass(trp.tr.ent, self, &tr, mod);
+			} else {
+				CGF_SFX_ShootBreakableGlass(tr.ent, self, &tr, mod);
+			}
 			// continue trace from current endpos to start
 			PRETRACE();
-			tr = gi.trace(tr.endpos, NULL, NULL, end, tr.ent, content_mask);
+			if (true_hitbox->value) {
+				// Paril's SPAQ enabled if true_hitbox != 0
+				trp = Col_PreciseTrace(trp.tr.endpos, end, trp.tr.ent, content_mask);
+			} else {
+				tr = gi.trace(tr.endpos, NULL, NULL, end, tr.ent, content_mask);
+			}
 			POSTTRACE();
 		}
 		// ---
 
 		// see if we hit water
-		if (tr.contents & MASK_WATER)
+		if ((tr.contents || trp.tr.contents) & MASK_WATER)
 		{
 			int color;
 
 			water = true;
 			VectorCopy(tr.endpos, water_start);
 
-			if (!VectorCompare(from, tr.endpos))
+			if ((!VectorCompare(from, tr.endpos) || !VectorCompare(from, trp.tr.endpos)))
 			{
 				if (tr.contents & CONTENTS_WATER)
 				{
-					if (strcmp(tr.surface->name, "*brwater") == 0)
+					if ((strcmp(tr.surface->name, "*brwater") || strcmp(trp.tr.surface->name, "*brwater")) == 0)
 						color = SPLASH_BROWN_WATER;
 					else
 						color = SPLASH_BLUE_WATER;
 				}
-				else if (tr.contents & CONTENTS_SLIME)
+				else if ((tr.contents & CONTENTS_SLIME) || (trp.tr.contents & CONTENTS_SLIME))
 					color = SPLASH_SLIME;
-				else if (tr.contents & CONTENTS_LAVA)
+				else if ((tr.contents & CONTENTS_LAVA || trp.tr.contents & CONTENTS_LAVA))
 					color = SPLASH_LAVA;
 				else
 					color = SPLASH_UNKNOWN;
@@ -357,10 +441,18 @@ static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 					gi.WriteByte(svc_temp_entity);
 					gi.WriteByte(TE_SPLASH);
 					gi.WriteByte(8);
-					gi.WritePosition(tr.endpos);
-					gi.WriteDir(tr.plane.normal);
-					gi.WriteByte(color);
-					gi.multicast(tr.endpos, MULTICAST_PVS);
+					if (true_hitbox->value) {
+						// Paril's SPAQ enabled if true_hitbox != 0
+						gi.WritePosition(trp.tr.endpos);
+						gi.WriteDir(trp.tr.plane.normal);
+						gi.WriteByte(color);
+						gi.multicast(trp.tr.endpos, MULTICAST_PVS);
+					} else {
+						gi.WritePosition(tr.endpos);
+						gi.WriteDir(tr.plane.normal);
+						gi.WriteByte(color);
+						gi.multicast(tr.endpos, MULTICAST_PVS);
+					}
 				}
 
 				// change bullet's course when it enters water
@@ -376,7 +468,12 @@ static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 
 			// re-trace ignoring water this time
 			PRETRACE();
-			tr = gi.trace(water_start, NULL, NULL, end, ignore, MASK_SHOT);
+			if (true_hitbox->value) {
+				// Paril's SPAQ enabled if true_hitbox != 0
+				trp = Col_PreciseTrace(water_start, end, ignore, MASK_SHOT);
+			} else {
+				tr = gi.trace(water_start, NULL, NULL, end, ignore, MASK_SHOT);
+			}
 			POSTTRACE();
 		}
 
@@ -386,52 +483,95 @@ static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 
 		if (tr.surface && (tr.surface->flags & SURF_SKY))
 			continue;
+		if (trp.tr.surface && (trp.tr.surface->flags & SURF_SKY))
+			continue;
 
-		if (tr.fraction < 1.0)
-		{
-
-			if ((tr.ent->svflags & SVF_MONSTER) || tr.ent->client)
-			{
-				ignore = tr.ent;
-				VectorCopy(tr.endpos, from);
-				//FIREBLADE
-				// Advance the "from" point a few units
-				// towards "end" here
-				if (tr.ent->client)
-				{
-					if (tr.ent->client->took_damage)
+		if ((tr.fraction < 1.0) || (trp.tr.fraction < 1.0)) {
+			if (((tr.ent->svflags & SVF_MONSTER) || tr.ent->client) || (trp.tr.ent->svflags & SVF_MONSTER) || trp.tr.ent->client) {
+				if (true_hitbox->value) {
+					// Paril's SPAQ enabled if true_hitbox != 0
+					ignore = trp.tr.ent;
+					VectorCopy(trp.tr.endpos, from);
+					//FIREBLADE
+					// Advance the "from" point a few units
+					// towards "end" here
+					if (trp.tr.ent->client)
 					{
-						vec3_t out;
-						VectorSubtract(end, from, out);
-						VectorNormalize(out);
-						VectorScale(out, 8, out);
-						VectorAdd(out, from, from);
-						continue;
+						if (trp.tr.ent->client->took_damage)
+						{
+							vec3_t out;
+							VectorSubtract(end, from, out);
+							VectorNormalize(out);
+							VectorScale(out, 8, out);
+							VectorAdd(out, from, from);
+							continue;
+						}
+						trp.tr.ent->client->took_damage++;
 					}
-					tr.ent->client->took_damage++;
+					//FIREBLADE
+				} else {
+					ignore = tr.ent;
+					VectorCopy(tr.endpos, from);
+					//FIREBLADE
+					// Advance the "from" point a few units
+					// towards "end" here
+					if (tr.ent->client)
+					{
+						if (tr.ent->client->took_damage)
+						{
+							vec3_t out;
+							VectorSubtract(end, from, out);
+							VectorNormalize(out);
+							VectorScale(out, 8, out);
+							VectorAdd(out, from, from);
+							continue;
+						}
+						tr.ent->client->took_damage++;
+					}
 				}
-				//FIREBLADE
 			}
 
-			if (tr.ent != self && tr.ent->takedamage)
-			{
-				T_Damage(tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, 0, mod);
-				if (stopAP)	// the AP round hit something that would stop it (kevlar)
-					ignore = NULL;
-			}
-			else if (tr.ent != self && !water)
-			{
-				if (strncmp(tr.surface->name, "sky", 3) != 0)
+			if (true_hitbox->value) {
+					// Paril's SPAQ enabled if true_hitbox != 0
+				if (trp.tr.ent != self && trp.tr.ent->takedamage) {
+					T_Damage(trp.tr.ent, self, self, aimdir, trp.tr.endpos, trp.tr.plane.normal, damage, kick, 0, mod);
+					if (stopAP)	// the AP round hit something that would stop it (kevlar)
+						ignore = NULL;
+				} else if (trp.tr.ent != self && !water) {
+					if (strncmp(trp.tr.surface->name, "sky", 3) != 0)
+					{
+						AddDecal(self, &tr);
+						gi.WriteByte(svc_temp_entity);
+						gi.WriteByte(te_impact);
+						gi.WritePosition (trp.tr.endpos);
+						gi.WriteDir(trp.tr.plane.normal);
+						gi.multicast(trp.tr.endpos, MULTICAST_PVS);
+
+						if (self->client)
+							PlayerNoise(self, trp.tr.endpos, PNOISE_IMPACT);
+					}
+				}
+			} else {
+					if (tr.ent != self && tr.ent->takedamage)
 				{
-					AddDecal(self, &tr);
-					gi.WriteByte(svc_temp_entity);
-					gi.WriteByte(te_impact);
-					gi.WritePosition (tr.endpos);
-					gi.WriteDir(tr.plane.normal);
-					gi.multicast(tr.endpos, MULTICAST_PVS);
+					T_Damage(tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, 0, mod);
+					if (stopAP)	// the AP round hit something that would stop it (kevlar)
+						ignore = NULL;
+				}
+				else if (tr.ent != self && !water)
+				{
+					if (strncmp(tr.surface->name, "sky", 3) != 0)
+					{
+						AddDecal(self, &tr);
+						gi.WriteByte(svc_temp_entity);
+						gi.WriteByte(te_impact);
+						gi.WritePosition (tr.endpos);
+						gi.WriteDir(tr.plane.normal);
+						gi.multicast(tr.endpos, MULTICAST_PVS);
 
-					if (self->client)
-						PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+						if (self->client)
+							PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+					}
 				}
 			}
 		}
@@ -442,27 +582,49 @@ static void fire_lead_ap(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 	{
 		vec3_t pos;
 
-		VectorSubtract(tr.endpos, water_start, dir);
-		VectorNormalize(dir);
-		VectorMA(tr.endpos, -2, dir, pos);
-		if (gi.pointcontents(pos) & MASK_WATER) {
-			VectorCopy(pos, tr.endpos);
+		if (true_hitbox->value) {
+			// Paril's SPAQ enabled if true_hitbox != 0
+			VectorSubtract(trp.tr.endpos, water_start, dir);
+			VectorNormalize(dir);
+			VectorMA(trp.tr.endpos, -2, dir, pos);
+			if (gi.pointcontents(pos) & MASK_WATER) {
+				VectorCopy(pos, trp.tr.endpos);
+			} else {
+				PRETRACE();
+				tr = gi.trace(pos, NULL, NULL, water_start, trp.tr.ent, MASK_WATER);
+				POSTTRACE();
+			}
+
+			VectorAdd(water_start, trp.tr.endpos, pos);
+			VectorScale(pos, 0.5, pos);
+
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_BUBBLETRAIL);
+			gi.WritePosition(water_start);
+			gi.WritePosition(trp.tr.endpos);
+			gi.multicast(pos, MULTICAST_PVS);
 		} else {
-			PRETRACE();
-			tr = gi.trace(pos, NULL, NULL, water_start, tr.ent, MASK_WATER);
-			POSTTRACE();
+			VectorSubtract(tr.endpos, water_start, dir);
+			VectorNormalize(dir);
+			VectorMA(tr.endpos, -2, dir, pos);
+			if (gi.pointcontents(pos) & MASK_WATER) {
+				VectorCopy(pos, tr.endpos);
+			} else {
+				PRETRACE();
+				tr = gi.trace(pos, NULL, NULL, water_start, tr.ent, MASK_WATER);
+				POSTTRACE();
+			}
+
+			VectorAdd(water_start, tr.endpos, pos);
+			VectorScale(pos, 0.5, pos);
+
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_BUBBLETRAIL);
+			gi.WritePosition(water_start);
+			gi.WritePosition(tr.endpos);
+			gi.multicast(pos, MULTICAST_PVS);
 		}
-
-		VectorAdd(water_start, tr.endpos, pos);
-		VectorScale(pos, 0.5, pos);
-
-		gi.WriteByte(svc_temp_entity);
-		gi.WriteByte(TE_BUBBLETRAIL);
-		gi.WritePosition(water_start);
-		gi.WritePosition(tr.endpos);
-		gi.multicast(pos, MULTICAST_PVS);
 	}
-
 }
 
 // zucc - for the M4

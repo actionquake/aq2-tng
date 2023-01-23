@@ -295,6 +295,10 @@
 #include	"acesrc/botnav.h"
 #endif
 
+// Paril's SPAQ collision code
+#include	"col_main.h"
+// End SPAQ
+
 #define		getEnt(entnum)	(edict_t *)((char *)globals.edicts + (globals.edict_size * entnum))	//AQ:TNG Slicer - This was missing
 #define		GAMEVERSION			"action"	// the "gameversion" client command will print this plus compile date
 
@@ -1207,6 +1211,9 @@ extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
 
+// 2023
+extern cvar_t *true_hitbox; // Paril's SPAQ collision code
+
 // Discord SDK integration with Q2Pro
 extern cvar_t *cl_discord;
 extern cvar_t *cl_discord_id;
@@ -2114,7 +2121,11 @@ struct edict_s
 	int bot_speed; 
 	qboolean	bCrawl; 
 	qboolean	bLastJump; 
-	vec3_t	lastPosition; 
+	vec3_t	lastPosition;
+
+	// Paril's SPAQ collision code
+	entity_collision_t	collision;
+	// end SPAQ
 #endif
 };
 

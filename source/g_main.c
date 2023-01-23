@@ -493,6 +493,9 @@ cvar_t *gmf;
 cvar_t *sv_idleremove;
 cvar_t *g_spawn_items;
 
+//2023
+cvar_t *true_hitbox; //Paril's SPAQ2 collision code
+
 // Discord SDK integration with Q2Pro
 cvar_t *cl_discord;
 cvar_t *cl_discord_id;

@@ -472,6 +472,14 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 	}
 
 	targ_maxs2 = targ->maxs[2];
+
+	// Paril's SPAQ collision code
+	if (true_hitbox->value) {
+		g_partid_t part;
+		Col_DecodeDamage(dflags, part);
+	}
+	// End SPAQ
+
 	if (targ_maxs2 == 4)
 		targ_maxs2 = CROUCHING_MAXS2;	//FB 6/1/99
 
@@ -498,12 +506,21 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 		case MOD_KNIFE:
 		case MOD_KNIFE_THROWN:
 
-			z_rel = point[2] - targ->s.origin[2];
-			from_top = targ_maxs2 - z_rel;
-			if (from_top < 0.0)	//FB 6/1/99
-				from_top = 0.0;	//Slightly negative values were being handled wrong
+			if (!true_hitbox->value) {
+				z_rel = point[2] - targ->s.origin[2];
+				from_top = targ_maxs2 - z_rel;
+				if (from_top < 0.0)	//FB 6/1/99
+					from_top = 0.0;	//Slightly negative values were being handled wrong
+			};
 			bleeding = 1;
 			instant_dam = 0;
+
+			if (true_hitbox->value) {
+				if (part == COLLISION_PART_HEAD) {
+				head_success = 1;
+			}
+				else if (part == COLLISION_PART_NONE)
+			};
 
 			if (from_top < 2 * HEAD_HEIGHT)
 			{

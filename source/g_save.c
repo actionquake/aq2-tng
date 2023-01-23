@@ -569,6 +569,9 @@ void InitGame( void )
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
   	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
 
+	// 2023
+	true_hitbox = gi.cvar("true_hitbox", "0", 0);  // Paril's SPAQ collision code
+
 	// Discord SDK integration with Q2Pro
 	cl_discord = gi.cvar("cl_discord", "0", 0);
 	cl_discord_id = gi.cvar("cl_discord_id", "0", 0);
