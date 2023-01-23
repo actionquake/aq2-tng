@@ -2124,6 +2124,7 @@ struct edict_s
 	vec3_t	lastPosition;
 
 	// Paril's SPAQ collision code
+	float				head_height;
 	entity_collision_t	collision;
 	// end SPAQ
 #endif

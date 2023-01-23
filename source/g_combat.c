@@ -506,33 +506,43 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 		case MOD_KNIFE:
 		case MOD_KNIFE_THROWN:
 
-			if (!true_hitbox->value) {
-				z_rel = point[2] - targ->s.origin[2];
-				from_top = targ_maxs2 - z_rel;
-				if (from_top < 0.0)	//FB 6/1/99
-					from_top = 0.0;	//Slightly negative values were being handled wrong
-			}
+			// if (!true_hitbox->value) {
+			// 	z_rel = point[2] - targ->s.origin[2];
+			// 	from_top = targ_maxs2 - z_rel;
+			// 	if (from_top < 0.0)	//FB 6/1/99
+			// 		from_top = 0.0;	//Slightly negative values were being handled wrong
+			// }
 			bleeding = 1;
 			instant_dam = 0;
 
 			if (true_hitbox->value) {
 				if (part == COLLISION_PART_HEAD) {
 				head_success = 1;
+			} else if (part == COLLISION_PART_NONE) {
+
+			// else if (from_top < 2 * HEAD_HEIGHT) {
+
+				z_rel = point[2] - targ->s.origin[2];
+				from_top = targ_maxs2 - z_rel;
+				if (from_top < 0.0)	{ //FB 6/1/99
+					from_top = 0.0;	//Slightly negative values were being handled wrong
+
+				float head_height = targ->head_height ? targ->head_height : HEAD_HEIGHT;
+				}
 			}
-			// 	else if (part == COLLISION_PART_NONE)
-			// }
+			if ((!true_hitbox->value) && from_top < 2 * HEAD_HEIGHT) {
 
-			else if (from_top < 2 * HEAD_HEIGHT) {
-				vec3_t new_point;
-				VerifyHeadShot(point, dir, HEAD_HEIGHT, new_point);
-				VectorSubtract(new_point, targ->s.origin, new_point);
-				//gi.cprintf(attacker, PRINT_HIGH, "z: %d y: %d x: %d\n", (int)(targ_maxs2 - new_point[2]),(int)(new_point[1]) , (int)(new_point[0]) );
+				if (from_top < 2 * HEAD_HEIGHT) {
+					vec3_t new_point;
+					VerifyHeadShot(point, dir, HEAD_HEIGHT, new_point);
+					VectorSubtract(new_point, targ->s.origin, new_point);
 
-				if ((targ_maxs2 - new_point[2]) < HEAD_HEIGHT
-					&& (abs (new_point[1])) < HEAD_HEIGHT * .8
-					&& (abs (new_point[0])) < HEAD_HEIGHT * .8)
-				{
-					head_success = 1;
+					if ((targ_maxs2 - new_point[2]) < HEAD_HEIGHT
+						&& (abs (new_point[1])) < HEAD_HEIGHT * .8
+						&& (abs (new_point[0])) < HEAD_HEIGHT * .8)
+					{
+						head_success = 1;
+					}
 				}
 			}
 
