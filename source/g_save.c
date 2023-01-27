@@ -568,6 +568,7 @@ void InitGame( void )
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
   	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
+	cl_bandagesound = gi.cvar("cl_bandagesound", "1", 0);
 
 	// Discord SDK integration with Q2Pro
 	cl_discord = gi.cvar("cl_discord", "0", 0);

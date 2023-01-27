@@ -1206,6 +1206,7 @@ extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
+extern cvar_t *cl_bandagesound; // Toggles enabling sound effects when player bandages
 
 // Discord SDK integration with Q2Pro
 extern cvar_t *cl_discord;
@@ -1591,6 +1592,9 @@ typedef struct
 	int limp_nopred;
 	int spec_flags;
 	qboolean antilag_optout;
+
+	// darksaint
+	int cl_bandagesound;
 
 	int mk23_mode;		// firing mode, semi or auto
 	int mp5_mode;
