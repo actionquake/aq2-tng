@@ -569,6 +569,24 @@ void InitGame( void )
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
   	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
 
+	// 2023
+	experimental = gi.cvar("experimental", "0", CVAR_LATCH);
+	true_hitbox = gi.cvar("true_hitbox", "0", CVAR_LATCH);
+
+	// Gate behind experimental mode
+	if (experimental->value)
+	{
+		gi.dprintf( "Disabling stat_logs as \"experimental\" is enabled.\n" );
+		gi.cvar_forceset("stat_logs", "0");
+	}
+
+	if (!experimental->value && true_hitbox->value)
+	{
+		gi.dprintf( "Disabling true_hitbox as \"experimental\" is disabled.\n" );
+		gi.cvar_forceset( "true_hitbox", "0" );
+	}
+	
+
 	// Discord SDK integration with Q2Pro
 	cl_discord = gi.cvar("cl_discord", "0", 0);
 	cl_discord_id = gi.cvar("cl_discord_id", "0", 0);

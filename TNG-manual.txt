@@ -617,6 +617,16 @@ Features
   g_spawn_items [0/1] - server cvar, set to "1" to allow for item/ammo/weapon spawns in games that you choose your starting weapon,
   for example, dm_choose, teamplay, etc.  Forced set to "0" for matchmode.  Set "0" for normal play.
 
+* Experimental Mode
+  experimental [0/1] - server cvar, default "0".  If set to 1, this defines the server as in experimental mode, which serves as a protection gate for experimental cvars and features from accidentally being enabled on non-test servers
+  Current features/cvars in experimental mode:
+    - true_hitbox
+
+* Model-based hitbox ** Experimental **
+  true_hitbox [0/1] - server cvar, default "0" (classic).  If set to "1", the hitbox with more closely match the model. All of this
+  code is credited to Paril's SPAQ fork.  Note: At this time, only the male model is affected by this change, other models will
+  always behave classically
+
 --------------------------------------------------------------------------------------------------------------------
 Contact Information
   If you wish to contact the TNG team, to report a bug, suggest a new feature, or offer JBravo your

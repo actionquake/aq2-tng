@@ -291,6 +291,10 @@
 #include	"g_grapple.h"
 #include	"p_antilag.h"
 
+// Paril's SPAQ
+#include	"col_main.h"
+// end SPAQ
+
 #ifndef NO_BOTS
 #include	"acesrc/botnav.h"
 #endif
@@ -1207,6 +1211,10 @@ extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
 
+// 2023
+extern cvar_t *experimental; // Gate for experimental features
+extern cvar_t *true_hitbox; // Paril's SPAQ collision code
+
 // Discord SDK integration with Q2Pro
 extern cvar_t *cl_discord;
 extern cvar_t *cl_discord_id;
@@ -2115,7 +2123,10 @@ struct edict_s
 	int bot_speed; 
 	qboolean	bCrawl; 
 	qboolean	bLastJump; 
-	vec3_t	lastPosition; 
+	vec3_t	lastPosition;
+	// Paril's SPAQ
+	float				head_height;
+	entity_collision_t	collision;
 #endif
 };
 

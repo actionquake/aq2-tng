@@ -876,6 +876,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	char *com_token;
 	int saved_team;
 
+	if (true_hitbox->value) {
+		Col_ClearModelLinks();
+	}
+
 	// Reset teamplay stuff
 	for(i = TEAM1; i < TEAM_TOP; i++)
 	{
@@ -1253,6 +1257,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	SVCmd_CheckSB_f(); //rekkie -- silence ban
 
 	UnBan_TeamKillers();
+
+	if (true_hitbox->value) {
+		Col_RemoveUnusedModels();
+	}
 
 #ifndef NO_BOTS
 	// Reload nodes and any persistent bots.

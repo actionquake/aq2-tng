@@ -493,6 +493,10 @@ cvar_t *gmf;
 cvar_t *sv_idleremove;
 cvar_t *g_spawn_items;
 
+// 2023
+cvar_t *experimental;
+cvar_t *true_hitbox;
+
 // Discord SDK integration with Q2Pro
 cvar_t *cl_discord;
 cvar_t *cl_discord_id;
