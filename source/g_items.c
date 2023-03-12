@@ -1506,7 +1506,7 @@ world_model_flags int               copied to 'ent->s.effects' (see s.effects fo
    Drop_Weapon,
    Weapon_Gas,
    NULL,
-   "models/items/ammo/grenades/medium/tris.md2",
+   "models/objects/grenade2/tris.md2",
    0,
    "models/weapons/v_handgr/tris.md2",
    "a_m61frag",
