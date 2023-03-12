@@ -15,7 +15,7 @@ env:
 
 jobs:
   x86_build_tng:
-    runs-on: [self-hosted, x86]
+    runs-on: x86
     steps:
       - name: 'Cleanup build folder'
         run: |
