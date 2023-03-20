@@ -1272,7 +1272,7 @@ static const game_import_ex_t game_import_ex = {
     // .TagRealloc = PF_TagRealloc,
 };
 
-static void RestartFilesystem(void)
+void RestartFilesystem(void)
 {
     char *buffer;
 
