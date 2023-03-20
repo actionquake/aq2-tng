@@ -298,5 +298,5 @@ typedef struct {
 
 typedef const game_export_ex_t *(*game_entry_ex_t)(const game_import_ex_t *);
 
-extern game_import_ex_t   gix;
-extern game_export_ex_t   gex;
+// extern game_import_ex_t   gix;
+// extern game_export_ex_t   gex;

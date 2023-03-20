@@ -1251,7 +1251,7 @@ void CheckNeedPass (void)
 // GetExtendedGameAPI()
 // https://github.com/skullernet/q2pro/commit/73ab2a2a7b23e793c519c07c0532ab16ce268052
 
-static const game_import_ex_t game_import_ex = {
+static game_import_ex_t game_import_ex = {
     .apiversion = GAME_API_VERSION_EX,
 
     // .OpenFile = FS_FOpenFile,
@@ -1272,27 +1272,13 @@ static const game_import_ex_t game_import_ex = {
     // .TagRealloc = PF_TagRealloc,
 };
 
-void RestartFilesystem(void)
-{
-    char *buffer;
-
-    // load file (possibly from packfile)
-    gix->LoadFile("test.txt", (void **)&buffer, 0, TAG_GAME);
-    if (buffer) {
-        // do something with it
-        gi.dprintf("%s", buffer);
-
-        // free memory
-        gi.TagFree(buffer);
-    }
-}
 
 game_export_ex_t gex = {
     .apiversion = GAME_API_VERSION_EX,
-    .RestartFilesystem = RestartFilesystem,
+	.ListFiles = FS_ListFiles,
 };
 
-game_export_ex_t *GetExtendedGameAPI(const game_import_ex_t *import)
+game_export_ex_t *GetExtendedGameAPI(game_import_ex_t *import)
 {
     gix = import;
     return &gex;

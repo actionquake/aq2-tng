@@ -882,8 +882,8 @@ extern game_locals_t game;
 extern level_locals_t level;
 extern game_import_t gi;
 extern game_export_t globals;
-extern game_import_ex_t gix;
-extern game_export_ex_t gex;
+extern const game_import_ex_t gix;
+extern const game_export_ex_t gex;
 extern spawn_temp_t st;
 
 extern int sm_meat_index;
@@ -1475,7 +1475,6 @@ void G_RunEntity (edict_t * ent);
 //
 void EndDMLevel (void);
 void ExitLevel (void);
-void RestartFilesystem(void);
 
 //
 // g_chase.c
