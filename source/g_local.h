@@ -1474,7 +1474,7 @@ void G_RunEntity (edict_t * ent);
 //
 void EndDMLevel (void);
 void ExitLevel (void);
-
+void    **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p);
 //
 // g_chase.c
 //
