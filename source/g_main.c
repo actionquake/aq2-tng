@@ -275,6 +275,8 @@ game_locals_t game;
 level_locals_t level;
 game_import_t gi;
 game_export_t globals;
+game_import_ex_t *gix;
+game_export_ex_t *gex;
 spawn_temp_t st;
 
 int sm_meat_index;
@@ -525,6 +527,9 @@ void WriteLevel (char *filename);
 void ReadLevel (char *filename);
 void InitGame (void);
 void G_RunFrame (void);
+
+// GetExtendedGameAPI()
+void **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p);
 
 qboolean CheckTimelimit(void);
 int dosoft;
@@ -1242,3 +1247,53 @@ void CheckNeedPass (void)
 }
 
 //FROM 3.20 END
+
+// GetExtendedGameAPI()
+// https://github.com/skullernet/q2pro/commit/73ab2a2a7b23e793c519c07c0532ab16ce268052
+
+static const game_import_ex_t game_import_ex = {
+    .apiversion = GAME_API_VERSION_EX,
+
+    // .OpenFile = FS_FOpenFile,
+    // .CloseFile = FS_FCloseFile,
+    // .LoadFile = PF_LoadFile,
+
+    // .ReadFile = FS_Read,
+    // .WriteFile = FS_Write,
+    // .FlushFile = FS_Flush,
+    // .TellFile = FS_Tell,
+    // .SeekFile = FS_Seek,
+    // .ReadLine = FS_ReadLine,
+
+    .ListFiles = FS_ListFiles,
+    //.FreeFileList = FS_FreeList,
+
+    // .ErrorString = Q_ErrorString,
+    // .TagRealloc = PF_TagRealloc,
+};
+
+static void RestartFilesystem(void)
+{
+    char *buffer;
+
+    // load file (possibly from packfile)
+    gix->LoadFile("test.txt", (void **)&buffer, 0, TAG_GAME);
+    if (buffer) {
+        // do something with it
+        gi.dprintf("%s", buffer);
+
+        // free memory
+        gi.TagFree(buffer);
+    }
+}
+
+game_export_ex_t gex = {
+    .apiversion = GAME_API_VERSION_EX,
+    .RestartFilesystem = RestartFilesystem,
+};
+
+game_export_ex_t *GetExtendedGameAPI(const game_import_ex_t *import)
+{
+    gix = import;
+    return &gex;
+}

@@ -701,3 +701,7 @@ void WriteLevel (char *filename)
 void ReadLevel (char *filename)
 {
 }
+
+void **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p)
+{
+}
