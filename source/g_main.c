@@ -275,8 +275,8 @@ game_locals_t game;
 level_locals_t level;
 game_import_t gi;
 game_export_t globals;
-game_import_ex_t *gix;
-game_export_ex_t *gex;
+game_import_ex_t gix;
+game_export_ex_t gex;
 spawn_temp_t st;
 
 int sm_meat_index;
