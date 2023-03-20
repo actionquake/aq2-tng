@@ -243,9 +243,6 @@ typedef vec_t vec5_t[5];
 typedef int fixed4_t;
 typedef int fixed8_t;
 typedef int fixed16_t;
-typedef long long          int64_t;
-typedef unsigned long long uint64_t;
-
 
 #ifndef M_PI
 #define M_PI            3.14159265358979323846f	// matches value in gcc v2 math.h
