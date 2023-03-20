@@ -1251,26 +1251,26 @@ void CheckNeedPass (void)
 // GetExtendedGameAPI()
 // https://github.com/skullernet/q2pro/commit/73ab2a2a7b23e793c519c07c0532ab16ce268052
 
-static game_import_ex_t game_import_ex = {
-    .apiversion = GAME_API_VERSION_EX,
+// static game_import_ex_t game_import_ex = {
+//     .apiversion = GAME_API_VERSION_EX,
 
-    // .OpenFile = FS_FOpenFile,
-    // .CloseFile = FS_FCloseFile,
-    // .LoadFile = PF_LoadFile,
+//     // .OpenFile = FS_FOpenFile,
+//     // .CloseFile = FS_FCloseFile,
+//     // .LoadFile = PF_LoadFile,
 
-    // .ReadFile = FS_Read,
-    // .WriteFile = FS_Write,
-    // .FlushFile = FS_Flush,
-    // .TellFile = FS_Tell,
-    // .SeekFile = FS_Seek,
-    // .ReadLine = FS_ReadLine,
+//     // .ReadFile = FS_Read,
+//     // .WriteFile = FS_Write,
+//     // .FlushFile = FS_Flush,
+//     // .TellFile = FS_Tell,
+//     // .SeekFile = FS_Seek,
+//     // .ReadLine = FS_ReadLine,
 
-    .ListFiles = FS_ListFiles,
-    //.FreeFileList = FS_FreeList,
+//     .ListFiles = FS_ListFiles,
+//     //.FreeFileList = FS_FreeList,
 
-    // .ErrorString = Q_ErrorString,
-    // .TagRealloc = PF_TagRealloc,
-};
+//     // .ErrorString = Q_ErrorString,
+//     // .TagRealloc = PF_TagRealloc,
+// };
 
 
 const game_export_ex_t gex = {

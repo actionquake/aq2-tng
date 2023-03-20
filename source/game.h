@@ -283,7 +283,7 @@ typedef struct {
     // int     (*SeekFile)(qhandle_t f, int64_t offset, int whence);
     // int     (*ReadLine)(qhandle_t f, char *buffer, size_t size);
 
-    void    **(*FS_ListFiles)(const char *path, const char *filter, unsigned flags, int *count_p);
+    void    **(*ListFiles)(const char *path, const char *filter, unsigned flags, int *count_p);
     // void    (*FreeFileList)(void **list);
 
     // const char *(*ErrorString)(int error);
