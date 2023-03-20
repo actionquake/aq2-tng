@@ -593,6 +593,15 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 		return NULL;
 	}
 	
+	void **list;
+    int count;
+
+    list = FS_ListFiles(NULL, ".bsp", FS_SEARCH_SAVEPATH | FS_SEARCH_RECURSIVE, &count);
+    if (!list) {
+        gi.dprintf("No maps found\n");
+        return;
+    }
+
 	bot->is_bot = true;
 	bot->yaw_speed = 1000;  // deg/sec
 	
