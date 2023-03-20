@@ -1273,7 +1273,7 @@ static game_import_ex_t game_import_ex = {
 };
 
 
-const game_export_ex_t gex = {
+const game_export_ex_t *gex = {
     .apiversion = GAME_API_VERSION_EX,
 	.ListFiles = FS_ListFiles,
 };
