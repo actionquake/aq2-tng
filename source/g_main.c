@@ -276,7 +276,7 @@ level_locals_t level;
 game_import_t gi;
 game_export_t globals;
 const game_import_ex_t *gix;
-const game_export_ex_t *gex;
+//const game_export_ex_t *gex;
 spawn_temp_t st;
 
 int sm_meat_index;
@@ -1273,7 +1273,7 @@ static game_import_ex_t game_import_ex = {
 };
 
 
-const game_export_ex_t *gex = {
+const game_export_ex_t gex = {
     .apiversion = GAME_API_VERSION_EX,
 	.ListFiles = FS_ListFiles,
 };
