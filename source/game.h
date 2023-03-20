@@ -292,6 +292,7 @@ typedef struct {
 
 typedef struct {
     int     apiversion;
+    void    **(*ListFiles)(const char *path, const char *filter, unsigned flags, int *count_p);
 } game_export_ex_t;
 
 typedef const game_export_ex_t *(*game_entry_ex_t)(const game_import_ex_t *);
