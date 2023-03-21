@@ -596,7 +596,7 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 	void **list;
 	int i, total;
 
-	list = gix->ListFiles("players", NULL, FS_SEARCH_STRIPEXT, &total);
+	list = gix->ListFiles("players/male", NULL, FS_SEARCH_STRIPEXT, &total);
 
 	gi.dprintf("Ahha!\n");
 	if (!list) {
@@ -605,9 +605,9 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 		gi.dprintf("Skins found!, %d of them\n", total);
 	}
 
-    for (i = 0; i < total; i++) {
-        gi.dprintf("%p\n", (char *)list[i]);
-    }
+    // for (i = 0; i < total; i++) {
+    //     gi.dprintf("%p\n", (char *)list[i]);
+    // }
 
 	gi.dprintf("%i files listed\n", total);
 
