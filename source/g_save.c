@@ -704,6 +704,12 @@ void ReadLevel (char *filename)
 
 // GetExtendedGameAPI() in Q2Pro
 #ifdef USE_AQTION
+
+/*
+=================
+FS_ListFiles
+=================
+*/
 void **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p)
 {
 }

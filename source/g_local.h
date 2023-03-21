@@ -2360,6 +2360,81 @@ typedef enum {
 #include "acesrc/acebot.h"
 #endif
 
+
+// GetExtendedGameAPI()
+#ifdef USE_AQTION
+
+// int Q_strncasecmp(const char *s1, const char *s2, size_t n)
+// {
+//     int        c1, c2;
+
+//     do {
+//         c1 = *s1++;
+//         c2 = *s2++;
+
+//         if (!n--)
+//             return 0;        /* strings are equal until end point */
+
+//         if (c1 != c2) {
+//             c1 = Q_tolower(c1);
+//             c2 = Q_tolower(c2);
+//             if (c1 < c2)
+//                 return -1;
+//             if (c1 > c2)
+//                 return 1;        /* strings not equal */
+//         }
+//     } while (c1);
+
+//     return 0;        /* strings are equal */
+// }
+
+// int Q_strcasecmp(const char *s1, const char *s2)
+// {
+//     int        c1, c2;
+
+//     do {
+//         c1 = *s1++;
+//         c2 = *s2++;
+
+//         if (c1 != c2) {
+//             c1 = Q_tolower(c1);
+//             c2 = Q_tolower(c2);
+//             if (c1 < c2)
+//                 return -1;
+//             if (c1 > c2)
+//                 return 1;        /* strings not equal */
+//         }
+//     } while (c1);
+
+//     return 0;        /* strings are equal */
+// }
+
+// file opening mode
+#define FS_MODE_READ            0x00000000
+#define FS_MODE_WRITE           0x00000001
+#define FS_MODE_APPEND          0x00000002
+#define FS_MODE_RDWR            0x00000003  // similar to FS_MODE_APPEND, but does not create the file
+#define FS_MODE_MASK            0x00000003
+
+// output buffering mode
+#define FS_BUF_DEFAULT          0x00000000  // default mode (normally fully buffered)
+#define FS_BUF_FULL             0x00000004  // fully buffered
+#define FS_BUF_LINE             0x00000008  // line buffered
+#define FS_BUF_NONE             0x0000000c  // unbuffered
+#define FS_BUF_MASK             0x0000000c
+
+// where to open file from
+#define FS_TYPE_ANY             0x00000000  // open from anywhere
+#define FS_TYPE_REAL            0x00000010  // open from disk only
+#define FS_TYPE_PAK             0x00000020  // open from pack only
+#define FS_TYPE_MASK            0x00000030
+
+// where to look for a file
+#define FS_PATH_ANY             0x00000000  // look in any search paths
+#define FS_PATH_BASE            0x00000040  // look in base search paths
+#define FS_PATH_GAME            0x00000080  // look in game search paths
+#define FS_PATH_MASK            0x000000c0
+
 // search mode for ListFiles()
 #define FS_SEARCH_BYFILTER      0x00000100  // wildcard search instead of extension search
 #define FS_SEARCH_SAVEPATH      0x00000200  // preserve file path
@@ -2368,3 +2443,86 @@ typedef enum {
 #define FS_SEARCH_DIRSONLY      0x00001000  // search only directories (can't be mixed with other flags)
 #define FS_SEARCH_RECURSIVE     0x00002000  // recursive search (implied by FS_SEARCH_BYFILTER)
 #define FS_SEARCH_MASK          0x0000ff00
+
+// misc flags for OpenFile()
+#define FS_FLAG_GZIP            0x00000100  // transparently (de)compress with gzip
+#define FS_FLAG_EXCL            0x00000200  // create the file, fail if already exists
+#define FS_FLAG_TEXT            0x00000400  // open in text mode if from disk
+#define FS_FLAG_DEFLATE         0x00000800  // if compressed, read raw deflate data, fail otherwise
+#define FS_FLAG_LOADFILE        0x00001000  // open non-unique handle, must be closed very quickly
+#define FS_FLAG_MASK            0x0000ff00
+
+// #define PATH_NOT_CHECKED    -1
+// #define MIN_LISTED_FILES    1024
+// #define MAX_LISTED_FILES    250000000
+// #define MAX_LISTED_DEPTH    8
+// #define PATH_INVALID        0
+// #define PATH_VALID          1
+// #define PATH_MIXED_CASE     2
+
+// #define FS_pathcmp      Q_strcasecmp
+// #define FS_pathcmpn     Q_strncasecmp
+
+// typedef struct {
+//     int64_t size;
+//     int64_t ctime;
+//     int64_t mtime;
+//     char    name[1];
+// } file_info_t;
+
+// typedef struct {
+//     const char  *filter;
+//     unsigned    flags;
+//     unsigned    baselen;
+//     void        **files;
+//     int         count;
+// } listfiles_t;
+
+// typedef enum {
+//     FS_FREE,
+//     FS_REAL,
+//     FS_PAK,
+// #if USE_ZLIB
+//     FS_ZIP,
+//     FS_GZ,
+// #endif
+//     FS_BAD
+// } filetype_t;
+
+// typedef struct packfile_s {
+//     int64_t     filepos;
+//     int64_t     filelen;
+// #if USE_ZLIB
+//     int64_t     complen;
+//     uint16_t    compmtd;    // compression method, 0 (stored) or Z_DEFLATED
+//     bool        coherent;   // true if local file header has been checked
+// #endif
+//     uint8_t     namelen;
+//     uint32_t    nameofs;
+//     struct packfile_s *hash_next;
+// } packfile_t;
+
+// typedef struct {
+//     filetype_t  type;       // FS_PAK or FS_ZIP
+//     unsigned    refcount;   // for tracking pack users
+//     FILE        *fp;
+//     unsigned    num_files;
+//     unsigned    hash_size;
+//     packfile_t  *files;
+//     packfile_t  **file_hash;
+//     char        *names;
+//     char        filename[1];
+// } pack_t;
+
+// typedef struct searchpath_s {
+//     struct searchpath_s *next;
+//     pack_t      *pack;        // only one of filename / pack will be used
+//     unsigned    mode;
+//     char        filename[1];
+// } searchpath_t;
+
+// static searchpath_t *fs_searchpaths;
+// static searchpath_t *fs_base_searchpaths;
+
+
+#endif

@@ -284,7 +284,7 @@ typedef struct {
     // int     (*ReadLine)(qhandle_t f, char *buffer, size_t size);
 
     void    **(*ListFiles)(const char *path, const char *filter, unsigned flags, int *count_p);
-    // void    (*FreeFileList)(void **list);
+    void    (*FreeFileList)(void **list);
 
     // const char *(*ErrorString)(int error);
     // void    *(*TagRealloc)(void *ptr, size_t size);

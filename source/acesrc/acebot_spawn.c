@@ -594,14 +594,24 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 	}
 	
 	void **list;
-    int count;
+	int i, total;
 
-    list = FS_ListFiles(NULL, ".bsp", FS_SEARCH_SAVEPATH | FS_SEARCH_RECURSIVE, &count);
-    if (!list) {
-        gi.dprintf("No maps found\n");
+	list = gix->ListFiles("players", NULL, FS_SEARCH_STRIPEXT, &total);
+
+	gi.dprintf("Ahha!\n");
+	if (!list) {
+        gi.dprintf("No skins found!\n");
     } else {
-		gi.dprintf("Maps found!");
+		gi.dprintf("Skins found!, %d of them\n", total);
 	}
+
+    for (i = 0; i < total; i++) {
+        gi.dprintf("%p\n", (char *)list[i]);
+    }
+
+	gi.dprintf("%i files listed\n", total);
+
+	gix->FreeFileList(list);
 
 	bot->is_bot = true;
 	bot->yaw_speed = 1000;  // deg/sec
