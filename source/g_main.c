@@ -1264,15 +1264,6 @@ void CheckNeedPass (void)
 #ifdef USE_AQTION
 const game_export_ex_t gex = {
     .apiversion = GAME_API_VERSION_EX,
-
-    .OpenFile = FS_OpenFile,
-    .CloseFile = FS_CloseFile,
-    .ReadFile = FS_Read,
-    .WriteFile = FS_Write,
-    .FlushFile = FS_Flush,
-    .TellFile = FS_Tell,
-    .SeekFile = FS_Seek,
-    .ReadLine = FS_ReadLine,
     .ListFiles = FS_ListFiles,
     .FreeFileList = FS_FreeList,
 };
