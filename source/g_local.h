@@ -1474,16 +1474,10 @@ void G_RunEntity (edict_t * ent);
 //
 void EndDMLevel (void);
 void ExitLevel (void);
+#ifdef USE_AQTION
 void    **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p);
 void FS_FreeList(void **list);
-int FS_ReadLine(qhandle_t f, char *buffer, size_t size);
-int FS_Seek(qhandle_t f, int64_t offset, int whence);
-int64_t FS_Tell(qhandle_t f);
-int FS_Flush(qhandle_t f);
-int FS_Write(const void *buf, size_t len, qhandle_t f);
-int FS_Read(void *buf, size_t len, qhandle_t f);
-int FS_CloseFile(qhandle_t f);
-int64_t FS_OpenFile(const char *name, qhandle_t *f, unsigned mode);
+#endif
 
 //
 // g_chase.c
@@ -2364,51 +2358,6 @@ typedef enum {
 // GetExtendedGameAPI()
 #ifdef USE_AQTION
 
-// int Q_strncasecmp(const char *s1, const char *s2, size_t n)
-// {
-//     int        c1, c2;
-
-//     do {
-//         c1 = *s1++;
-//         c2 = *s2++;
-
-//         if (!n--)
-//             return 0;        /* strings are equal until end point */
-
-//         if (c1 != c2) {
-//             c1 = Q_tolower(c1);
-//             c2 = Q_tolower(c2);
-//             if (c1 < c2)
-//                 return -1;
-//             if (c1 > c2)
-//                 return 1;        /* strings not equal */
-//         }
-//     } while (c1);
-
-//     return 0;        /* strings are equal */
-// }
-
-// int Q_strcasecmp(const char *s1, const char *s2)
-// {
-//     int        c1, c2;
-
-//     do {
-//         c1 = *s1++;
-//         c2 = *s2++;
-
-//         if (c1 != c2) {
-//             c1 = Q_tolower(c1);
-//             c2 = Q_tolower(c2);
-//             if (c1 < c2)
-//                 return -1;
-//             if (c1 > c2)
-//                 return 1;        /* strings not equal */
-//         }
-//     } while (c1);
-
-//     return 0;        /* strings are equal */
-// }
-
 // file opening mode
 #define FS_MODE_READ            0x00000000
 #define FS_MODE_WRITE           0x00000001
@@ -2451,78 +2400,5 @@ typedef enum {
 #define FS_FLAG_DEFLATE         0x00000800  // if compressed, read raw deflate data, fail otherwise
 #define FS_FLAG_LOADFILE        0x00001000  // open non-unique handle, must be closed very quickly
 #define FS_FLAG_MASK            0x0000ff00
-
-// #define PATH_NOT_CHECKED    -1
-// #define MIN_LISTED_FILES    1024
-// #define MAX_LISTED_FILES    250000000
-// #define MAX_LISTED_DEPTH    8
-// #define PATH_INVALID        0
-// #define PATH_VALID          1
-// #define PATH_MIXED_CASE     2
-
-// #define FS_pathcmp      Q_strcasecmp
-// #define FS_pathcmpn     Q_strncasecmp
-
-// typedef struct {
-//     int64_t size;
-//     int64_t ctime;
-//     int64_t mtime;
-//     char    name[1];
-// } file_info_t;
-
-// typedef struct {
-//     const char  *filter;
-//     unsigned    flags;
-//     unsigned    baselen;
-//     void        **files;
-//     int         count;
-// } listfiles_t;
-
-// typedef enum {
-//     FS_FREE,
-//     FS_REAL,
-//     FS_PAK,
-// #if USE_ZLIB
-//     FS_ZIP,
-//     FS_GZ,
-// #endif
-//     FS_BAD
-// } filetype_t;
-
-// typedef struct packfile_s {
-//     int64_t     filepos;
-//     int64_t     filelen;
-// #if USE_ZLIB
-//     int64_t     complen;
-//     uint16_t    compmtd;    // compression method, 0 (stored) or Z_DEFLATED
-//     bool        coherent;   // true if local file header has been checked
-// #endif
-//     uint8_t     namelen;
-//     uint32_t    nameofs;
-//     struct packfile_s *hash_next;
-// } packfile_t;
-
-// typedef struct {
-//     filetype_t  type;       // FS_PAK or FS_ZIP
-//     unsigned    refcount;   // for tracking pack users
-//     FILE        *fp;
-//     unsigned    num_files;
-//     unsigned    hash_size;
-//     packfile_t  *files;
-//     packfile_t  **file_hash;
-//     char        *names;
-//     char        filename[1];
-// } pack_t;
-
-// typedef struct searchpath_s {
-//     struct searchpath_s *next;
-//     pack_t      *pack;        // only one of filename / pack will be used
-//     unsigned    mode;
-//     char        filename[1];
-// } searchpath_t;
-
-// static searchpath_t *fs_searchpaths;
-// static searchpath_t *fs_base_searchpaths;
-
 
 #endif
