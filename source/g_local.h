@@ -1475,6 +1475,16 @@ void G_RunEntity (edict_t * ent);
 void EndDMLevel (void);
 void ExitLevel (void);
 void    **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p);
+void FS_FreeList(void **list);
+int FS_ReadLine(qhandle_t f, char *buffer, size_t size);
+int FS_Seek(qhandle_t f, int64_t offset, int whence);
+int64_t FS_Tell(qhandle_t f);
+int FS_Flush(qhandle_t f);
+int FS_Write(const void *buf, size_t len, qhandle_t f);
+int FS_Read(void *buf, size_t len, qhandle_t f);
+int FS_CloseFile(qhandle_t f);
+int64_t FS_OpenFile(const char *name, qhandle_t *f, unsigned mode);
+
 //
 // g_chase.c
 //

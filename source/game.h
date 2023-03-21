@@ -292,7 +292,17 @@ typedef struct {
 
 typedef struct {
     int     apiversion;
+    int64_t (*OpenFile)(const char *path, qhandle_t *f, unsigned mode); // returns file length
+    int     (*CloseFile)(qhandle_t f);
+
+    int     (*ReadFile)(void *buffer, size_t len, qhandle_t f);
+    int     (*WriteFile)(const void *buffer, size_t len, qhandle_t f);
+    int     (*FlushFile)(qhandle_t f);
+    int64_t (*TellFile)(qhandle_t f);
+    int     (*SeekFile)(qhandle_t f, int64_t offset, int whence);
+    int     (*ReadLine)(qhandle_t f, char *buffer, size_t size);
     void    **(*ListFiles)(const char *path, const char *filter, unsigned flags, int *count_p);
+    void    (*FreeFileList)(void **list);
 } game_export_ex_t;
 
 typedef const game_export_ex_t *(*game_entry_ex_t)(const game_import_ex_t *);
