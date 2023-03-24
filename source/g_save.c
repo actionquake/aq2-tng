@@ -571,6 +571,8 @@ void InitGame( void )
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "1", 0);
+	instagib = gi.cvar("instagib", "0", CVAR_LATCH);
+	instagib_mode = gi.cvar("instagib_mode", "0", 0);
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION

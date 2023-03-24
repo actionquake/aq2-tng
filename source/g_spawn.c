@@ -848,6 +848,9 @@ int Gamemodeflag(void)
 	if (use_3teams->value) {
 		gamemodeflag += GMF_3TEAMS;
 	}
+	if (instagib->value) {
+		gamemodeflag += GMF_INSTAGIB;
+	}
 	if (darkmatch->value) {
 		gamemodeflag += GMF_DARKMATCH;
 	}
@@ -1053,6 +1056,22 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("3 Teams Enabled - Forcing Tourney off\n");
 			gi.cvar_forceset(use_tourney->name, "0");
 		}
+	}
+	else if (instagib->value)
+	{
+		if (instagib_mode->value = 0){
+			gi.cvar_forceset(wp_flags->name, "32");
+		}
+		if (instagib_mode->value = 1){
+			gi.cvar_forceset(wp_flags->name, "511");
+			if (use_randoms->value)
+				{
+					gi.dprintf ("Instagib Mode 2 Enabled - Forcing Random weapons and items off\n");
+					gi.cvar_forceset(use_randoms->name, "0");
+				}
+			}
+		
+		
 	}
 	else if (matchmode->value)
 	{

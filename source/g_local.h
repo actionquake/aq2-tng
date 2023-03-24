@@ -955,7 +955,7 @@ extern int sm_meat_index;
 // Game Mode Flags
 #define GMF_NONE 0
 #define GMF_3TEAMS 1
-//#define NEW_MODE 2       // If new game mode flags are created, use 2 for its value first
+#define GMF_INSTAGIB 2
 #define GMF_DARKMATCH 4
 #define GMF_MATCHMODE 8
 
@@ -1166,6 +1166,8 @@ extern cvar_t *e_enhancedSlippers;
 
 // 2023
 extern cvar_t *use_killcounts;
+extern cvar_t *instagib;
+extern cvar_t *instagib_mode;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);

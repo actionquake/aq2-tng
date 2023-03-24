@@ -496,6 +496,8 @@ cvar_t *g_spawn_items;
 
 // 2023
 cvar_t *use_killcounts;  // Display kill counts in console to clients on frag
+cvar_t *instagib;	     // Enables instagib mode
+cvar_t *instagib_mode;   // 0 = sniper only, 1 = no weapon limit
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;

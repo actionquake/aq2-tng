@@ -583,37 +583,62 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 				{
 					if (attacker->client)
 					{
+						// 2023 instagib game mode, kevlar helmet does nothing!
+						if (!instagib->value){
 						gi.cprintf(attacker, PRINT_HIGH,
 							"%s has a Kevlar Helmet, too bad you have AP rounds...\n",
 							client->pers.netname);
 						gi.cprintf(targ, PRINT_HIGH,
 							"Kevlar Helmet absorbed some of %s's AP sniper round\n",
 							attacker->client->pers.netname);
+						damage = (int) (damage * 0.325);
+						} else { // Instagib is full damage
+							gi.cprintf(attacker, PRINT_HIGH,
+							"%s has a Kevlar Helmet, too bad instagib is on...\n",
+							client->pers.netname);
+							gi.cprintf(targ, PRINT_HIGH,
+							"Kevlar Helmet does nothing for %s's instagib round\n",
+							attacker->client->pers.netname);
+						}
 					}
-					damage = (int) (damage * 0.325);
 					gi.sound(targ, CHAN_VOICE, level.snd_headshot, 1, ATTN_NORM, 0);
 				}
 				else
 				{
 					if (attacker->client)
 					{
-						gi.cprintf( attacker, PRINT_HIGH, "%s has a Kevlar Helmet - AIM FOR THE BODY!\n",
-							client->pers.netname );
-						gi.cprintf( targ, PRINT_HIGH, "Kevlar Helmet absorbed a part of %s's shot\n",
-							attacker->client->pers.netname );
+						if (!instagib->value){
+							gi.cprintf( attacker, PRINT_HIGH, "%s has a Kevlar Helmet - AIM FOR THE BODY!\n",
+								client->pers.netname );
+							gi.cprintf( targ, PRINT_HIGH, "Kevlar Helmet absorbed a part of %s's shot\n",
+								attacker->client->pers.netname );
+							damage = (int)(damage / 2);
+							bleeding = 0;
+							instant_dam = 1;
+							stopAP = 1;
+							do_sparks = 1;
+						} else { // Instagib is full damage
+							gi.cprintf( attacker, PRINT_HIGH, "%s has a Kevlar Helmet - too bad it's instagib mode!\n",
+								client->pers.netname );
+							gi.cprintf( targ, PRINT_HIGH, "Kevlar Helmet did nothing to protect you from %s's instagib shot\n",
+								attacker->client->pers.netname );
+							bleeding = 0;
+							instant_dam = 1;
+							stopAP = 0;
+							do_sparks = 1;
+						}
 					}
 					gi.sound(targ, CHAN_ITEM, level.snd_vesthit, 1, ATTN_NORM, 0);
-					damage = (int)(damage / 2);
-					bleeding = 0;
-					instant_dam = 1;
-					stopAP = 1;
-					do_sparks = 1;
 				}
 			}
 			else if (z_rel < LEG_DAMAGE)
 			{
 				damage_type = LOC_LDAM;
-				damage = damage * .25;
+
+				// Instagib is full damage
+				if (!instagib->value){
+					damage = damage * .25;
+				}
 				if (attacker->client)
 				{
 					strcpy( attacker->client->last_damaged_players, client->pers.netname );
@@ -628,7 +653,10 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 			else if (z_rel < STOMACH_DAMAGE)
 			{
 				damage_type = LOC_SDAM;
-				damage = damage * .4;
+				// Instagib is full damage
+				if (!instagib->value){
+					damage = damage * .4;
+				}
 				gi.cprintf(targ, PRINT_HIGH, "Stomach damage\n");
 				if (attacker->client)
 				{
@@ -655,7 +683,10 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 
 				if (!gotArmor)
 				{
-					damage = damage * .65;
+					// Instagib is full damage
+					if (!instagib->value){
+						damage = damage * .65;
+					}
 					gi.cprintf(targ, PRINT_HIGH, "Chest damage\n");
 					if (attacker->client)
 						gi.cprintf(attacker, PRINT_HIGH, "You hit %s in the chest\n",
@@ -674,7 +705,10 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 						gi.cprintf (targ, PRINT_HIGH, "Kevlar Vest absorbed some of %s's AP sniper round\n",
 							attacker->client->pers.netname);
 					}
-					damage = damage * .325;
+					// Instagib is full damage
+					if (!instagib->value){
+						damage = damage * .325;
+					}
 				}
 				else
 				{
@@ -686,7 +720,10 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 							attacker->client->pers.netname);
 					}
 					gi.sound(targ, CHAN_ITEM, level.snd_vesthit, 1, ATTN_NORM, 0);
-					damage = (int)(damage / 10);
+					// Instagib is full damage
+					if (!instagib->value){
+						damage = (int)(damage / 10);
+					}
 					bleeding = 0;
 					instant_dam = 1;
 					stopAP = 1;
