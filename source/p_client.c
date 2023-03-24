@@ -1571,6 +1571,19 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 					SetAnimation( self, FRAME_death301 - 1, FRAME_death308, ANIM_DEATH );
 					break;
 				}
+			if (instagib->value){
+				int n;
+
+				switch (locOfDeath) {
+					if (sv_gib->value) {
+						for (n = 0; n < 16; n++)
+							ThrowGib(self,
+									"models/objects/gibs/sm_meat/tris.md2",
+									damage, GIB_ORGANIC);
+						ThrowClientHead(self, damage);
+					}
+				}
+			}
 			if ((mod == MOD_SNIPER) || (mod == MOD_KNIFE)
 				|| (mod == MOD_KNIFE_THROWN)) {
 				gi.sound(self, CHAN_VOICE, gi.soundindex("misc/glurp.wav"), 1, ATTN_NORM, 0);
