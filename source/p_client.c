@@ -1573,8 +1573,6 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 				}
 			if (instagib->value){
 				int n;
-
-				switch (locOfDeath) {
 					if (sv_gib->value) {
 						for (n = 0; n < 16; n++)
 							ThrowGib(self,
