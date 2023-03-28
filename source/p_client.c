@@ -3052,6 +3052,11 @@ qboolean ClientConnect(edict_t * ent, char *userinfo)
 	Q_strncpyz(ent->client->pers.ip, ipaddr_buf, sizeof(ent->client->pers.ip));
 	Q_strncpyz(ent->client->pers.userinfo, userinfo, sizeof(ent->client->pers.userinfo));
 
+	#ifdef USE_AQTION
+	Q_strncpyz(ent->client->pers.steamid, Info_ValueForKey(ent->client->pers.userinfo, "steamid"), sizeof(ent->client->pers.steamid));
+	Q_strncpyz(ent->client->pers.discordid, Info_ValueForKey(ent->client->pers.userinfo, "cl_discord_id"), sizeof(ent->client->pers.discordid));
+	#endif
+
 	if (game.serverfeatures & GMF_MVDSPEC) {
 		value = Info_ValueForKey(userinfo, "mvdspec");
 		if (*value) {

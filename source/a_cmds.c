@@ -1228,8 +1228,6 @@ void Cmd_Ghost_f(edict_t * ent)
 	num_ghost_players--;
 }
 
-#if USE_AQTION
-
 void GetGhostStats(void)
 {
 	int i = 0;
@@ -1243,11 +1241,6 @@ void GetGhostStats(void)
 
 	if (num_ghost_players == 0) {
 		// No ghosts found
-		return;
-	}
-
-	if (i >= num_ghost_players) {
-		//No ghosts found
 		return;
 	}
 
@@ -1283,6 +1276,8 @@ void GetGhostStats(void)
 	}
 	num_ghost_players--;
 }
+
+#if USE_AQTION
 
 void generate_uuid()
 {
