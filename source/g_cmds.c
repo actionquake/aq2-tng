@@ -1806,7 +1806,8 @@ static void Cmd_CPSI_f (edict_t * ent)
 		ent->client->resp.gllockpvs = atoi(gi.argv(2));
 		ent->client->resp.glclear = atoi(gi.argv(3));
 		ent->client->resp.gldynamic = atoi(gi.argv(4));
-		Q_strncpyz(ent->client->resp.gldriver, gi.argv (5), sizeof(ent->client->resp.gldriver));
+		ent->client->resp.glbrightness = atoi(gi.argv(5));
+		Q_strncpyz(ent->client->resp.gldriver, gi.argv (6), sizeof(ent->client->resp.gldriver));
 		//      strncpy(ent->client->resp.vidref,gi.argv(4),sizeof(ent->client->resp.vidref-1));
 		//      ent->client->resp.vidref[15] = 0;
 	}

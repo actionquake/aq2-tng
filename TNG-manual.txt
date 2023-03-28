@@ -188,6 +188,15 @@ Features
 
   Commands:
   llsound [0/1] - When on (1), Low Lag Sounds will be used.
+  Note: This functionality has been enhanced for AQtion, if this is disabled (0) then all weapon sounds will
+  retain standard functionality and all clients will be forced to use the same sound file (mk23fire.wav, for example).
+  If this is enabled (1), clients can adjust which sound file is played per weapon, based on the following cvars:
+    * cl_mk23_sound
+    * cl_mp5_sound
+    * cl_m4_sound
+    * cl_m3_sound
+    * cl_hc_sound
+    * cl_ssg_sound
 
 * Announcer
   The announcer that says "Lights, Camera, Action!" has his vocabulary increased by several words, announcing

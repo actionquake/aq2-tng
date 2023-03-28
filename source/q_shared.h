@@ -829,7 +829,8 @@ pmove_t;
 #define RDF_UVGOGGLES           8
 //ROGUE
 
-
+#define RF_INDICATOR			(RF_TRANSLUCENT | RF_FULLBRIGHT | RF_DEPTHHACK)
+#define IS_INDICATOR(rflags)	((rflags & RF_INDICATOR) == RF_INDICATOR)
 
 
 // player_state_t->refdef flags
@@ -1435,5 +1436,16 @@ typedef struct
   short stats[MAX_STATS];	// fast status bar updates
 }
 player_state_t;
+
+
+// Reki : Cvar Sync info shared between engine and game
+#define CVARSYNC_MAXSIZE	64
+#define CVARSYNC_MAX		32
+typedef struct {
+	char name[CVARSYNC_MAXSIZE];
+	char value[CVARSYNC_MAXSIZE];
+} cvarsync_t;
+
+typedef char cvarsyncvalue_t[CVARSYNC_MAXSIZE];
 
 #endif

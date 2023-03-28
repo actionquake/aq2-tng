@@ -528,7 +528,7 @@ void VideoCheckClient(edict_t *ent)
 		if (ent->client->resp.gllockpvs != 0) {
 			gi.cprintf(ent, PRINT_HIGH,
 				"This server does not allow using that value for gl_lockpvs, set it to '0'\n");
-			gi.bprintf(PRINT_HIGH, "%s was using an illegal setting\n",
+			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_lockpvs setting\n",
 				ent->client->pers.netname);
 			Kick_Client(ent);
 			return;
@@ -538,7 +538,7 @@ void VideoCheckClient(edict_t *ent)
 		if (ent->client->resp.glclear != 0) {
 			gi.cprintf(ent, PRINT_HIGH,
 				"This server does not allow using that value for gl_clear, set it to '0'\n");
-			gi.bprintf(PRINT_HIGH, "%s was using an illegal setting\n",
+			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_clear setting\n",
 				ent->client->pers.netname);
 			Kick_Client(ent);
 			return;
@@ -548,7 +548,17 @@ void VideoCheckClient(edict_t *ent)
 		if (ent->client->resp.gldynamic != 1) {
 			gi.cprintf(ent, PRINT_HIGH,
 				"This server does not allow using that value for gl_dynamic, set it to '1'\n");
-			gi.bprintf(PRINT_HIGH, "%s was using an illegal setting\n",
+			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_dynamic setting\n",
+				ent->client->pers.netname);
+			Kick_Client(ent);
+			return;
+		}
+		if (ent->client->resp.glbrightness != 0) {
+			stuffcmd (ent, "gl_brightness 0\n");
+		} else {
+			gi.cprintf(ent, PRINT_HIGH,
+				"This server does not allow using that value for gl_brightness, set it to '0'\n");
+			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_brightness setting\n",
 				ent->client->pers.netname);
 			Kick_Client(ent);
 			return;

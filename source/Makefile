@@ -59,12 +59,6 @@ endif
 MACHINE=$(shell uname -m)
 SYSTEM=$(shell uname -s)
 
-# Fixes by bAron to get it compiling on max m1
-ifeq ($(TNG_BUILD_FOR),M1)
-	CC=clang
-	MACHINE=arm64e
-endif
-
 ARCH=$(MACHINE)
 
 # If machine starts with arm (any 32-bit Raspberry Pi) make gamearm.so.
@@ -101,6 +95,17 @@ ARCH=x86_64
 SHLIBEXT=dll
 SHLIBLIBS=-lws2_32
 endif
+
+ifeq ($(SYSTEM), Darwin)
+SHLIBEXT=dylib
+# Fixes by bAron to get it compiling on max m1
+ifeq ($(TNG_BUILD_FOR),M1)
+CC=clang
+MACHINE=arm
+CFLAGS+=-target aarch64-apple-darwin
+endif
+endif
+
 
 ifeq ($(USE_AQTION),TRUE)
 CFLAGS += -DUSE_AQTION -DAQTION_EXTENSION

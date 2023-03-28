@@ -68,6 +68,13 @@ jobs:
           name: tng-darwin-x86_64
           skip_unpack: true
 
+      - name: Download Darwin ARM64 build artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build.yaml
+          name: tng-darwin-arm64
+          skip_unpack: true
+
       - name: Upload dist tarball to release
         uses: softprops/action-gh-release@v1
         env:
@@ -81,4 +88,5 @@ jobs:
             tng-lin-arm64.zip
             tng-lin-x86_64.zip
             tng-darwin-x86_64.zip
+            tng-darwin-arm64.zip
 
