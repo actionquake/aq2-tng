@@ -495,8 +495,13 @@ cvar_t *sv_idleremove;
 cvar_t *g_spawn_items;
 
 // 2023
-
 cvar_t *use_killcounts;  // Display kill counts in console to clients on frag
+
+#ifdef AQTION_EXTENSION
+cvar_t *use_newirvision;
+cvar_t *use_indicators;
+cvar_t *use_xerp;
+#endif
 
 // Discord SDK integration with Q2Pro
 cvar_t *cl_discord;
@@ -599,16 +604,18 @@ game_export_t *GetGameAPI (game_import_t * import)
 	engine_Client_GetProtocol = gi.CheckForExtension("Client_GetProtocol");
 	engine_Client_GetVersion = gi.CheckForExtension("Client_GetVersion");
 
-	engine_Ghud_SendUpdates = gi.CheckForExtension("Ghud_SendUpdates");
+	engine_Ghud_ClearForClient = gi.CheckForExtension("Ghud_ClearForClient");
 	engine_Ghud_NewElement = gi.CheckForExtension("Ghud_NewElement");
+	engine_Ghud_RemoveElement = gi.CheckForExtension("Ghud_RemoveElement");
 	engine_Ghud_SetFlags = gi.CheckForExtension("Ghud_SetFlags");
-	engine_Ghud_UnicastSetFlags = gi.CheckForExtension("Ghud_UnicastSetFlags");
 	engine_Ghud_SetInt = gi.CheckForExtension("Ghud_SetInt");
 	engine_Ghud_SetText = gi.CheckForExtension("Ghud_SetText");
 	engine_Ghud_SetPosition = gi.CheckForExtension("Ghud_SetPosition");
 	engine_Ghud_SetAnchor = gi.CheckForExtension("Ghud_SetAnchor");
 	engine_Ghud_SetColor = gi.CheckForExtension("Ghud_SetColor");
 	engine_Ghud_SetSize = gi.CheckForExtension("Ghud_SetSize");
+
+	engine_CvarSync_Set = gi.CheckForExtension("CvarSync_Set");
 #endif
 
 
@@ -936,29 +943,6 @@ void CheckDMRules (void)
 
 		if (!FRAMESYNC)
 			return;
-
-#ifdef AQTION_EXTENSION
-#ifdef AQTION_HUD
-		// Reki
-		// Update our ghud values for the team score
-		int i;
-		for (i = TEAM1; i < TEAM_TOP; i++)
-		{
-			if (teams[i].ghud_num <= 0)
-				continue;
-
-			if (teams[i].ghud_resettime && level.time > teams[i].ghud_resettime)
-			{
-				teams[i].ghud_resettime = 0;
-				Ghud_SetFlags(teams[i].ghud_icon, 0);
-				Ghud_SetFlags(teams[i].ghud_num, 0);
-			}
-
-			Ghud_SetInt(teams[i].ghud_num, teams[i].score);
-		}
-#endif
-#endif
-
 
 		if (CheckTeamRules())
 			return;

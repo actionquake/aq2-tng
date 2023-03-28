@@ -1225,6 +1225,13 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 		G_UpdatePlayerStatusbar(ent, 1);
 	}
 
+#ifdef AQTION_EXTENSION
+	if (desired_team == NOTEAM)
+		HUD_SetType(ent, 1);
+	else
+		HUD_SetType(ent, -1);
+#endif
+
 	if (level.intermission_framenum)
 		return;
 
@@ -1265,6 +1272,10 @@ void LeaveTeam (edict_t * ent)
 	ent->client->resp.joined_team = 0;
 	ent->client->resp.team = NOTEAM;
 	G_UpdatePlayerStatusbar(ent, 1);
+
+#ifdef AQTION_EXTENSION
+	HUD_SetType(ent, 1);
+#endif
 
 	teams_changed = true;
 }
@@ -2180,14 +2191,6 @@ int WonGame (int winner)
 				gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_teamwins[winner], 1.0, ATTN_NONE, 0.0);
 			// end of changing sound dir
 			teams[winner].score++;
-
-			#ifdef AQTION_EXTENSION
-			#ifdef AQTION_HUD
-			Ghud_SetFlags(teams[winner].ghud_icon, GHF_BLINK);
-			Ghud_SetFlags(teams[winner].ghud_num, GHF_BLINK);
-			teams[winner].ghud_resettime = level.time + 3;
-			#endif
-			#endif
 
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
 

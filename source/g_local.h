@@ -367,6 +367,7 @@
 // edict->client->pers.spec_flags
 #define SPECFL_KILLFEED					0x00000001
 #define SPECFL_SPECHUD					0x00000002
+#define SPECFL_SPECHUD_NEW				0x00000004
 
 // variable server FPS
 #ifndef NO_FPS
@@ -799,6 +800,9 @@ typedef struct
 
   int model_null;
   int model_lsight;
+#ifdef AQTION_EXTENSION
+  int model_arrow;
+#endif
 
   edict_t *current_entity;	// entity running from G_RunFrame
 
@@ -1170,32 +1174,37 @@ extern int (*engine_Client_GetProtocol)(edict_t *ent);
 int Client_GetVersion(edict_t *ent);
 int Client_GetProtocol(edict_t *ent);
 
-extern void (*engine_Ghud_SendUpdates)(edict_t *ent);
-extern int(*engine_Ghud_NewElement)(int type);
-extern void(*engine_Ghud_SetFlags)(int i, int val);
-extern void(*engine_Ghud_UnicastSetFlags)(edict_t *ent, int i, int val);
-extern void(*engine_Ghud_SetInt)(int i, int val);
-extern void(*engine_Ghud_SetText)(int i, char *text);
-extern void(*engine_Ghud_SetPosition)(int i, int x, int y, int z);
-extern void(*engine_Ghud_SetAnchor)(int i, float x, float y);
-extern void(*engine_Ghud_SetColor)(int i, int r, int g, int b, int a);
-extern void(*engine_Ghud_SetSize)(int i, int x, int y);
+extern void(*engine_Ghud_ClearForClient)(edict_t *ent);
+extern int(*engine_Ghud_NewElement)(edict_t *ent, int type);
+extern void(*engine_Ghud_RemoveElement)(edict_t *ent, int i);
+extern void(*engine_Ghud_SetFlags)(edict_t *ent, int i, int val);
+extern void(*engine_Ghud_SetInt)(edict_t *ent, int i, int val);
+extern void(*engine_Ghud_SetText)(edict_t *ent, int i, char *text);
+extern void(*engine_Ghud_SetPosition)(edict_t *ent, int i, int x, int y, int z);
+extern void(*engine_Ghud_SetAnchor)(edict_t *ent, int i, float x, float y);
+extern void(*engine_Ghud_SetColor)(edict_t *ent, int i, int r, int g, int b, int a);
+extern void(*engine_Ghud_SetSize)(edict_t *ent, int i, int x, int y);
 
-void  Ghud_SendUpdates(edict_t *ent);
-int   Ghud_NewElement(int type);
-void  Ghud_SetFlags(int i, int val);
-void  Ghud_UnicastSetFlags(edict_t *ent, int i, int val);
-void  Ghud_SetInt(int i, int val);
-void  Ghud_SetText(int i, char *text);
-void  Ghud_SetPosition(int i, int x, int y);
-void  Ghud_SetPosition3D(int i, int x, int y, int z);
-void  Ghud_SetAnchor(int i, float x, float y);
-void  Ghud_SetColor(int i, int r, int g, int b, int a);
-void  Ghud_SetSize(int i, int x, int y);
+void  Ghud_ClearForClient(edict_t *ent);
+int   Ghud_NewElement(edict_t *ent, int type);
+void  Ghud_RemoveElement(edict_t *ent, int i);
+void  Ghud_SetFlags(edict_t *ent, int i, int val);
+void  Ghud_SetInt(edict_t *ent, int i, int val);
+void  Ghud_SetText(edict_t *ent, int i, char *text);
+void  Ghud_SetPosition(edict_t *ent, int i, int x, int y);
+void  Ghud_SetPosition3D(edict_t *ent, int i, int x, int y, int z);
+void  Ghud_SetAnchor(edict_t *ent, int i, float x, float y);
+void  Ghud_SetColor(edict_t *ent, int i, int r, int g, int b, int a);
+void  Ghud_SetSize(edict_t *ent, int i, int x, int y);
 
-int   Ghud_AddIcon(int x, int y, int image, int sizex, int sizey);
-int   Ghud_AddText(int x, int y, char *text);
-int   Ghud_AddNumber(int x, int y, int value);
+int   Ghud_AddIcon(edict_t *ent, int x, int y, int image, int sizex, int sizey);
+int   Ghud_AddText(edict_t *ent, int x, int y, char *text);
+void  Ghud_SetTextFlags(edict_t *ent, int i, int uiflags);
+int   Ghud_AddNumber(edict_t *ent, int x, int y, int value);
+
+
+extern void(*engine_CvarSync_Set)(int index, const char *name, const char *val);
+void  CvarSync_Set(int index, const char *name, const char *val);
 #endif
 
 // 2022
@@ -1209,6 +1218,12 @@ extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
+
+#ifdef AQTION_EXTENSION
+extern cvar_t *use_newirvision;		// enable new irvision (only highlight baddies)
+extern cvar_t *use_indicators;		// enable/allow indicators
+extern cvar_t *use_xerp;			// allow clients to use cl_xerp
+#endif
 
 // Discord SDK integration with Q2Pro
 extern cvar_t *cl_discord;
@@ -1595,10 +1610,14 @@ typedef struct
 	int menu_shown;		// has the main menu been shown
 	qboolean dm_selected;		// if dm weapon selection has been done once
 
-	// Reki - added these options, controllable via userinfo cvar
+	// Reki - added these options, controllable via userinfo cvar (Reki update 2/24/23, controllable via cvarsync as well)
 	int limp_nopred;
 	int spec_flags;
 	qboolean antilag_optout;
+#ifdef AQTION_EXTENSION
+	int cl_xerp;
+	int cl_indicators;
+#endif
 
 	int mk23_mode;		// firing mode, semi or auto
 	int mp5_mode;
@@ -1697,6 +1716,11 @@ typedef struct
   vec3_t jmp_teleport_v_angle;
   qboolean jmp_teleport_ducked;
 
+#ifdef AQTION_EXTENSION
+  int	hud_items[128];
+  int	hud_type;
+#endif
+
   //char skin[MAX_SKINLEN];
 }
 client_respawn_t;
@@ -1711,6 +1735,11 @@ struct gclient_s
 
 	// known to compatible server
 	int				clientNum;
+
+	// Reki: cvar sync
+#ifdef AQTION_EXTENSION
+	cvarsyncvalue_t cl_cvar[CVARSYNC_MAX];
+#endif
 
 	// private to game
 	client_persistant_t	pers;
@@ -1892,6 +1921,10 @@ struct gclient_s
 	int			ctf_grapplestate;		// true if pulling
 	int			ctf_grapplereleaseframe;	// frame of grapple release
 
+#ifdef AQTION_EXTENSION
+	//AQTION - Reki: Teammate indicators
+	edict_t		*arrow;
+#endif
 
 	// used for extrapolation
 	usercmd_t	cmd_last;
@@ -2255,14 +2288,6 @@ typedef struct team_s
 	int pauses_used, wantReset;
 	cvar_t	*teamscore;
 	edict_t	*captain;
-
-#ifdef AQTION_EXTENSION
-#ifdef AQTION_HUD
-	int	 ghud_resettime;
-	byte ghud_icon;
-	byte ghud_num;
-#endif
-#endif
 }team_t;
 
 extern team_t teams[TEAM_TOP];
@@ -2281,12 +2306,48 @@ extern int gameSettings;
 #include "a_dom.h"
 
 #ifdef AQTION_EXTENSION
-extern int ghud_team1_icon;
-extern int ghud_team1_num;
-extern int ghud_team2_icon;
-extern int ghud_team2_num;
-extern int ghud_team3_icon;
-extern int ghud_team3_num;
+#define HAS_CVARSYNC(ent) (Client_GetProtocol(ent) == 38 && Client_GetVersion(ent) >= 3013)
+
+// hud (through ghud extension)
+typedef enum {
+	h_nameplate_l = 0,
+	h_nameplate_r = 30,
+	h_nameplate_end = 61,
+	h_team_l,
+	h_team_l_num,
+	h_team_r,
+	h_team_r_num,
+} huditem_t;
+
+void HUD_SetType(edict_t *clent, int type);
+void HUD_ClientSetup(edict_t *clent);
+void HUD_ClientUpdate(edict_t *clent);
+void HUD_SpectatorSetup(edict_t *clent);
+void HUD_SpectatorUpdate(edict_t *clent);
+
+// cvar sync
+typedef enum {
+	clcvar_cl_antilag,
+	clcvar_cl_indicators,
+	clcvar_cl_xerp,
+	clcvar_cl_spectatorhud,
+	clcvar_cl_spectatorkillfeed,
+} clcvar_t;
+
+// UI flags from q2pro
+#define UI_LEFT             0x00000001
+#define UI_RIGHT            0x00000002
+#define UI_CENTER           (UI_LEFT | UI_RIGHT)
+#define UI_BOTTOM           0x00000004
+#define UI_TOP              0x00000008
+#define UI_MIDDLE           (UI_BOTTOM | UI_TOP)
+#define UI_DROPSHADOW       0x00000010
+#define UI_ALTCOLOR         0x00000020
+#define UI_IGNORECOLOR      0x00000040
+#define UI_XORCOLOR         0x00000080
+#define UI_AUTOWRAP         0x00000100
+#define UI_MULTILINE        0x00000200
+#define UI_DRAWCURSOR       0x00000400
 #endif
 
 #ifndef NO_BOTS

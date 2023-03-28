@@ -340,6 +340,14 @@ static void FreeClientEdicts(gclient_t *client)
 		G_FreeEdict(client->ctf_grapple);
 		client->ctf_grapple = NULL;
 	}
+
+#ifdef AQTION_EXTENSION
+	//remove arrow
+	if (client->arrow) {
+		G_FreeEdict(client->arrow);
+		client->arrow = NULL;
+	}
+#endif
 }
 
 void Announce_Reward(edict_t *ent, int rewardType){
@@ -882,7 +890,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			}
 
 			self->enemy = NULL;
-
+      
 			#if USE_AQTION
 			if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 				LogWorldKill(self);
@@ -2355,6 +2363,9 @@ void PutClientInServer(edict_t * ent)
 	client_persistant_t pers;
 	client_respawn_t resp;
 	gitem_t *item;
+#ifdef AQTION_EXTENSION
+	cvarsyncvalue_t cl_cvar[CVARSYNC_MAX];
+#endif
 
 	// find a spawn point
 	// do it before setting health back up, so farthest
@@ -2369,11 +2380,18 @@ void PutClientInServer(edict_t * ent)
 	// deathmatch wipes most client data every spawn
 	resp = client->resp;
 	pers = client->pers;
+#ifdef AQTION_EXTENSION
+	memcpy(cl_cvar, client->cl_cvar, sizeof(client->cl_cvar));
+#endif
 
 	memset(client, 0, sizeof(*client));
 
+#ifdef AQTION_EXTENSION
+	memcpy(client->cl_cvar, cl_cvar, sizeof(client->cl_cvar));
+#endif
 	client->pers = pers;
 	client->resp = resp;
+
 
 	client->clientNum = index;
 
@@ -2460,6 +2478,18 @@ void PutClientInServer(edict_t * ent)
 	ent->s.effects = 0;
 	ent->s.skinnum = ent - g_edicts - 1;
 	ent->s.modelindex = 255;	// will use the skin specified model
+
+#ifdef AQTION_EXTENSION
+	// teammate indicator arrows
+	if (use_indicators->value && teamplay->value && !client->arrow && client->resp.team)
+	{
+		client->arrow = G_Spawn();
+		client->arrow->solid = SOLID_NOT;
+		client->arrow->movetype = MOVETYPE_NOCLIP;
+		client->arrow->classname = "ind_arrow";
+		client->arrow->owner = ent;
+	}
+#endif
 
 	// zucc vwep
 	//ent->s.modelindex2 = 255;             // custom gun model
@@ -2618,12 +2648,21 @@ void PutClientInServer(edict_t * ent)
 		ent->solid = SOLID_NOT;
 		ent->svflags |= SVF_NOCLIENT;
 		ent->client->ps.gunindex = 0;
+
+#ifdef AQTION_EXTENSION
+		if (!ent->client->resp.team)
+			HUD_SetType(ent, 1);
+#endif
 		gi.linkentity(ent);
 		return;
 	}
 
 #ifndef NO_BOTS
 	}  // end if( respawn )
+#endif
+
+#ifdef AQTION_EXTENSION
+	HUD_SetType(ent, -1);
 #endif
 
 	if (!teamplay->value) {	// this handles telefrags...
@@ -2687,6 +2726,17 @@ void ClientBeginDeathmatch(edict_t * ent)
 
 	ent->client->resp.enterframe = level.framenum;
 	ent->client->resp.gldynamic = 1;
+	
+#ifdef AQTION_EXTENSION
+	if (teamplay->value)
+	{
+		HUD_SetType(ent, 1);
+	}
+	else
+	{
+		HUD_SetType(ent, -1);
+	}
+#endif
 
 	if (!ent->client->pers.connected) {
 		ent->client->pers.connected = true;
@@ -2728,7 +2778,9 @@ void ClientBeginDeathmatch(edict_t * ent)
 
 #ifndef NO_BOTS
     	ACEIT_RebuildPlayerList();
+#if USE_AQTION
 		StatBotCheck();
+#endif
 #endif
 
 	// locate ent at a spawn point
@@ -2909,29 +2961,42 @@ void ClientUserinfoChanged(edict_t *ent, char *userinfo)
 	}
 #endif
 
-	// Reki - spectator options, force team overlay/send easily parsable kill feed prints
-	s = Info_ValueForKey(userinfo, "cl_spectatorhud");
-	if (atoi(s))
-		client->pers.spec_flags |= SPECFL_SPECHUD;
-	else
-		client->pers.spec_flags &= SPECFL_SPECHUD;
 
-	s = Info_ValueForKey(userinfo, "cl_spectatorkillfeed");
-	if (atoi(s))
-		client->pers.spec_flags |= SPECFL_KILLFEED;
-	else
-		client->pers.spec_flags &= SPECFL_KILLFEED;
+#ifdef AQTION_EXTENSION
+	if (!HAS_CVARSYNC(ent)) // only do these cl cvars if cvarsync isn't a thing, since it's much better than userinfo
+	{
+#endif
+		// Reki - spectator options, force team overlay/send easily parsable kill feed prints
+		s = Info_ValueForKey(userinfo, "cl_spectatorhud");
+		if (atoi(s))
+			client->pers.spec_flags |= SPECFL_SPECHUD | SPECFL_SPECHUD_NEW;
+		else
+			client->pers.spec_flags &= ~(SPECFL_SPECHUD | SPECFL_SPECHUD_NEW);
 
-	// Reki - disable antilag for *my own shooting*, not others shooting at me
-	s = Info_ValueForKey(userinfo, "cl_antilag");
-	int antilag_value = client->pers.antilag_optout;
-	if (s[0] == 0 || atoi(s) > 0)
-		client->pers.antilag_optout = qfalse;
-	else if (atoi(s) <= 0)
-		client->pers.antilag_optout = qtrue;
+	#ifdef AQTION_EXTENSION
+		if (Client_GetProtocol(ent) == 38) // Reki: new clients get new spec hud
+			client->pers.spec_flags &= ~SPECFL_SPECHUD;
+	#endif
 
-	if (sv_antilag->value && antilag_value != client->pers.antilag_optout)
-		gi.cprintf(ent, PRINT_MEDIUM, "YOUR CL_ANTILAG IS NOW SET TO %i\n", !client->pers.antilag_optout);
+		s = Info_ValueForKey(userinfo, "cl_spectatorkillfeed");
+		if (atoi(s))
+			client->pers.spec_flags |= SPECFL_KILLFEED;
+		else
+			client->pers.spec_flags &= ~SPECFL_KILLFEED;
+
+		// Reki - disable antilag for *my own shooting*, not others shooting at me
+		s = Info_ValueForKey(userinfo, "cl_antilag");
+		int antilag_value = client->pers.antilag_optout;
+		if (s[0] == 0 || atoi(s) > 0)
+			client->pers.antilag_optout = qfalse;
+		else if (atoi(s) <= 0)
+			client->pers.antilag_optout = qtrue;
+
+		if (sv_antilag->value && antilag_value != client->pers.antilag_optout)
+			gi.cprintf(ent, PRINT_MEDIUM, "YOUR CL_ANTILAG IS NOW SET TO %i\n", !client->pers.antilag_optout);
+#ifdef AQTION_EXTENSION
+	}
+#endif
 }
 
 /*
@@ -3099,7 +3164,9 @@ void ClientDisconnect(edict_t * ent)
 	ent->is_bot = false;
 	ent->think = NULL;
 	ACEIT_RebuildPlayerList();
+#if USE_AQTION
 	StatBotCheck();
+#endif
 #endif
 }
 
@@ -3483,11 +3550,18 @@ void ClientBeginServerFrame(edict_t * ent)
 	unsigned short world_timestamp = (int)(level.time * 1000) % 60000;
 	client->ps.pmove.pm_timestamp = world_timestamp;
 
-	// network any pending ghud updates
-	Ghud_SendUpdates(ent);
-
 	// update dimension mask for team-only entities
 	client->dimension_observe = 1 | (1 << client->resp.team);
+
+	if (client->resp.hud_type == 1)
+	{
+		client->dimension_observe |= 0xE; // true spectators can see all teams
+		HUD_SpectatorUpdate(ent);
+	}
+	else
+	{
+		HUD_ClientUpdate(ent);
+	}
 #endif
 
 	if (client->resp.penalty > 0 && level.realFramenum % HZ == 0)
