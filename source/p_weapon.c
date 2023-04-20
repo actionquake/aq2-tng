@@ -3741,27 +3741,26 @@ void Weapon_Gas(edict_t* ent)
 	if (ent->client->weaponstate == WEAPON_READY)
 	{
 		if (((ent->client->latched_buttons | ent->client->buttons) & BUTTON_ATTACK)
-			&& (ent->solid != SOLID_NOT || ent->deadflag == DEAD_DEAD) &&
-			!lights_camera_action && !ent->client->uvTime)
-		{
+			&& (ent->solid != SOLID_NOT || ent->deadflag == DEAD_DEAD)) {
+			if(lights_camera_action && !ent->client->uvTime){
 
-
-			if (ent->client->ps.gunframe <= GRENADE_PINIDLE_LAST &&
-				ent->client->ps.gunframe >= GRENADE_PINIDLE_FIRST)
-			{
-				ent->client->ps.gunframe = GRENADE_PULL_FIRST;
-				ent->client->weaponstate = WEAPON_ACTIVATING;
-				ent->client->latched_buttons &= ~BUTTON_ATTACK;
-			}
-			else
-			{
-				if (ent->client->ps.gunframe == GRENADE_IDLE_LAST)
+				if (ent->client->ps.gunframe <= GRENADE_PINIDLE_LAST &&
+					ent->client->ps.gunframe >= GRENADE_PINIDLE_FIRST)
 				{
-					ent->client->ps.gunframe = GRENADE_IDLE_FIRST;
+					ent->client->ps.gunframe = GRENADE_PULL_FIRST;
+					ent->client->weaponstate = WEAPON_ACTIVATING;
+					ent->client->latched_buttons &= ~BUTTON_ATTACK;
+				}
+				else
+				{
+					if (ent->client->ps.gunframe == GRENADE_IDLE_LAST)
+					{
+						ent->client->ps.gunframe = GRENADE_IDLE_FIRST;
+						return;
+					}
+					ent->client->ps.gunframe++;
 					return;
 				}
-				ent->client->ps.gunframe++;
-				return;
 			}
 		}
 
