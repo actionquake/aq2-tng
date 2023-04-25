@@ -815,24 +815,25 @@ void P_WorldEffects (void)
 	if (waterlevel == 3)
 	{
 		// breather or envirosuit give air
-		if (breather || envirosuit)
-		{
-			current_player->air_finished_framenum = level.framenum + 10 * HZ;
+		// AQ2 doesn't use the rebreather
+		// if (breather || envirosuit)
+		// {
+		// 	current_player->air_finished_framenum = level.framenum + 10 * HZ;
 
-			if (((current_client->breather_framenum - level.framenum) % (25 * FRAMEDIV)) == 0)
-			{
-				if (!current_client->breather_sound)
-					gi.sound (current_player, CHAN_AUTO,
-					gi.soundindex("player/u_breath1.wav"), 1, ATTN_NORM, 0);
-				else
-					gi.sound (current_player, CHAN_AUTO,
-					gi.soundindex("player/u_breath2.wav"), 1, ATTN_NORM, 0);
-				current_client->breather_sound ^= 1;
-				PlayerNoise (current_player, current_player->s.origin,
-				PNOISE_SELF);
-				//FIXME: release a bubble?
-			}
-		}
+		// 	if (((current_client->breather_framenum - level.framenum) % (25 * FRAMEDIV)) == 0)
+		// 	{
+		// 		if (!current_client->breather_sound)
+		// 			gi.sound (current_player, CHAN_AUTO,
+		// 			gi.soundindex("player/u_breath1.wav"), 1, ATTN_NORM, 0);
+		// 		else
+		// 			gi.sound (current_player, CHAN_AUTO,
+		// 			gi.soundindex("player/u_breath2.wav"), 1, ATTN_NORM, 0);
+		// 		current_client->breather_sound ^= 1;
+		// 		PlayerNoise (current_player, current_player->s.origin,
+		// 		PNOISE_SELF);
+		// 		//FIXME: release a bubble?
+		// 	}
+		// }
 
 		// if out of air, start drowning
 		if (current_player->air_finished_framenum < level.framenum)

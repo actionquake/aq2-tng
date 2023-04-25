@@ -459,6 +459,7 @@ cvar_t *radio_repeat_time;
 cvar_t *use_classic;		// Used to reset spread/gren strength to 1.52
 
 cvar_t *warmup;
+cvar_t *warmup_bots;
 cvar_t *round_begin;
 cvar_t *spectator_hud;
 
@@ -474,6 +475,7 @@ cvar_t *ltk_chat;
 cvar_t *ltk_routing;
 cvar_t *ltk_botfile;
 cvar_t *ltk_loadbots;
+cvar_t *ltk_classic;
 #endif
 
 cvar_t *jump;			// jumping mod
@@ -497,6 +499,12 @@ cvar_t *g_spawn_items;
 
 // 2023
 cvar_t *use_killcounts;  // Display kill counts in console to clients on frag
+cvar_t *am;  // Attract mode toggle
+cvar_t *am_newnames;  // Attract mode new names, use new LTK bot names
+cvar_t *am_botcount;  // Attract mode botcount, how many bots at minimum at all times
+cvar_t *am_delay;  // Attract mode delay, unused at the moment
+cvar_t *am_team;  // Attract mode team, which team do you want the bots to join
+cvar_t *zoom_comp; // Compensates zoom-in frames with ping (high ping = fewer frames)
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;

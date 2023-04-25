@@ -170,33 +170,32 @@ Features
   with the following:
 
   MK23 Pistol: 
-    sound/weapons/blastf1a.wav 
+    sound/weapons/mk23fire.wav 
   Handcannon: 
-    sound/weapons/sshotf1b.wav
-  MP5 Submachinegun (Give all of them the same sound):
-    sound/weapons/machgf1b.wav
-    sound/weapons/machgf2b.wav
-    sound/weapons/machgf3b.wav
-    sound/weapons/machgf4b.wav
-    sound/weapons/machgf5b.wav
+    sound/weapons/cannon_fire.wav
+  MP5 Submachinegun:
+    sound/weapons/mp5fire.wav
   SSG-3000 Sniper Rifle: 
-    sound/weapons/hyprbf1a.wav
+    sound/weapons/ssgfire.wav
   M4 Assault Rifle: 
-    sound/weapons/rocklf1a.wav
-    sound/weapons/rocklr1b.wav
-  (use an 'empty' sound for rock1r1b.wav as it's only played once together with the other wav file)
+    sound/weapons/m4a1fire.wav
+  M3 Super Shotgun
+    sound/weapons/shotgf1b.wav
 
   Commands:
   llsound [0/1] - When on (1), Low Lag Sounds will be used.
   Note: This functionality has been enhanced for AQtion, if this is disabled (0) then all weapon sounds will
   retain standard functionality and all clients will be forced to use the same sound file (mk23fire.wav, for example).
-  If this is enabled (1), clients can adjust which sound file is played per weapon, based on the following cvars:
+  If this is enabled (1), clients can adjust which sound file is played per weapon, based on the following Q2Pro cvars:
     * cl_mk23_sound
     * cl_mp5_sound
     * cl_m4_sound
     * cl_m3_sound
     * cl_hc_sound
     * cl_ssg_sound
+  If llsound is 1, but these values are not set (default 0) they will play the gun sound that corresponds to the non-numbered 
+  name value of the sound file, such as `mk23fire.wav` or `cannon_fire.wav`.  Players who do not use AQtion or the most
+  recent versions of Q2Pro will not benefit from this change.
 
 * Announcer
   The announcer that says "Lights, Camera, Action!" has his vocabulary increased by several words, announcing
@@ -206,7 +205,9 @@ Features
   Commands:
   use_warnings [0/1] - When on (1), it will play all warnings such as "3 minutes left" and "Team X Wins".
   use_rewards [0/1] - When on (1), it will play the sounds on rewards such as "Impressive".
-  
+  use_killcounts [0/1] - When on (1), server will announce kill counts.  `0` is no kill counts printed, `1` prints for all modes.  
+  Kill streaks reset every round ( see WonGame() ).  The printing of these kill streaks does not affect use_rewards.
+
 * Kevlar Helmet
   A new item, the Kevlar Helmet acts like the Kevlar Vest does, only it protects the head of the player wearing
   it. To disable it, use item banning.
@@ -616,6 +617,37 @@ Features
 * Force Spawn items
   g_spawn_items [0/1] - server cvar, set to "1" to allow for item/ammo/weapon spawns in games that you choose your starting weapon,
   for example, dm_choose, teamplay, etc.  Forced set to "0" for matchmode.  Set "0" for normal play.
+
+* Attract Mode
+  am - server cvar, this will set the server up in 'attract mode', where bots spawn in but are replaced by humans, and 
+  vice versa.  This is meant to keep a server 'populated' without being overrun by bots, when humans can take their place.  It depends
+  on several other cvars for proper operation.
+    am [0/1/2]
+      - 0 is disabled, LTK bots will spawn normally from their configs.  This is the default value.
+      - 1 is enabled, and human replace bots as they join, and bots replace humans as they leave.  Depends on am_botcount for
+        this threshold value
+      - 2 is enabled, and humans will not replace bots until the total number of players (real people + bots) is (maxclients - 2).
+    am_botcount [#]
+      - This value is the number of players + bots you want at any given time.  Default is 6.
+        For example:
+          In am 1, a value of 6 will have 6 bots and 0 players, 3 bots and 3 players, or 0 bots and 6 players.
+          In am 2, a value of 6 will retain 6 bots at all times, until the total number of players + bots reaches (maxclients - 2),
+          then the system will begin removing bots for each new real player join
+    am_team [0/1/2/3]
+      - This value is which team you want bots to spawn in on.  If you only want bots on team 1, set this value to 1.  0 means bots will
+        autojoin teams via the autobalancer.  If you try to set this to 3 without use_3teams, they will default to team 1.  Default is 0.
+    am_newnames [0/1]
+      - This enables new bot names, stemming from the AQ2World team, in case you want to change things up a bit.  Default is 1.
+      
+* Zoom Compensation
+  zoom_comp [0/1] - server cvar, set to "1" to compensate zoom delay based on ping.  Every 80ms ping reduces 1 frame, 
+  minimum of 1 frame.  Default is "0", do not compensate
+
+* Warmup
+  warmup [#] - server cvar, set in seconds, minimum is 15, 20 is common.  This is the amount of time in seconds after both captains ready up that warmups will continue until the first round begins.
+  Set to 0 to disable warmup entirely.
+  warmup_bots [#] - server cvar, set in number of bots to add.  This adds this many bots to the warmup phase of matchmode.
+  Set to '0' to disable warmup_bots, suggested value for usage is '4' to '6'.
 
 --------------------------------------------------------------------------------------------------------------------
 Contact Information

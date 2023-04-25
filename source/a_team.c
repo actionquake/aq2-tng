@@ -1241,6 +1241,12 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 		AddToTransparentList (ent);
 	}
 
+	#ifdef USE_AQTION
+	if (in_warmup && warmup_bots->value) {
+		PutClientInServer (ent);
+	}
+	#endif
+
 	//AQ2:TNG END
 	if (!skip_menuclose && (gameSettings & GS_WEAPONCHOOSE) && !use_randoms->value)
 		OpenWeaponMenu(ent);
@@ -1882,6 +1888,13 @@ void RunWarmup ()
 			gi.centerprintf(ent, "WARMUP");
 		}
 	}
+	#ifdef USE_AQTION
+	if (warmup_bots->value){
+		gi.cvar_forceset("am", "1");
+		gi.cvar_forceset("am_botcount", warmup_bots->string);
+		attract_mode_bot_check();
+	}
+	#endif
 }
 
 void StartRound ()
@@ -2225,6 +2238,14 @@ int WonGame (int winner)
 	// Increment roundNum for tracking
 	game.roundNum++;
 
+	// Reset kill streaks in team modes
+	if (use_killcounts->value){
+		for (i = 0; i < game.maxclients; i++) {
+			cl_ent = g_edicts + 1 + i;
+			cl_ent->client->resp.streakKills = 0;
+		}
+	}
+
 	return 0;
 }
 
@@ -2302,6 +2323,21 @@ int CheckTeamRules (void)
 			{
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
+
+				#ifdef USE_AQTION
+				// Cleanup and remove all bots, it's go time!
+				if (warmup_bots->value){
+					gi.cvar_forceset("am", "0");
+					gi.cvar_forceset("am_botcount", "0");
+					attract_mode_bot_check();
+					ACESP_RemoveBot("all");
+					CenterPrintAll("All bots removed, good luck and have fun!");
+
+					//Re-enable stats now that the bots are gone
+					game.ai_ent_found = false;
+					gi.cvar_forceset(stat_logs->name, "1");
+				}
+				#endif
 			}
 		}
 		if(team_round_countdown == 41 && !matchmode->value)

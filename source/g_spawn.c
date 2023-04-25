@@ -1258,7 +1258,16 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	// Reload nodes and any persistent bots.
 	ACEND_InitNodes();
 	ACEND_LoadNodes();
-	ACESP_LoadBotConfig();
+	
+	// Normal operations, load LTK bots as normal
+	if (Q_stricmp(am->string, "0") == 0) {
+		ACESP_LoadBotConfig();
+	} else {
+		// Reset bot count, load initial bots
+		game.bot_count = 0;
+		attract_mode_bot_check();
+	}
+
 #endif
 }
 
@@ -1699,7 +1708,7 @@ void SP_worldspawn (edict_t * ent)
 	gi.soundindex("*fall2.wav");
 	gi.soundindex("*gurp1.wav");	// drowning damage
 	gi.soundindex("*gurp2.wav");
-	gi.soundindex("*jump1.wav");	// player jump
+	//gi.soundindex("*jump1.wav");	// player jump - AQ2 doesn't use this
 	gi.soundindex("*pain25_1.wav");
 	gi.soundindex("*pain25_2.wav");
 	gi.soundindex("*pain50_1.wav");
