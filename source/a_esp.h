@@ -41,11 +41,11 @@ typedef enum
   ESP_STATE_START,
   ESP_STATE_PLAYING
 }
-ctfstate_t;
+espstate_t;
 
-typedef struct ctfgame_s {
-	int team1, team2;
-	int total1, total2;	// these are only set when going into intermission!
+typedef struct espgame_s {
+	int team1, team2, team3;
+	int total1, total2, team3;	// these are only set when going into intermission!
 	int last_flag_capture;
 	int last_capture_team;
 	int halftime;
@@ -55,50 +55,52 @@ typedef struct ctfgame_s {
 	/* team spawn times in seconds */
 	int spawn_red;
 	int spawn_blue;
+    int spawn_green;
 	qboolean custom_spawns;
 	char author[64];
 	char comment[128];
-} ctfgame_t;
+} espgame_t;
 
-extern ctfgame_t ctfgame;
+extern espgame_t espgame;
 
 extern gitem_t *team_flag[TEAM_TOP];
 
-extern cvar_t *ctf;
-extern cvar_t *ctf_forcejoin;
-extern cvar_t *ctf_mode;
-extern cvar_t *ctf_dropflag;
-extern cvar_t *ctf_respawn;
-extern cvar_t *ctf_model;
+extern cvar_t *esp;
+extern cvar_t *esp_forcejoin;
+extern cvar_t *esp_mode;
+extern cvar_t *esp_dropflag;
+extern cvar_t *esp_respawn;
+extern cvar_t *esp_model;
 
 #define ESP_TEAM1_SKIN "ctf_r"
 #define ESP_TEAM2_SKIN "ctf_b"
+#define ESP_TEAM3_SKIN "ctf_g"
 #define ESP_TEAMLEADER1_SKIN "babarracuda"
 #define ESP_TEAMLEADER2_SKIN "blues"
+#define ESP_TEAMLEADER3_SKIN "hulk2"
+
 
 #define DF_ESP_FORCEJOIN	131072
 
-#define ESP_CAPTURE_BONUS		15	// what you get for capture
-#define ESP_TEAM_BONUS			10	// what your team gets for capture
-#define ESP_RECOVERY_BONUS		1	// what you get for recovery
-#define ESP_FLAG_BONUS			0	// what you get for picking up enemy flag
-#define ESP_FRAG_CARRIER_BONUS	2	// what you get for fragging enemy flag carrier
-#define ESP_FLAG_RETURN_TIME	40	// seconds until auto return
+// Team score bonuses
+#define TS_TEAM_BONUS                      1   // this is the bonus point teams get for fragging enemy leader
 
-#define ESP_CARRIER_DANGER_PROTECT_BONUS	2	// bonus for fraggin someone who has recently hurt your flag carrier
-#define ESP_CARRIER_PROTECT_BONUS		1	// bonus for fraggin someone while either you or your target are near your flag carrier
-#define ESP_FLAG_DEFENSE_BONUS			1	// bonus for fraggin someone while either you or your target are near your flag
-#define ESP_RETURN_FLAG_ASSIST_BONUS		1	// awarded for returning a flag that causes a capture to happen almost immediately
-#define ESP_FRAG_CARRIER_ASSIST_BONUS		2	// award for fragging a flag carrier if a capture happens almost immediately
+// Individual score bonuses
+#define ESP_LEADER_FRAG_BONUS   	        10	// points player receives for fragging enemy leader
+#define ESP_LEADER_ESCORT_BONUS             10  // points player receives if they are leader and they successfully touch escort marker
 
-#define ESP_TARGET_PROTECT_RADIUS		400	// the radius around an object being defended where a target will be worth extra frags
-#define ESP_ATTACKER_PROTECT_RADIUS		400	// the radius around an object being defended where an attacker will get extra frags when making kills
+#define ESP_LEADER_DANGER_PROTECT_BONUS 	2	// bonus for fragging someone who has recently hurt your leader
+#define ESP_LEADER_PROTECT_BONUS    		1	// bonus for fragging someone while either you or your target are near your leader
+#define ESP_MARKER_DEFENSE_BONUS    		1	// bonus for fragging someone while either you or your target are near your flag
 
-#define ESP_CARRIER_DANGER_PROTECT_TIMEOUT	8
-#define ESP_FRAG_CARRIER_ASSIST_TIMEOUT		10
-#define ESP_RETURN_FLAG_ASSIST_TIMEOUT		10
+#define ESP_LEADER_HARASS_BONUS             2   // points for attacking defenders of the leader
 
-#define ESP_AUTO_FLAG_RETURN_TIMEOUT		30	// number of seconds before dropped flag auto-returns
+#define ESP_TARGET_PROTECT_RADIUS   		400	// the radius around an object being defended where a target will be worth extra frags
+#define ESP_ATTACKER_PROTECT_RADIUS 		400	// the radius around an object being defended where an attacker will get extra frags when making kills
+
+#define ESP_LEADER_DANGER_PROTECT_TIMEOUT	8   // time in seconds until player is eligible for the bonus points after receiving them
+#define ESP_LEADER_HARASS_TIMEOUT       	8
+#define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
 
 void ESPInit (void);
 qboolean ESPLoadConfig(char *);

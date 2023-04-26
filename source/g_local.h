@@ -2333,6 +2333,7 @@ extern int gameSettings;
 
 #include "a_ctf.h"
 #include "a_dom.h"
+#include "a_esp.h"
 
 #ifdef AQTION_EXTENSION
 #define HAS_CVARSYNC(ent) (Client_GetProtocol(ent) == 38 && Client_GetVersion(ent) >= 3013)

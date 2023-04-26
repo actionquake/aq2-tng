@@ -4,6 +4,15 @@
 
 #include "g_local.h"
 
+ctfgame_t espgame;
+
+cvar_t *esp = NULL;
+cvar_t *esp_forcejoin = NULL;
+cvar_t *esp_mode = NULL;
+cvar_t *esp_dropflag = NULL;
+cvar_t *esp_respawn = NULL;
+cvar_t *esp_model = NULL;
+
 cvar_t *dom = NULL;
 
 unsigned int dom_team_effect[] = {
@@ -322,6 +331,8 @@ qboolean EspLoadConfig(char *mapname)
 	/* zero is perfectly acceptable respawn time, but we want to know if it came from the config or not */
 	espgame.spawn_red = -1;
 	espgame.spawn_blue = -1;
+	if(use_3teams->value)
+		espgame.spawn_green = -1;
 
 	sprintf (buf, "%s/tng/%s.esp", GAMEVERSION, mapname);
 	fh = fopen (buf, "r");
@@ -341,6 +352,7 @@ qboolean EspLoadConfig(char *mapname)
 
 	// Hard-coded scenario settings so things don't break
 	if(no_file){
+		// TODO: A better GHUD method to display this?
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Hard-coded Espionage configuration loaded\n");
 		gi.dprintf(" Game type  : %s\n", "Assassinate the Leader");
@@ -350,7 +362,14 @@ qboolean EspLoadConfig(char *mapname)
 		gi.dprintf("  Red Leader: %s\n", "male/babarracuda");
 		gi.dprintf("  Blue Member: %s\n", "male/ctf_b");
 		gi.dprintf("  Blue Leader: %s\n", "male/blues");
+		if(use_3teams->value){
+			gi.dprintf("  Green Member: %s\n", "male/ctf_g");
+			gi.dprintf("  Green Leader: %s\n", "male/hulk2");
 
+			espgame.spawn_green = 10;
+			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
+			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
+		}
 
 		espgame.spawn_red = 10;
 		espgame.spawn_blue = 10;
@@ -359,6 +378,7 @@ qboolean EspLoadConfig(char *mapname)
 		esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
 		esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
 		esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
+
 		// No custom spawns, use default for map
 		espgame.custom_spawns = false;
 	} else {
@@ -379,12 +399,17 @@ qboolean EspLoadConfig(char *mapname)
 		ptr = INI_Find(fh, "esp", "type");
 		char *gametypename;
 		if(ptr) {
-			if(strcmp(ptr, "etv") == 0)
-				espgame.type = 1;
-				gametypename = "Escort the VIP";	
-			if(strcmp(ptr, "atl") == 0)
+			if (espionage->value == 1) {
+				if(strcmp(ptr, "etv") == 0)
+					espgame.type = 1;
+					gametypename = "Escort the VIP";	
+				if(strcmp(ptr, "atl") == 0)
+					espgame.type = 0;
+					gametypename = "Assassinate the Leader";
+			} else if (espionage->value == 2) {
 				espgame.type = 0;
-				gametypename = "Assassinate the Leader";
+					gametypename = "Assassinate the Leader";
+			}
 			gi.dprintf(" Game type : %s\n", gametypename);
 		}
 
@@ -398,6 +423,13 @@ qboolean EspLoadConfig(char *mapname)
 		if(ptr) {
 			gi.dprintf("  Blue     : %s\n", ptr);
 			espgame.spawn_blue = atoi(ptr);
+		}
+		if (use_3teams->value){
+			ptr = INI_Find(fh, "respawn", "green");
+			if(ptr) {
+				gi.dprintf("  Green     : %s\n", ptr);
+				espgame.spawn_green = atoi(ptr);
+			}
 		}
 
 		// Only set the marker if the scenario is ETV
@@ -415,14 +447,20 @@ qboolean EspLoadConfig(char *mapname)
 		if(ptr) {
 			gi.dprintf("  Red      : %s\n", ptr);
 			EspSetTeamSpawns(TEAM1, ptr);
-			espgame.custom_spawns = true;
 		}
 		ptr = INI_Find(fh, "spawns", "blue");
 		if(ptr) {
 			gi.dprintf("  Blue     : %s\n", ptr);
 			EspSetTeamSpawns(TEAM2, ptr);
-			espgame.custom_spawns = true;
 		}
+		if (use_3teams->value){
+			ptr = INI_Find(fh, "spawns", "green");
+			if(ptr) {
+				gi.dprintf("  Green     : %s\n", ptr);
+				EspSetTeamSpawns(TEAM3, ptr);
+			}
+		}
+		espgame.custom_spawns = true;
 		
 		gi.dprintf(" Skins\n");
 		ptr = INI_Find(fh, "skins", "red_member");
@@ -455,6 +493,24 @@ qboolean EspLoadConfig(char *mapname)
 			gi.dprintf("Warning: No skin set for blue_member, defaulting to male/ctf_b\n");
 			gi.dprintf("  Blue Member: %s\n", "male/ctf_b");
 		}
+		if(use_3teams->value) {
+			ptr = INI_Find(fh, "skins", "green_member");
+			ptr_team = INI_Find(fh, "teams", "green");
+			if(ptr) {
+				if(ptr_team) {
+					gi.dprintf("  %s: %s\n", ptr_team, ptr);
+				} else {
+					gi.dprintf("  Green Member: %s\n", ptr);
+					esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
+					//EspSetTeamSpawns(TEAM1, ptr);
+					espgame.custom_skins = true;
+				}
+			} else {
+				gi.dprintf("Warning: No skin set for green_member, defaulting to male/ctf_g\n");
+				gi.dprintf("  Green Member: %s\n", "male/ctf_g");
+			}
+		}
+		// Leader Skins
 		ptr = INI_Find(fh, "skins", "red_leader");
 		ptr_team = INI_Find(fh, "teams", "red_leader");
 		if(ptr) {
@@ -482,8 +538,25 @@ qboolean EspLoadConfig(char *mapname)
 				espgame.custom_skins = true;
 			}
 		} else {
-			gi.dprintf("Warning: No skin set for blue_leader, defaulting to male/adidas\n");
-			gi.dprintf("  Blue Leader: %s\n", "male/adidas");
+			gi.dprintf("Warning: No skin set for blue_leader, defaulting to male/blues\n");
+			gi.dprintf("  Blue Leader: %s\n", "male/blues");
+		}
+		if(use_3teams->value){
+			ptr = INI_Find(fh, "skins", "green_leader");
+			ptr_team = INI_Find(fh, "teams", "green_leader");
+			if(ptr) {
+				if(ptr_team) {
+					gi.dprintf("  %s: %s\n", ptr_team, ptr);
+				} else {
+					gi.dprintf("  Green Leader: %s\n", ptr);
+					esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
+					//EspSetTeamSpawns(TEAM1, ptr);
+					espgame.custom_skins = true;
+				}
+			} else {
+				gi.dprintf("Warning: No skin set for green_leader, defaulting to male/hulk2\n");
+				gi.dprintf("  Green Leader: %s\n", "male/hulk2");
+			}
 		}
 	}
 
