@@ -20,21 +20,21 @@ unsigned int dom_team_fx[] = {
 	RF_SHELL_GREEN
 };
 
-int dom_flag_count = 0;
-int dom_team_flags[ TEAM_TOP ] = {0};
-int dom_winner = NOTEAM;
-int dom_red_flag = 0, dom_blue_flag = 0;
+int esp_marker_count = 0;
+int esp_team_markers[ TEAM_TOP ] = {0};
+int esp_winner = NOTEAM;
+int esp_red_marker = 0;
 int esp_pics[ TEAM_TOP ] = {0};
-int dom_last_score = 0;
+int esp_last_score = 0;
 
 
-int DomFlagOwner( edict_t *flag )
+int DomFlagOwner( edict_t *marker )
 {
-	if( flag->s.effects == dom_team_effect[ TEAM1 ] )
+	if( marker->s.effects == dom_team_effect[ TEAM1 ] )
 		return TEAM1;
-	if( flag->s.effects == dom_team_effect[ TEAM2 ] )
+	if( marker->s.effects == dom_team_effect[ TEAM2 ] )
 		return TEAM2;
-	if( flag->s.effects == dom_team_effect[ TEAM3 ] )
+	if( marker->s.effects == dom_team_effect[ TEAM3 ] )
 		return TEAM3;
 	return NOTEAM;
 }
@@ -42,16 +42,16 @@ int DomFlagOwner( edict_t *flag )
 
 qboolean DomCheckRules( void )
 {
-	int max_score = dom_flag_count * ((teamCount == 3) ? 150 : 200);
+	int max_score = dom_marker_count * ((teamCount == 3) ? 150 : 200);
 	int winning_teams = 0;
 
 	if( (int) level.time > dom_last_score )
 	{
 		dom_last_score = level.time;
 
-		teams[ TEAM1 ].score += dom_team_flags[ TEAM1 ];
-		teams[ TEAM2 ].score += dom_team_flags[ TEAM2 ];
-		teams[ TEAM3 ].score += dom_team_flags[ TEAM3 ];
+		teams[ TEAM1 ].score += dom_team_markers[ TEAM1 ];
+		teams[ TEAM2 ].score += dom_team_markers[ TEAM2 ];
+		teams[ TEAM3 ].score += dom_team_markers[ TEAM3 ];
 	}
 
 	dom_winner = NOTEAM;
@@ -118,79 +118,79 @@ qboolean DomCheckRules( void )
 }
 
 
-void DomFlagThink( edict_t *flag )
+void DomFlagThink( edict_t *marker )
 {
-	int prev = flag->s.frame;
+	int prev = marker->s.frame;
 
-	// If the flag was touched this frame, make it owned by that team.
-	if( flag->owner && flag->owner->client && flag->owner->client->resp.team )
+	// If the marker was touched this frame, make it owned by that team.
+	if( marker->owner && marker->owner->client && marker->owner->client->resp.team )
 	{
-		unsigned int effect = dom_team_effect[ flag->owner->client->resp.team ];
-		if( flag->s.effects != effect )
+		unsigned int effect = dom_team_effect[ marker->owner->client->resp.team ];
+		if( marker->s.effects != effect )
 		{
 			char location[ 128 ] = "(";
 			qboolean has_loc = false;
 			edict_t *ent = NULL;
-			int prev_owner = DomFlagOwner( flag );
+			int prev_owner = DomFlagOwner( marker );
 
 			if( prev_owner != NOTEAM )
-				dom_team_flags[ prev_owner ] --;
+				dom_team_markers[ prev_owner ] --;
 
-			flag->s.effects = effect;
-			flag->s.renderfx = dom_team_fx[ flag->owner->client->resp.team ];
-			dom_team_flags[ flag->owner->client->resp.team ] ++;
+			marker->s.effects = effect;
+			marker->s.renderfx = dom_team_fx[ marker->owner->client->resp.team ];
+			dom_team_markers[ marker->owner->client->resp.team ] ++;
 
-			if( flag->owner->client->resp.team == TEAM1 )
-				flag->s.modelindex = dom_red_flag;
+			if( marker->owner->client->resp.team == TEAM1 )
+				marker->s.modelindex = dom_red_marker;
 			else
-				flag->s.modelindex = dom_blue_flag;
+				marker->s.modelindex = dom_blue_marker;
 
-			// Get flag location if possible.
-			has_loc = GetPlayerLocation( flag, location + 1 );
+			// Get marker location if possible.
+			has_loc = GetPlayerLocation( marker, location + 1 );
 			if( has_loc )
 				strcat( location, ") " );
 			else
 				location[0] = '\0';
 
-			gi.bprintf( PRINT_HIGH, "%s secured %s flag %sfor %s!\n",
-				flag->owner->client->pers.netname,
-				(dom_flag_count == 1) ? "the" : "a",
+			gi.bprintf( PRINT_HIGH, "%s secured %s marker %sfor %s!\n",
+				marker->owner->client->pers.netname,
+				(dom_marker_count == 1) ? "the" : "a",
 				location,
-				teams[ flag->owner->client->resp.team ].name );
+				teams[ marker->owner->client->resp.team ].name );
 
-			if( (dom_team_flags[ flag->owner->client->resp.team ] == dom_flag_count) && (dom_flag_count > 1) )
+			if( (dom_team_markers[ marker->owner->client->resp.team ] == dom_marker_count) && (dom_marker_count > 1) )
 				gi.bprintf( PRINT_HIGH, "%s TEAM IS DOMINATING!\n",
-				teams[ flag->owner->client->resp.team ].name );
+				teams[ marker->owner->client->resp.team ].name );
 
-			gi.sound( flag, CHAN_ITEM, gi.soundindex("tng/flagret.wav"), 0.75, 0.125, 0 );
+			gi.sound( marker, CHAN_ITEM, gi.soundindex("tng/markerret.wav"), 0.75, 0.125, 0 );
 
 			for( ent = g_edicts + 1; ent <= g_edicts + game.maxclients; ent ++ )
 			{
 				if( ! (ent->inuse && ent->client && ent->client->resp.team) )
 					continue;
-				else if( ent == flag->owner )
-					unicastSound( ent, gi.soundindex("tng/flagcap.wav"), 0.75 );
-				else if( ent->client->resp.team != flag->owner->client->resp.team )
-					unicastSound( ent, gi.soundindex("tng/flagtk.wav"), 0.75 );
+				else if( ent == marker->owner )
+					unicastSound( ent, gi.soundindex("tng/markercap.wav"), 0.75 );
+				else if( ent->client->resp.team != marker->owner->client->resp.team )
+					unicastSound( ent, gi.soundindex("tng/markertk.wav"), 0.75 );
 			}
 		}
 	}
 
-	// Reset so the flag can be touched again.
-	flag->owner = NULL;
+	// Reset so the marker can be touched again.
+	marker->owner = NULL;
 
-	// Animate the flag waving.
-	flag->s.frame = 173 + (((flag->s.frame - 173) + 1) % 16);
+	// Animate the marker waving.
+	marker->s.frame = 173 + (((marker->s.frame - 173) + 1) % 16);
 
 	// Blink between red and blue if it's unclaimed.
-	if( (flag->s.frame < prev) && (flag->s.effects == dom_team_effect[ NOTEAM ]) )
-		flag->s.modelindex = (flag->s.modelindex == dom_blue_flag) ? dom_red_flag : dom_blue_flag;
+	if( (marker->s.frame < prev) && (marker->s.effects == dom_team_effect[ NOTEAM ]) )
+		marker->s.modelindex = (marker->s.modelindex == dom_blue_marker) ? dom_red_marker : dom_blue_marker;
 
-	flag->nextthink = level.framenum + FRAMEDIV;
+	marker->nextthink = level.framenum + FRAMEDIV;
 }
 
 
-void EspTouchMarker( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *surf )
+void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf )
 {
 	if( ! player->client )
 		return;
@@ -203,72 +203,72 @@ void EspTouchMarker( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t
 	if( player->client->uvTime )
 		return;
 
-	// If the flag hasn't been touched this frame, the player will take it.
-	if( ! flag->owner )
-		flag->owner = player;
-	// If somebody on another team also touched the flag this frame, nobody takes it.
-	else if( flag->owner->client && (flag->owner->client->resp.team != player->client->resp.team) )
-		flag->owner = flag;
+	// If the marker hasn't been touched this frame, the player will take it.
+	if( ! marker->owner )
+		marker->owner = player;
+	// If somebody on another team also touched the marker this frame, nobody takes it.
+	else if( marker->owner->client && (marker->owner->client->resp.team != player->client->resp.team) )
+		marker->owner = marker;
 }
 
 
-void EspMakeMarker( edict_t *flag )
+void EspMakeMarker( edict_t *marker )
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
 
-	VectorSet( flag->mins, -15, -15, -15 );
-	VectorSet( flag->maxs,  15,  15,  15 );
+	VectorSet( marker->mins, -15, -15, -15 );
+	VectorSet( marker->maxs,  15,  15,  15 );
 
-	// Put the flag on the ground.
-	VectorCopy( flag->s.origin, dest );
+	// Put the marker on the ground.
+	VectorCopy( marker->s.origin, dest );
 	dest[2] -= 128;
-	tr = gi.trace( flag->s.origin, flag->mins, flag->maxs, dest, flag, MASK_SOLID );
+	tr = gi.trace( marker->s.origin, marker->mins, marker->maxs, dest, marker, MASK_SOLID );
 	if( ! tr.startsolid )
-		VectorCopy( tr.endpos, flag->s.origin );
+		VectorCopy( tr.endpos, marker->s.origin );
 
-	VectorCopy( flag->s.origin, flag->old_origin );
+	VectorCopy( marker->s.origin, marker->old_origin );
 
-	flag->solid = SOLID_TRIGGER;
-	flag->movetype = MOVETYPE_NONE;
-	flag->s.modelindex = dom_blue_flag;
-	flag->s.skinnum = 0;
-	flag->s.effects = dom_team_effect[ NOTEAM ];
-	flag->s.renderfx = dom_team_fx[ NOTEAM ];
-	flag->owner = NULL;
-	flag->touch = DomTouchFlag;
-	NEXT_KEYFRAME( flag, DomFlagThink );
-	flag->classname = "item_flag";
-	flag->svflags &= ~SVF_NOCLIENT;
-	gi.linkentity( flag );
+	marker->solid = SOLID_TRIGGER;
+	marker->movetype = MOVETYPE_NONE;
+	marker->s.modelindex = dom_blue_marker;
+	marker->s.skinnum = 0;
+	marker->s.effects = dom_team_effect[ NOTEAM ];
+	marker->s.renderfx = dom_team_fx[ NOTEAM ];
+	marker->owner = NULL;
+	marker->touch = EspTouchFlag;
+	NEXT_KEYFRAME( marker, DomFlagThink );
+	marker->classname = "item_marker";
+	marker->svmarkers &= ~SVF_NOCLIENT;
+	gi.linkentity( marker );
 
-	dom_flag_count ++;
+	dom_marker_count ++;
 }
 
 void EspSetMarker(int team, char *str)
 {
-	char *flag_name;
+	char *marker_name;
 	edict_t *ent = NULL;
 	vec3_t position;
 
 	if(team == TEAM1)
-		flag_name = "item_flag_team1";
+		marker_name = "item_marker_team1";
 	else if(team == TEAM2)
-		flag_name = "item_flag_team2";
+		marker_name = "item_marker_team2";
 	else
 		return;
 
 	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
 		return;
 
-	/* find and remove existing flag(s) if any */
-	while ((ent = G_Find(ent, FOFS(classname), flag_name)) != NULL) {
+	/* find and remove existing marker(s) if any */
+	while ((ent = G_Find(ent, FOFS(classname), marker_name)) != NULL) {
 		G_FreeEdict (ent);
 	}
 
 	ent = G_Spawn ();
 
-	ent->classname = ED_NewString (flag_name);
+	ent->classname = ED_NewString (marker_name);
 	ent->spawnflags &=
 		~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM | SPAWNFLAG_NOT_HARD |
 		SPAWNFLAG_NOT_COOP | SPAWNFLAG_NOT_DEATHMATCH);
@@ -497,146 +497,63 @@ qboolean EspLoadConfig(char *mapname)
 
 	gi.dprintf("-------------------------------------\n");
 
+	if (espgame.type == 1){
+		esp_last_score = 0;
+		esp_red_marker = gi.modelindex("models/flags/flag1.md2");
+
+		if( teamCount == 3 )
+		{
+			// 3 team mode uses color shells because there's no green flag.
+			dom_team_effect[ TEAM1 ] |= EF_COLOR_SHELL;
+			dom_team_effect[ TEAM2 ] |= EF_COLOR_SHELL;
+			dom_team_fx[ TEAM1 ] |= RF_SHELL_RED;
+			dom_team_fx[ TEAM2 ] |= RF_SHELL_BLUE;
+		}
+
+		Com_sprintf( buf, sizeof(buf), "%s/tng/%s.dom", GAMEVERSION, mapname );
+		fh = fopen( buf, "rt" );
+		if( fh )
+		{
+			// Found a Domination config file for this map.
+
+			gi.dprintf( "%s\n", buf );
+
+			ptr = INI_Find( fh, "dom", "flags" );
+			if( ptr )
+				ptr = strchr( ptr, '<' );
+			while( ptr )
+			{
+				edict_t *flag = G_Spawn();
+
+				char *space = NULL, *end = strchr( ptr + 1, '>' );
+				if( end )
+					*end = '\0';
+
+				flag->s.origin[0] = atof( ptr + 1 );
+				space = strchr( ptr + 1, ' ' );
+				if( space )
+				{
+					flag->s.origin[1] = atof( space );
+					space = strchr( space + 1, ' ' );
+					if( space )
+					{
+						flag->s.origin[2] = atof( space );
+						space = strchr( space + 1, ' ' );
+						if( space )
+							flag->s.angles[YAW] = atof( space );
+					}
+				}
+
+				DomMakeFlag( flag );
+				ptr = strchr( (end ? end : ptr) + 1, '<' );
+			}
+		}
+	}
+
 	fclose(fh);
 
 	return true;
 }
-
-
-// qboolean EspLoadConfig( const char *mapname )
-// {
-// 	char buf[1024] = "";
-// 	char *ptr = NULL;
-// 	FILE *fh = NULL;
-// 	size_t i = 0;
-
-// 	gi.dprintf("-------------------------------------\n");
-
-// 	esp_marker_count = 0;
-// 	memset( &dom_team_flags, 0, sizeof(dom_team_flags) );
-// 	esp_winner = NOTEAM;
-// 	teams[ TEAM1 ].score = 0;
-// 	teams[ TEAM2 ].score = 0;
-// 	teams[ TEAM3 ].score = 0;
-// 	esp_last_score = 0;
-// 	target_marker = gi.modelindex("models/espionage/marker.md2");
-// 	esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
-// 	esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-// 	esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
-// 	esp_pics_leader[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
-// 	esp_pics_leader[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
-// 	esp_pics_leader[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
-
-// 	Com_sprintf( buf, sizeof(buf), "%s/tng/%s.esp", GAMEVERSION, mapname );
-// 	fh = fopen( buf, "rt" );
-// 	if( fh )
-// 	{
-// 		// Found an Espionage config file for this map.
-
-// 		gi.dprintf( "%s\n", buf );
-
-// 		ptr = INI_Find( fh, "esp", "target" );
-// 		if( ptr )
-// 			ptr = strchr( ptr, '<' );
-// 		while( ptr )
-// 		{
-// 			edict_t *marker = G_Spawn();
-
-// 			char *space = NULL, *end = strchr( ptr + 1, '>' );
-// 			if( end )
-// 				*end = '\0';
-
-// 			marker->s.origin[0] = atof( ptr + 1 );
-// 			space = strchr( ptr + 1, ' ' );
-// 			if( space )
-// 			{
-// 				marker->s.origin[1] = atof( space );
-// 				space = strchr( space + 1, ' ' );
-// 				if( space )
-// 				{
-// 					marker->s.origin[2] = atof( space );
-// 					space = strchr( space + 1, ' ' );
-// 					if( space )
-// 						marker->s.angles[YAW] = atof( space );
-// 				}
-// 			}
-
-// 			EspMakeMarker( marker );
-// 			ptr = strchr( (end ? end : ptr) + 1, '<' );
-// 		}
-
-// 		fclose( fh );
-// 		fh = NULL;
-// 	}
-
-// 	if( esp_marker_count )
-// 		gi.dprintf( "Espionage Escort the VIP mode: %i marker loaded.\n", esp_marker_count );
-// 	else
-// 	{
-// 		// Try to generate markers for ETV mode
-
-// 		edict_t *spawns[ 32 ] = {0}, *spot = NULL;
-// 		int spawn_count = 0, need = 3;
-
-// 		if(( spot = G_Find( NULL, FOFS(classname), "item_flag_team1" )) != NULL)
-// 		{
-// 			EspMakeMarker( spot );
-// 			need --;
-// 		}
-
-// 		spot = NULL;
-// 		while( ((spot = G_Find( spot, FOFS(classname), "info_player_deathmatch" )) != NULL) && (spawn_count < 32) )
-// 		{
-// 			spawns[ spawn_count ] = spot;
-// 			spawn_count ++;
-// 		}
-
-// 		// If we have flags, don't convert scarce player spawns.
-// 		if( dom_flag_count && (spawn_count <= 3) )
-// 			need = 0;
-// 		// Can't convert more spawns than we have.
-// 		else if( need > spawn_count )
-// 			need = spawn_count;
-// 		else if( need < spawn_count )
-// 		{
-// 			// If we have plenty of choices, randomize which spawns we convert.
-// 			for( i = 0; i < need; i ++ )
-// 			{
-// 				edict_t *swap = spawns[ i ];
-// 				int index = rand() % spawn_count;
-// 				spawns[ i ] = spawns[ index ];
-// 				spawns[ index ] = swap;
-// 			}
-// 		}
-
-// 		for( i = 0; i < need; i ++ )
-// 		{
-// 			if( spawn_count > 3 )
-// 			{
-// 				// Turn a spawn location into a flag.
-// 				DomMakeFlag( spawns[ i ] );
-// 				spawn_count --;
-// 			}
-// 			else if( ! dom_flag_count )
-// 			{
-// 				// We're desperate, so make a copy of a player spawn as a flag location.
-// 				edict_t *flag = G_Spawn();
-// 				VectorCopy( spawns[ i ]->s.origin, flag->s.origin );
-// 				VectorCopy( spawns[ i ]->s.angles, flag->s.angles );
-// 				DomMakeFlag( flag );
-// 			}
-// 		}
-
-// 		if( dom_flag_count )
-// 			gi.dprintf( "Domination mode: %i flags generated.\n", dom_flag_count );
-// 		else
-// 			gi.dprintf( "Warning: Domination needs flags in: tng/%s.dom\n", mapname );
-// 	}
-
-// 	gi.dprintf("-------------------------------------\n");
-
-// 	return (dom_flag_count > 0);
-// }
 
 
 void DomSetupStatusbar( void )
@@ -663,12 +580,10 @@ void SetDomStats( edict_t *ent )
 	// Team scores for the score display and HUD.
 	ent->client->ps.stats[ STAT_TEAM1_SCORE ] = teams[ TEAM1 ].score;
 	ent->client->ps.stats[ STAT_TEAM2_SCORE ] = teams[ TEAM2 ].score;
-	ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
 
 	// Team icons for the score display and HUD.
-	ent->client->ps.stats[ STAT_TEAM1_PIC ] = dom_pics[ TEAM1 ];
-	ent->client->ps.stats[ STAT_TEAM2_PIC ] = dom_pics[ TEAM2 ];
-	ent->client->ps.stats[ STAT_TEAM3_PIC ] = dom_pics[ TEAM3 ];
+	ent->client->ps.stats[ STAT_TEAM1_PIC ] = esp_pics[ TEAM1 ];
+	ent->client->ps.stats[ STAT_TEAM2_PIC ] = esp_pics[ TEAM2 ];
 
 	// During intermission, blink the team icon of the winning team.
 	if( level.intermission_framenum && ((level.realFramenum / FRAMEDIV) & 8) )
@@ -677,7 +592,5 @@ void SetDomStats( edict_t *ent )
 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
 		else if (dom_winner == TEAM2)
 			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
-		else if (dom_winner == TEAM3)
-			ent->client->ps.stats[ STAT_TEAM3_PIC ] = 0;
 	}
 }
