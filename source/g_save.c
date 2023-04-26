@@ -548,7 +548,14 @@ void InitGame( void )
 	use_mvd2 = gi.cvar( "use_mvd2", "0", 0 );	// JBravo: q2pro MVD2 recording. 0 = off, 1 = on
 
 	// BEGIN AQ2 ETE
-	espionage = gi.cvar( "espionage", "0", 0);
+	esp = gi.cvar( "esp", "0", /*CVAR_SERVERINFO | */ CVAR_LATCH );  //Removed in favor of 'gm' (gamemode)
+	esp_mode = gi.cvar( "esp_mode", "0", 0 );
+	esp_etv_halftime = gi.cvar( "esp_etv_halftime", "0", 0 );
+	esp_mustvolunteer = gi.cvar( "esp_mustvolunteer", "0", 0 );
+	esp_showleader = gi.cvar( "esp_showleader", "1", 0 );
+	esp_showtarget = gi.cvar( "esp_showtarget", "1", 0 );
+	esp_forcejoin = gi.cvar( "esp_forcejoin", "", 0 );
+	esp_model = gi.cvar( "esp_model", "male", CVAR_LATCH );
 	e_enhancedSlippers = gi.cvar( "e_enhancedSlippers", "0", 0);
 	// END AQ2 ETE
 

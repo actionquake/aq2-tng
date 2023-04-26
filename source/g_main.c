@@ -480,7 +480,14 @@ cvar_t *ltk_classic;
 cvar_t *jump;			// jumping mod
 
 // BEGIN AQ2 ETE
-cvar_t *espionage;
+cvar_t *esp;
+cvar_t *esp_mode;
+cvar_t *esp_etv_halftime;
+cvar_t *esp_mustvolunteer;
+cvar_t *esp_showleader;
+cvar_t *esp_showtarget;
+cvar_t *esp_forcejoin;
+cvar_t *esp_model;
 cvar_t *e_enhancedSlippers;
 // END AQ2 ETE
 

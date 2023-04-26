@@ -15,6 +15,7 @@ From 2.82
 + zoom_comp: Value [0/1], enables zoom ping compensation. Higher ping = lower delay frames on sniper zoom
 + warmup_bots: Value in number of bots to spawn in warmup mode.  Set to 0 to not add any bots (classic).  Default '0', suggested value if you want bots is '6'.
 + item_kit_mode: Value [0/1], default 0 (disabled).  If enabled, some items are combined into kits to boost their effectiveness without adjusting the item strength or features themselves
++ esp: Value [0/1], default 0, enables Espionage mode (ETV and ATL)
 
 From 2.81
 * 3team mode: third team can not be locked forever anymore

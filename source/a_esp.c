@@ -4,7 +4,7 @@
 
 #include "g_local.h"
 
-ctfgame_t espgame;
+espgame_t espgame;
 
 cvar_t *esp = NULL;
 cvar_t *esp_forcejoin = NULL;
@@ -13,16 +13,14 @@ cvar_t *esp_dropflag = NULL;
 cvar_t *esp_respawn = NULL;
 cvar_t *esp_model = NULL;
 
-cvar_t *dom = NULL;
-
-unsigned int dom_team_effect[] = {
+unsigned int esp_team_effect[] = {
 	EF_BLASTER | EF_TELEPORTER,
 	EF_FLAG1,
 	EF_FLAG2,
 	EF_GREEN_LIGHT | EF_COLOR_SHELL
 };
 
-unsigned int dom_team_fx[] = {
+unsigned int esp_team_fx[] = {
 	RF_GLOW,
 	RF_FULLBRIGHT,
 	RF_FULLBRIGHT,
@@ -37,57 +35,45 @@ int esp_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
 
-int DomFlagOwner( edict_t *marker )
-{
-	if( marker->s.effects == dom_team_effect[ TEAM1 ] )
-		return TEAM1;
-	if( marker->s.effects == dom_team_effect[ TEAM2 ] )
-		return TEAM2;
-	if( marker->s.effects == dom_team_effect[ TEAM3 ] )
-		return TEAM3;
-	return NOTEAM;
-}
-
-
 qboolean DomCheckRules( void )
 {
-	int max_score = dom_marker_count * ((teamCount == 3) ? 150 : 200);
+	int max_score = esp_marker_count * ((teamCount == 3) ? 150 : 200);
 	int winning_teams = 0;
 
 	if( (int) level.time > dom_last_score )
 	{
 		dom_last_score = level.time;
 
-		teams[ TEAM1 ].score += dom_team_markers[ TEAM1 ];
-		teams[ TEAM2 ].score += dom_team_markers[ TEAM2 ];
-		teams[ TEAM3 ].score += dom_team_markers[ TEAM3 ];
+		teams[ TEAM1 ].score += esp_team_markers[ TEAM1 ];
+		teams[ TEAM2 ].score += esp_team_markers[ TEAM2 ];
+		teams[ TEAM3 ].score += esp_team_markers[ TEAM3 ];
 	}
 
-	dom_winner = NOTEAM;
+	esp_winner = NOTEAM;
 
 	if( max_score <= 0 )
 		return true;
 
 	if( teams[ TEAM1 ].score >= max_score )
 	{
-		dom_winner = TEAM1;
+		esp_winner = TEAM1;
 		winning_teams ++;
 	}
 	if( teams[ TEAM2 ].score >= max_score )
 	{
-		dom_winner = TEAM2;
+		esp_winner = TEAM2;
 		winning_teams ++;
 	}
 	if( teams[ TEAM3 ].score >= max_score )
 	{
-		dom_winner = TEAM3;
+		esp_winner = TEAM3;
 		winning_teams ++;
 	}
 
 	if( winning_teams == 1 )
 	{
 		// Winner: just show that they hit the score limit, not how far beyond they went.
-		teams[ dom_winner ].score = max_score;
+		teams[ esp_winner ].score = max_score;
 	}
 	else if( winning_teams > 1 )
 	{
@@ -98,28 +84,28 @@ qboolean DomCheckRules( void )
 
 		if( teams[ TEAM1 ].score == max_score )
 		{
-			dom_winner = TEAM1;
+			esp_winner = TEAM1;
 			winning_teams ++;
 		}
 		if( teams[ TEAM2 ].score == max_score )
 		{
-			dom_winner = TEAM2;
+			esp_winner = TEAM2;
 			winning_teams ++;
 		}
 		if( teams[ TEAM3 ].score == max_score )
 		{
-			dom_winner = TEAM3;
+			esp_winner = TEAM3;
 			winning_teams ++;
 		}
 
 		// Don't allow a tie.
 		if( winning_teams > 1 )
-			dom_winner = NOTEAM;
+			esp_winner = NOTEAM;
 	}
 
-	if( dom_winner != NOTEAM )
+	if( esp_winner != NOTEAM )
 	{
-		gi.bprintf( PRINT_HIGH, "%s team wins!\n", teams[ dom_winner ].name );
+		gi.bprintf( PRINT_HIGH, "%s team wins!\n", teams[ esp_winner ].name );
 		return true;
 	}
 
@@ -134,7 +120,7 @@ void DomFlagThink( edict_t *marker )
 	// If the marker was touched this frame, make it owned by that team.
 	if( marker->owner && marker->owner->client && marker->owner->client->resp.team )
 	{
-		unsigned int effect = dom_team_effect[ marker->owner->client->resp.team ];
+		unsigned int effect = esp_team_effect[ marker->owner->client->resp.team ];
 		if( marker->s.effects != effect )
 		{
 			char location[ 128 ] = "(";
@@ -143,16 +129,16 @@ void DomFlagThink( edict_t *marker )
 			int prev_owner = DomFlagOwner( marker );
 
 			if( prev_owner != NOTEAM )
-				dom_team_markers[ prev_owner ] --;
+				esp_team_markers[ prev_owner ] --;
 
 			marker->s.effects = effect;
-			marker->s.renderfx = dom_team_fx[ marker->owner->client->resp.team ];
-			dom_team_markers[ marker->owner->client->resp.team ] ++;
+			marker->s.renderfx = esp_team_fx[ marker->owner->client->resp.team ];
+			esp_team_markers[ marker->owner->client->resp.team ] ++;
 
 			if( marker->owner->client->resp.team == TEAM1 )
-				marker->s.modelindex = dom_red_marker;
+				marker->s.modelindex = esp_red_marker;
 			else
-				marker->s.modelindex = dom_blue_marker;
+				marker->s.modelindex = esp_blue_marker;
 
 			// Get marker location if possible.
 			has_loc = GetPlayerLocation( marker, location + 1 );
@@ -163,11 +149,11 @@ void DomFlagThink( edict_t *marker )
 
 			gi.bprintf( PRINT_HIGH, "%s secured %s marker %sfor %s!\n",
 				marker->owner->client->pers.netname,
-				(dom_marker_count == 1) ? "the" : "a",
+				(esp_marker_count == 1) ? "the" : "a",
 				location,
 				teams[ marker->owner->client->resp.team ].name );
 
-			if( (dom_team_markers[ marker->owner->client->resp.team ] == dom_marker_count) && (dom_marker_count > 1) )
+			if( (esp_team_markers[ marker->owner->client->resp.team ] == esp_marker_count) && (esp_marker_count > 1) )
 				gi.bprintf( PRINT_HIGH, "%s TEAM IS DOMINATING!\n",
 				teams[ marker->owner->client->resp.team ].name );
 
@@ -192,7 +178,7 @@ void DomFlagThink( edict_t *marker )
 	marker->s.frame = 173 + (((marker->s.frame - 173) + 1) % 16);
 
 	// Blink between red and blue if it's unclaimed.
-	if( (marker->s.frame < prev) && (marker->s.effects == dom_team_effect[ NOTEAM ]) )
+	if( (marker->s.frame < prev) && (marker->s.effects == esp_team_effect[ NOTEAM ]) )
 		marker->s.modelindex = (marker->s.modelindex == dom_blue_marker) ? dom_red_marker : dom_blue_marker;
 
 	marker->nextthink = level.framenum + FRAMEDIV;
@@ -242,16 +228,16 @@ void EspMakeMarker( edict_t *marker )
 	marker->movetype = MOVETYPE_NONE;
 	marker->s.modelindex = dom_blue_marker;
 	marker->s.skinnum = 0;
-	marker->s.effects = dom_team_effect[ NOTEAM ];
-	marker->s.renderfx = dom_team_fx[ NOTEAM ];
+	marker->s.effects = esp_team_effect[ NOTEAM ];
+	marker->s.renderfx = esp_team_fx[ NOTEAM ];
 	marker->owner = NULL;
 	marker->touch = EspTouchFlag;
 	NEXT_KEYFRAME( marker, DomFlagThink );
 	marker->classname = "item_marker";
-	marker->svmarkers &= ~SVF_NOCLIENT;
+	marker->svflags &= ~SVF_NOCLIENT;
 	gi.linkentity( marker );
 
-	dom_marker_count ++;
+	esp_marker_count ++;
 }
 
 void EspSetMarker(int team, char *str)
@@ -294,6 +280,10 @@ void EspSetTeamSpawns(int team, char *str)
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
+	if (use_3teams->value){
+		if(team == TEAM3)
+			team_spawn_name = "info_player_team3";
+	}
 
 	/* find and remove all team spawns for this team */
 	while ((spawn = G_Find(spawn, FOFS(classname), team_spawn_name)) != NULL) {
@@ -399,14 +389,14 @@ qboolean EspLoadConfig(char *mapname)
 		ptr = INI_Find(fh, "esp", "type");
 		char *gametypename;
 		if(ptr) {
-			if (espionage->value == 1) {
+			if (esp->value == 1) {
 				if(strcmp(ptr, "etv") == 0)
 					espgame.type = 1;
 					gametypename = "Escort the VIP";	
 				if(strcmp(ptr, "atl") == 0)
 					espgame.type = 0;
 					gametypename = "Assassinate the Leader";
-			} else if (espionage->value == 2) {
+			} else if (esp->value == 2) {
 				espgame.type = 0;
 					gametypename = "Assassinate the Leader";
 			}
@@ -604,9 +594,9 @@ void SetDomStats( edict_t *ent )
 	// During intermission, blink the team icon of the winning team.
 	if( level.intermission_framenum && ((level.realFramenum / FRAMEDIV) & 8) )
 	{
-		if (dom_winner == TEAM1)
+		if (esp_winner == TEAM1)
 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
-		else if (dom_winner == TEAM2)
+		else if (esp_winner == TEAM2)
 			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
 	}
 }

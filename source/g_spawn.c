@@ -848,7 +848,7 @@ int Gamemodeflag(void)
 	if (use_3teams->value) {
 		gamemodeflag += GMF_3TEAMS;
 	}
-	if (espionage->value) {
+	if (esp->value) {
 		gamemodeflag += GMF_ESPIONAGE;
 	}
 	if (darkmatch->value) {

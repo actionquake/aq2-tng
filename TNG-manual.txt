@@ -590,7 +590,14 @@ Features
 * Espionage Additions
   Taken from AQ2:ETE, these additions are optional server vars to create a larger variety of gameplay.
 
-  Commands:
+  esp [0/1] - Activates Espionage mode.  Default 0
+  esp_mode [0/1] - Sets default scenario mode.  0 defaults to Assassinate the Leader, 1 will try Escort the VIP of the scenario file supports it, else it defaults to Assassinate the Leader
+  esp_etv_halftime [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the timelimit has passed
+  esp_mustvolunteer [0/1] - In non-matchmode games, setting to 1 means a player must volunteer (using the `volunteer` command) to be the leader (in ETV mode, only Team 1 needs a leader).  Setting to 0 means that the leader is randomly chosen on round start.
+  esp_showleader [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
+  esp_showtarget [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
+  esp_forcejoin [0/1] Forces joining a team, following autobalancing rules
+  esp_model "male" - Sets a default model if not specified
   e_enhancedSlippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage
   reduction when falling long distances
 

@@ -1179,7 +1179,13 @@ extern cvar_t *medkit_time;
 extern cvar_t *medkit_instant;
 
 // BEGIN AQ2 ETE
-extern cvar_t *espionage;
+extern cvar_t *esp;
+extern cvar_t *esp_mode;
+extern cvar_t *esp_mustvolunteer;
+extern cvar_t *esp_showleader;
+extern cvar_t *esp_showtarget;
+extern cvar_t *esp_forcejoin;
+extern cvar_t *esp_model;
 extern cvar_t *e_enhancedSlippers;
 
 // END AQ2 ETE
