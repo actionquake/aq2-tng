@@ -973,7 +973,7 @@ extern int sm_meat_index;
 // Game Mode Flags
 #define GMF_NONE 0
 #define GMF_3TEAMS 1
-//#define NEW_MODE 2       // If new game mode flags are created, use 2 for its value first
+#define GMF_ESPIONAGE 2       // If new game mode flags are created, use 2 for its value first
 #define GMF_DARKMATCH 4
 #define GMF_MATCHMODE 8
 
@@ -1179,6 +1179,7 @@ extern cvar_t *medkit_time;
 extern cvar_t *medkit_instant;
 
 // BEGIN AQ2 ETE
+extern cvar_t *espionage;
 extern cvar_t *e_enhancedSlippers;
 
 // END AQ2 ETE

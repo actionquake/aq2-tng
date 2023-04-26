@@ -251,12 +251,7 @@ void EspSetMarker(int team, char *str)
 	edict_t *ent = NULL;
 	vec3_t position;
 
-	if(team == TEAM1)
-		marker_name = "item_marker_team1";
-	else if(team == TEAM2)
-		marker_name = "item_marker_team2";
-	else
-		return;
+	marker_name = "item_marker_team1";
 
 	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
 		return;
@@ -277,6 +272,7 @@ void EspSetMarker(int team, char *str)
 	VectorCopy(position, ent->old_origin);
 
 	ED_CallSpawn (ent);
+
 }
 
 void EspSetTeamSpawns(int team, char *str)
@@ -496,59 +492,6 @@ qboolean EspLoadConfig(char *mapname)
 		ChangePlayerSpawns();
 
 	gi.dprintf("-------------------------------------\n");
-
-	if (espgame.type == 1){
-		esp_last_score = 0;
-		esp_red_marker = gi.modelindex("models/flags/flag1.md2");
-
-		if( teamCount == 3 )
-		{
-			// 3 team mode uses color shells because there's no green flag.
-			dom_team_effect[ TEAM1 ] |= EF_COLOR_SHELL;
-			dom_team_effect[ TEAM2 ] |= EF_COLOR_SHELL;
-			dom_team_fx[ TEAM1 ] |= RF_SHELL_RED;
-			dom_team_fx[ TEAM2 ] |= RF_SHELL_BLUE;
-		}
-
-		Com_sprintf( buf, sizeof(buf), "%s/tng/%s.dom", GAMEVERSION, mapname );
-		fh = fopen( buf, "rt" );
-		if( fh )
-		{
-			// Found a Domination config file for this map.
-
-			gi.dprintf( "%s\n", buf );
-
-			ptr = INI_Find( fh, "dom", "flags" );
-			if( ptr )
-				ptr = strchr( ptr, '<' );
-			while( ptr )
-			{
-				edict_t *flag = G_Spawn();
-
-				char *space = NULL, *end = strchr( ptr + 1, '>' );
-				if( end )
-					*end = '\0';
-
-				flag->s.origin[0] = atof( ptr + 1 );
-				space = strchr( ptr + 1, ' ' );
-				if( space )
-				{
-					flag->s.origin[1] = atof( space );
-					space = strchr( space + 1, ' ' );
-					if( space )
-					{
-						flag->s.origin[2] = atof( space );
-						space = strchr( space + 1, ' ' );
-						if( space )
-							flag->s.angles[YAW] = atof( space );
-					}
-				}
-
-				DomMakeFlag( flag );
-				ptr = strchr( (end ? end : ptr) + 1, '<' );
-			}
-		}
-	}
 
 	fclose(fh);
 
