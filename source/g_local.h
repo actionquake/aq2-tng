@@ -2313,6 +2313,9 @@ typedef struct team_s
 	int pauses_used, wantReset;
 	cvar_t	*teamscore;
 	edict_t	*captain;
+	// Espionage
+	edict_t *leader;
+	char leader_skin_index[MAX_QPATH];
 }team_t;
 
 extern team_t teams[TEAM_TOP];
