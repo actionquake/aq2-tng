@@ -1599,6 +1599,26 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		CheckForUnevenTeams(self);
 }
 
+void KillEveryone(int teamNum){
+	edict_t *ent;
+
+	for (int i = 0; i < game.maxclients; i++){
+		if (game.clients[i].resp.team == teamNum){
+			killPlayer(ent, false);
+		}
+	}
+}
+
+void MakeTeamInvulnerable(int winner, int uvtime){
+	edict_t *ent;
+
+	for (int i = 0; i < game.maxclients; i++){
+		if (game.clients[i].resp.team == winner){
+			ent->client->uvTime = uvtime;
+		}
+	}
+}
+
 /*
 =======================================================================
 

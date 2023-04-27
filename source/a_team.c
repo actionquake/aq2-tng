@@ -1831,38 +1831,57 @@ qboolean BothTeamsHavePlayers()
 // CheckForWinner: Checks for a winner (or not).
 int CheckForWinner()
 {
-	int players[TEAM_TOP] = { 0 }, i = 0, teamNum = 0, teamsWithPlayers = 0;
+	int players[TEAM_TOP] = { 0 }, i = 0, teamNum = 0, teamsWithPlayers = 0, teamsWithAliveLeaders = 0;
 	edict_t *ent;
 
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
-	for (i = 0; i < game.maxclients; i++)
-	{
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse || ent->solid == SOLID_NOT)
-			continue;
+	if(esp->value){
+		if (esp_mode == 0){
+			for (i = TEAM1; i <= teamCount; i++){
+				if (!teams[i].leader->deadflag == DEAD_DEAD) {
+					teamsWithAliveLeaders++;
+					teamNum = i;
+				}
+			}
+			if (teamsWithAliveLeaders)
+				return (teamsWithAliveLeaders > 1) ? WINNER_NONE : teamNum;
 
-		teamNum = game.clients[i].resp.team;
-		if (teamNum == NOTEAM)
-			continue;
-
-		players[teamNum]++;
-	}
-
-	teamsWithPlayers = 0;
-	for (i = TEAM1; i <= teamCount; i++)
-	{
-		if (players[i]) {
-			teamsWithPlayers++;
-			teamNum = i;
+			return WINNER_TIE;
+		// Round ends if team 1's leader die in ETV mode
+		} else if (esp_mode == 1){
+			if (teams[TEAM1].leader->deadflag == DEAD_DEAD) {
+				return TEAM2;
+			} else if (teams[TEAM2].leader->touch = EspTouchMarker()){
+				return TEAM1;
+			}
 		}
+	} else {
+		// Normal teamplay check
+		for (i = 0; i < game.maxclients; i++){
+			ent = &g_edicts[1 + i];
+			if (!ent->inuse || ent->solid == SOLID_NOT)
+				continue;
+
+			teamNum = game.clients[i].resp.team;
+			if (teamNum == NOTEAM)
+				continue;
+
+			players[teamNum]++;
+		}
+		teamsWithPlayers = 0;
+		for (i = TEAM1; i <= teamCount; i++){
+			if (players[i]) {
+				teamsWithPlayers++;
+				teamNum = i;
+			}
+		}
+		if (teamsWithPlayers)
+			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
+
+		return WINNER_TIE;
 	}
-
-	if (teamsWithPlayers)
-		return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
-
-	return WINNER_TIE;
 }
 
 // CheckForForcedWinner: A winner is being forced, find who it is.
@@ -2343,6 +2362,20 @@ int WonGame (int winner)
 			PrintScores ();
 		}
 	}
+	if(esp->value){
+		if(esp_punish->value == 1){
+			// Immediately kill all losing members of the remaining team
+			for (i = TEAM1, i < TEAM_TOP; i++;){
+				if (i != winner){
+					KillEveryone(i);
+				}
+			}
+		} else if (esp_punish->value == 2){
+			// Grant uv shield to winning team
+			int uvtime = 50;
+			MakeTeamInvulnerable(winner, uvtime);
+		}
+	}
 
 	if (CheckTimelimit())
 		return 1;
@@ -2562,6 +2595,13 @@ int CheckTeamRules (void)
 			}
 
 			if (dom->value && DomCheckRules())
+			{
+				EndDMLevel();
+				team_round_going = team_round_countdown = team_game_going = 0;
+				return 1;
+			}
+
+			if (esp->value && EspCheckRules())
 			{
 				EndDMLevel();
 				team_round_going = team_round_countdown = team_game_going = 0;

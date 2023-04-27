@@ -550,6 +550,7 @@ void InitGame( void )
 	// BEGIN AQ2 ETE
 	esp = gi.cvar( "esp", "0", /*CVAR_SERVERINFO | */ CVAR_LATCH );  //Removed in favor of 'gm' (gamemode)
 	esp_mode = gi.cvar( "esp_mode", "0", 0 );
+	esp_punish = gi.cvar( "esp_punish", "0", 0 );
 	esp_etv_halftime = gi.cvar( "esp_etv_halftime", "0", 0 );
 	esp_mustvolunteer = gi.cvar( "esp_mustvolunteer", "0", 0 );
 	esp_showleader = gi.cvar( "esp_showleader", "1", 0 );

@@ -1181,6 +1181,8 @@ extern cvar_t *medkit_instant;
 // BEGIN AQ2 ETE
 extern cvar_t *esp;
 extern cvar_t *esp_mode;
+extern cvar_t *esp_punish;
+extern cvar_t *esp_etv_halftime;
 extern cvar_t *esp_mustvolunteer;
 extern cvar_t *esp_showleader;
 extern cvar_t *esp_showtarget;
