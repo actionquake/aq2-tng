@@ -2465,7 +2465,14 @@ int CheckTeamRules (void)
 		team_round_countdown--;
 		if(!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers ())
+			if (esp->value)
+			{
+				if(AllTeamsHaveLeaders() && BothTeamsHavePlayers())
+				in_warmup = 0;
+				team_game_going = 1;
+				StartLCA();	
+			}
+			if (BothTeamsHavePlayers())
 			{
 				in_warmup = 0;
 				team_game_going = 1;

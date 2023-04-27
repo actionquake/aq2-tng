@@ -6,12 +6,7 @@
 
 espgame_t espgame;
 
-cvar_t *esp = NULL;
-cvar_t *esp_forcejoin = NULL;
-cvar_t *esp_mode = NULL;
-cvar_t *esp_dropflag = NULL;
 cvar_t *esp_respawn = NULL;
-cvar_t *esp_model = NULL;
 
 unsigned int esp_team_effect[] = {
 	EF_BLASTER | EF_TELEPORTER,
@@ -36,8 +31,6 @@ int esp_last_score = 0;
 
 void EspMarkerThink( edict_t *marker )
 {
-	int prev = marker->s.frame;
-
 	// If the marker was touched this frame, make it owned by that team.
 	if( marker->owner && marker->owner->client && marker->owner->client->resp.team )
 	{
@@ -298,15 +291,17 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		ptr = INI_Find(fh, "esp", "type");
-		char *gametypename;
+		char *gametypename = "Assassinate the Leader";
 		if(ptr) {
 			if (esp->value == 1) {
-				if(strcmp(ptr, "etv") == 0)
+				if(strcmp(ptr, "etv") == 0){
 					espgame.type = 1;
 					gametypename = "Escort the VIP";	
-				if(strcmp(ptr, "atl") == 0)
+				}
+				if(strcmp(ptr, "atl") == 0){
 					espgame.type = 0;
 					gametypename = "Assassinate the Leader";
+				}
 			} else if (esp->value == 2) {
 				espgame.type = 0;
 					gametypename = "Assassinate the Leader";
@@ -334,7 +329,7 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		// Only set the marker if the scenario is ETV
-		if(espgame.type = 1) {
+		if(espgame.type == 1) {
 			gi.dprintf(" Target\n");
 			ptr = INI_Find(fh, "target", "escort");
 			if(ptr) {
@@ -469,31 +464,12 @@ qboolean EspLoadConfig(const char *mapname)
 
 	fclose(fh);
 
-	if (espgame.type = 1 && use_3teams->value){
+	if (espgame.type == 1 && use_3teams->value){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
 		espgame.type = 0;
 	}
 
 	return true;
-}
-
-
-void DomSetupStatusbar( void )
-{
-	Q_strncatz(level.statusbar, 
-		// Red Team
-		"yb -172 " "if 24 xr -24 pic 24 endif " "xr -92 num 4 26 "
-		// Blue Team
-		"yb -148 " "if 25 xr -24 pic 25 endif " "xr -92 num 4 27 ",
-		sizeof(level.statusbar) );
-	
-	if( teamCount >= 3 )
-	{
-		Q_strncatz(level.statusbar, 
-			// Green Team
-			"yb -124 " "if 30 xr -24 pic 30 endif " "xr -92 num 4 31 ",
-			sizeof(level.statusbar) );
-	}
 }
 
 int EspGetRespawnTime(edict_t *ent)
@@ -750,7 +726,7 @@ void EspCheckHurtLeader(edict_t * targ, edict_t * attacker)
 		attacker->client->resp.esp_lasthurtleader = level.framenum;
 }
 
-void SetDomStats( edict_t *ent )
+void SetEspStats( edict_t *ent )
 {
 	// Team scores for the score display and HUD.
 	ent->client->ps.stats[ STAT_TEAM1_SCORE ] = teams[ TEAM1 ].score;
@@ -768,4 +744,117 @@ void SetDomStats( edict_t *ent )
 		else if (esp_winner == TEAM2)
 			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
 	}
+}
+
+int EspOtherTeam(int team)
+{
+	// This is only used when there are 2 teams
+	if(use_3teams->value)
+		return -1;
+
+	switch (team) {
+	case TEAM1:
+		return TEAM2;
+	case TEAM2:
+		return TEAM1;
+	case NOTEAM:
+		return NOTEAM; /* there is no other team for NOTEAM, but I want it back! */
+	}
+	return -1;		// invalid value
+}
+
+void EspSwapTeams()
+{
+	edict_t *ent;
+	int i;
+
+	for (i = 0; i < game.maxclients; i++) {
+		ent = &g_edicts[1 + i];
+		if (ent->inuse && ent->client->resp.team) {
+			ent->client->resp.team = EspOtherTeam(ent->client->resp.team);
+			AssignSkin(ent, teams[ent->client->resp.team].skin, false);
+		}
+	}
+
+	/* swap scores too! */
+	i = espgame.team1;
+	espgame.team1 = espgame.team2;
+	espgame.team2 = i;
+
+	// Swap matchmode team captains.
+	ent = teams[TEAM1].captain;
+	teams[TEAM1].captain = teams[TEAM2].captain;
+	teams[TEAM2].captain = ent;
+
+	teams_changed = true;
+}
+
+qboolean EspCheckRules(void)
+{
+	// Espionage uses the same capturelimit cvars as CTF
+	if( capturelimit->value && (espgame.team1 >= capturelimit->value || espgame.team2 >= capturelimit->value) )
+	{
+		gi.bprintf(PRINT_HIGH, "Capturelimit hit.\n");
+		IRC_printf(IRC_T_GAME, "Capturelimit hit.\n");
+		return true;
+	}
+
+	if( timelimit->value > 0 && espgame.type > 0 )
+	{
+		if( espgame.halftime == 0 && level.matchTime >= (timelimit->value * 60) / 2 - 60 )
+		{
+			if( use_warnings->value )
+			{
+				CenterPrintAll( "1 MINUTE LEFT..." );
+				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
+			}
+			espgame.halftime = 1;
+		}
+		else if( espgame.halftime == 1 && level.matchTime >= (timelimit->value * 60) / 2 - 10 )
+		{
+			if( use_warnings->value )
+				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
+			espgame.halftime = 2;
+		}
+		else if( espgame.halftime < 3 && level.matchTime >= (timelimit->value * 60) / 2 + 1 && esp_etv_halftime->value && esp_mode->value == 1)
+		{
+			team_round_going = team_round_countdown = team_game_going = 0;
+			MakeAllLivePlayersObservers ();
+			EspSwapTeams();
+			CenterPrintAll("The teams have been switched!");
+			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
+				 gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
+			espgame.halftime = 3;
+		}
+	}
+	return false;
+}
+
+qboolean AllTeamsHaveLeaders()
+{
+	int teamcount, i, teamsWithLeaders;
+
+	//AQ2:TNG Slicer Matchmode
+	if (matchmode->value && !TeamsReady())
+		return false;
+	//AQ2:TNG END
+
+	teamsWithLeaders = 0;
+	for (i = TEAM1; i <= teamCount; i++)
+	{
+		if (HAVE_LEADER(i)) {
+			teamsWithLeaders++;
+		}
+	}
+
+	if (use_3teams->value)
+		teamcount = TEAM3;
+	else
+		teamcount = TEAM2;
+	
+	// Only Team 1 needs a leader in ETV mode
+	if (espgame.type == 1 && HAVE_LEADER(TEAM1))
+		teamcount = teamcount - 1;
+
+	return (teamsWithLeaders >= teamcount);
 }

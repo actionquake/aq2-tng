@@ -556,7 +556,6 @@ void InitGame( void )
 	esp_showleader = gi.cvar( "esp_showleader", "1", 0 );
 	esp_showtarget = gi.cvar( "esp_showtarget", "1", 0 );
 	esp_forcejoin = gi.cvar( "esp_forcejoin", "", 0 );
-	esp_model = gi.cvar( "esp_model", "male", CVAR_LATCH );
 	e_enhancedSlippers = gi.cvar( "e_enhancedSlippers", "0", 0);
 	// END AQ2 ETE
 

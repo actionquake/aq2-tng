@@ -598,7 +598,6 @@ Features
   esp_showleader [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
   esp_showtarget [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
   esp_forcejoin [0/1] Forces joining a team, following autobalancing rules
-  esp_model "male" - Sets a default model if not specified
   e_enhancedSlippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage
   reduction when falling long distances
 

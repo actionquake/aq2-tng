@@ -4,7 +4,6 @@ extern cvar_t *esp;
 #define	HAVE_LEADER(teamNum) (teams[(teamNum)].leader)
 
 int EspFlagOwner( edict_t *flag );
-qboolean EspCheckRules( void );
 void EspRemember( const edict_t *ent, const gitem_t *item );
 qboolean EspLoadConfig( const char *mapname );
 void EspSetupStatusbar( void );
@@ -19,7 +18,7 @@ espstate_t;
 
 typedef struct espgame_s {
 	int team1, team2, team3;
-	int total1, total2, team3;	// these are only set when going into intermission!
+	int total1, total2;	// these are only set when going into intermission!
 	int last_flag_capture;
 	int last_capture_team;
 	int halftime;
@@ -39,13 +38,6 @@ typedef struct espgame_s {
 extern espgame_t espgame;
 
 extern gitem_t *team_flag[TEAM_TOP];
-
-extern cvar_t *esp;
-extern cvar_t *esp_forcejoin;
-extern cvar_t *esp_mode;
-extern cvar_t *esp_dropflag;
-extern cvar_t *esp_respawn;
-extern cvar_t *esp_model;
 
 #define ESP_TEAM1_SKIN "ctf_r"
 #define ESP_TEAM2_SKIN "ctf_b"
@@ -99,15 +91,12 @@ void ESPCalcScores (void);
 void SetESPStats (edict_t * ent);
 void ESPDeadDropFlag (edict_t * self);
 void ESPFlagSetup (edict_t * ent);
-void ESPResetFlag (int team);
-void ESPFragBonuses (edict_t * targ, edict_t * inflictor, edict_t * attacker);
+void ESPScoreBonuses (edict_t * targ, edict_t * inflictor, edict_t * attacker);
 void ESPCheckHurtCarrier (edict_t * targ, edict_t * attacker);
-void ESPDestroyFlag (edict_t * self);
-void ESPResetFlags( void );
 
 void ESPOpenJoinMenu (edict_t * ent);
 
-qboolean ESPCheckRules (void);
+qboolean EspCheckRules (void);
 qboolean HasFlag (edict_t * ent);
 
 void SP_misc_ctf_banner (edict_t * ent);

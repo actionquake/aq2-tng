@@ -262,6 +262,16 @@ void PrintMOTD(edict_t * ent)
 				else
 					server_type = "Team Deathmatch";
 			}
+			else if (esp->value) // Is it Espionage?
+			{
+				if (teamCount == 3 && esp_mode->value == 0)
+					server_type = "3 Team Espionage: Assassinate the Leader";
+				else if (teamCount == 2 && esp_mode->value == 1)
+					server_type = "Espionage: Escort the VIP";
+				else if (esp_mode->value == 0){
+					server_type = "Espionage: Assassinate the Leader";
+				}
+			}
 			else if (use_tourney->value) // Is it Tourney?
 				server_type = "Tourney";
 			else // No? Then it must be Teamplay

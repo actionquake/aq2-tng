@@ -1006,6 +1006,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 				gi.dprintf ("Espionage Enabled - Forcing 3Teams off\n");
 				gi.cvar_forceset(use_3teams->name, "0");
 			}
+		}
 		if(teamdm->value)
 		{
 			gi.dprintf ("Espionage Enabled - Forcing Team DM off\n");
