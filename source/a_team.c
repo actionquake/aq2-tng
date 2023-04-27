@@ -1840,7 +1840,7 @@ int CheckForWinner()
 	if(esp->value){
 		if (esp_mode == 0){
 			for (i = TEAM1; i <= teamCount; i++){
-				if (!teams[i].leader->deadflag == DEAD_DEAD) {
+				if (!IS_ALIVE(teams[i].leader)) {
 					teamsWithAliveLeaders++;
 					teamNum = i;
 				}
@@ -1851,7 +1851,7 @@ int CheckForWinner()
 			return WINNER_TIE;
 		// Round ends if team 1's leader die in ETV mode
 		} else if (esp_mode == 1){
-			if (teams[TEAM1].leader->deadflag == DEAD_DEAD) {
+			if (!IS_ALIVE(teams[TEAM1].leader)) {
 				return TEAM2;
 			} else if (teams[TEAM2].leader->touch = EspTouchMarker()){
 				return TEAM1;
@@ -2375,6 +2375,9 @@ int WonGame (int winner)
 			int uvtime = 50;
 			MakeTeamInvulnerable(winner, uvtime);
 		}
+		// Reset marker owner
+		edict_t *marker;
+		marker->owner == NULL;
 	}
 
 	if (CheckTimelimit())

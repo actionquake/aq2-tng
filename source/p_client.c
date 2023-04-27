@@ -1476,6 +1476,9 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		if (ctf->value)
 			CTFFragBonuses(self, inflictor, attacker);
 
+		if (esp->value)
+			EspScoreBonuses(self, inflictor, attacker);
+
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
 
@@ -1599,21 +1602,33 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		CheckForUnevenTeams(self);
 }
 
-void KillEveryone(int teamNum){
-	edict_t *ent;
 
-	for (int i = 0; i < game.maxclients; i++){
+void KillEveryone (int teamNum)
+{
+	edict_t *ent;
+	int i;
+
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse)
+			continue;
+		if(ent->solid == SOLID_NOT && !ent->deadflag)
+			continue;
 		if (game.clients[i].resp.team == teamNum){
 			killPlayer(ent, false);
 		}
 	}
 }
 
-void MakeTeamInvulnerable(int winner, int uvtime){
+void MakeTeamInvulnerable(int winner, int uvtime)
+{
 	edict_t *ent;
 
 	for (int i = 0; i < game.maxclients; i++){
-		if (game.clients[i].resp.team == winner){
+		ent = &g_edicts[1 + i];
+		// Make alive clients invulnerable
+		if (game.clients[i].resp.team == winner && (!ent->solid == SOLID_NOT && !ent->deadflag)){
 			ent->client->uvTime = uvtime;
 		}
 	}
@@ -2711,6 +2726,15 @@ void PutClientInServer(edict_t * ent)
 
 	if (allweapon->value)
 		AllWeapons(ent);
+
+	// Team leaders in Espionage receive all items by default
+	if(esp->value){
+		for (i = TEAM1; i <= teamCount; i++){
+			if (ent == teams[i].leader) {
+				AllItems(ent);
+			}
+		}
+	}
 
 	// force the current weapon up
 	client->newweapon = client->weapon;

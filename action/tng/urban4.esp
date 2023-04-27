@@ -8,6 +8,7 @@ blue=6
 
 [target]
 escort=<-1388 1513 366>
+name=Rooftop
 
 [spawns]
 red=<-1087 1552 302 -90>,<8 952 46 -90>,<200 1369 430 -92>

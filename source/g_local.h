@@ -1756,6 +1756,10 @@ typedef struct
 #endif
 
   //char skin[MAX_SKINLEN];
+
+  int esp_state;
+  int esp_capstreak;
+  int esp_lasthurtleader;
 }
 client_respawn_t;
 

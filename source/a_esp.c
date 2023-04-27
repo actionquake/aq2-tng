@@ -30,11 +30,11 @@ unsigned int esp_team_fx[] = {
 int esp_marker_count = 0;
 int esp_team_markers[ TEAM_TOP ] = {0};
 int esp_winner = NOTEAM;
-int esp_red_marker = 0;
+int esp_marker = 0;
 int esp_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
-void DomFlagThink( edict_t *marker )
+void EspMarkerThink( edict_t *marker )
 {
 	int prev = marker->s.frame;
 
@@ -47,19 +47,13 @@ void DomFlagThink( edict_t *marker )
 			char location[ 128 ] = "(";
 			qboolean has_loc = false;
 			edict_t *ent = NULL;
-			int prev_owner = DomFlagOwner( marker );
-
-			if( prev_owner != NOTEAM )
-				esp_team_markers[ prev_owner ] --;
 
 			marker->s.effects = effect;
 			marker->s.renderfx = esp_team_fx[ marker->owner->client->resp.team ];
 			esp_team_markers[ marker->owner->client->resp.team ] ++;
 
 			if( marker->owner->client->resp.team == TEAM1 )
-				marker->s.modelindex = esp_red_marker;
-			else
-				marker->s.modelindex = esp_blue_marker;
+				marker->s.modelindex = esp_marker;
 
 			// Get marker location if possible.
 			has_loc = GetPlayerLocation( marker, location + 1 );
@@ -68,14 +62,14 @@ void DomFlagThink( edict_t *marker )
 			else
 				location[0] = '\0';
 
-			gi.bprintf( PRINT_HIGH, "%s secured %s marker %sfor %s!\n",
+			gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
 				marker->owner->client->pers.netname,
 				(esp_marker_count == 1) ? "the" : "a",
 				location,
 				teams[ marker->owner->client->resp.team ].name );
 
-			if( (esp_team_markers[ marker->owner->client->resp.team ] == esp_marker_count) && (esp_marker_count > 1) )
-				gi.bprintf( PRINT_HIGH, "%s TEAM IS DOMINATING!\n",
+			if( (esp_team_markers[ marker->owner->client->resp.team ] == esp_marker_count) && (esp_marker_count > 2) )
+				gi.bprintf( PRINT_HIGH, "%s IS DOMINATING!\n",
 				teams[ marker->owner->client->resp.team ].name );
 
 			gi.sound( marker, CHAN_ITEM, gi.soundindex("tng/markerret.wav"), 0.75, 0.125, 0 );
@@ -86,8 +80,6 @@ void DomFlagThink( edict_t *marker )
 					continue;
 				else if( ent == marker->owner )
 					unicastSound( ent, gi.soundindex("tng/markercap.wav"), 0.75 );
-				else if( ent->client->resp.team != marker->owner->client->resp.team )
-					unicastSound( ent, gi.soundindex("tng/markertk.wav"), 0.75 );
 			}
 		}
 	}
@@ -97,10 +89,6 @@ void DomFlagThink( edict_t *marker )
 
 	// Animate the marker waving.
 	marker->s.frame = 173 + (((marker->s.frame - 173) + 1) % 16);
-
-	// Blink between red and blue if it's unclaimed.
-	if( (marker->s.frame < prev) && (marker->s.effects == esp_team_effect[ NOTEAM ]) )
-		marker->s.modelindex = (marker->s.modelindex == dom_blue_marker) ? dom_red_marker : dom_blue_marker;
 
 	marker->nextthink = level.framenum + FRAMEDIV;
 }
@@ -118,13 +106,13 @@ void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface
 		return;
 	if( player->client->uvTime )
 		return;
+	// Player must be team leader on team 1 to activate the marker
+	if (!IS_LEADER(player) && player->client->resp.team != TEAM1)
+		return;
 
 	// If the marker hasn't been touched this frame, the player will take it.
 	if( ! marker->owner )
 		marker->owner = player;
-	// If somebody on another team also touched the marker this frame, nobody takes it.
-	else if( marker->owner->client && (marker->owner->client->resp.team != player->client->resp.team) )
-		marker->owner = marker;
 }
 
 
@@ -152,7 +140,7 @@ void EspMakeMarker( edict_t *marker )
 	marker->s.effects = esp_team_effect[ NOTEAM ];
 	marker->s.renderfx = esp_team_fx[ NOTEAM ];
 	marker->owner = NULL;
-	marker->touch = EspTouchFlag;
+	marker->touch = EspTouchMarker;
 	NEXT_KEYFRAME( marker, EspMarkerThink );
 	marker->classname = "item_marker";
 	marker->svflags &= ~SVF_NOCLIENT;
@@ -236,6 +224,7 @@ qboolean EspLoadConfig(const char *mapname)
 	FILE *fh;
 
 	memset(&espgame, 0, sizeof(espgame));
+	esp_marker = gi.modelindex("models/esp/marker.md2");
 
 	gi.dprintf("Trying to load Espionage configuration file\n", mapname);
 
@@ -507,6 +496,259 @@ void DomSetupStatusbar( void )
 	}
 }
 
+int EspGetRespawnTime(edict_t *ent)
+{
+	int spawntime = esp_respawn->value;
+	if(ent->client->resp.team == TEAM1 && espgame.spawn_red > -1)
+		spawntime = espgame.spawn_red;
+	else if(ent->client->resp.team == TEAM2 && espgame.spawn_blue > -1)
+		spawntime = espgame.spawn_blue;
+	else if(ent->client->resp.team == TEAM3 && espgame.spawn_green > -1)
+		spawntime = espgame.spawn_green;
+
+	gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
+
+	return spawntime;
+}
+
+void EspAssignTeam(gclient_t * who)
+{
+	edict_t *player;
+	int i, team1count = 0, team2count = 0, team3count = 0;
+
+	who->resp.esp_state = ESP_STATE_START;
+
+	if (!DMFLAGS(DF_ESP_FORCEJOIN)) {
+		who->resp.team = NOTEAM;
+		return;
+	}
+
+	for (i = 1; i <= game.maxclients; i++) {
+		player = &g_edicts[i];
+		if (!player->inuse || player->client == who)
+			continue;
+		switch (player->client->resp.team) {
+		case TEAM1:
+			team1count++;
+			break;
+		case TEAM2:
+			team2count++;
+			break;
+		case TEAM3:
+			team3count++;
+		}
+	}
+	if (team1count < team2count)
+		who->resp.team = TEAM1;
+	else if (team2count < team1count)
+		who->resp.team = TEAM2;
+	else if (team3count < team1count && team3count < team2count)
+		who->resp.team = TEAM3;
+	else if (rand() & 1)
+		who->resp.team = TEAM1;
+	else
+		who->resp.team = TEAM2;
+
+	teams_changed = true;
+}
+
+edict_t *SelectEspSpawnPoint(edict_t * ent)
+{
+	edict_t *spot, *spot1, *spot2;
+	int count = 0;
+	int selection;
+	float range, range1, range2;
+	char *cname;
+
+	ent->client->resp.esp_state = ESP_STATE_PLAYING;
+
+	switch (ent->client->resp.team) {
+	case TEAM1:
+		cname = "info_player_team1";
+		break;
+	case TEAM2:
+		cname = "info_player_team2";
+		break;
+	case TEAM3:
+		cname = "info_player_team3";
+		break;
+	default:
+		/* FIXME: might return NULL when dm spawns are converted to team ones */
+		return SelectRandomDeathmatchSpawnPoint();
+	}
+
+	spot = NULL;
+	range1 = range2 = 99999;
+	spot1 = spot2 = NULL;
+
+	while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+		count++;
+		range = PlayersRangeFromSpot(spot);
+		if (range < range1) {
+			if (range1 < range2) {
+				range2 = range1;
+				spot2 = spot1;
+			}
+			range1 = range;
+			spot1 = spot;
+		} else if (range < range2) {
+			range2 = range;
+			spot2 = spot;
+		}
+	}
+
+	if (!count)
+		return SelectRandomDeathmatchSpawnPoint();
+
+	if (count <= 2) {
+		spot1 = spot2 = NULL;
+	} else
+		count -= 2;
+
+	selection = rand() % count;
+
+	spot = NULL;
+	do {
+		spot = G_Find(spot, FOFS(classname), cname);
+		if (spot == spot1 || spot == spot2)
+			selection++;
+	}
+	while (selection--);
+
+	return spot;
+}
+
+void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
+{
+	int i, enemyteam;
+	gitem_t *flag_item, *enemy_flag_item;
+	edict_t *ent, *flag, *carrier;
+	vec3_t v1, v2;
+
+	carrier = NULL;
+
+	// no bonus for fragging yourself
+	if (!targ->client || !attacker->client || targ == attacker)
+		return;
+
+	enemyteam = (targ->client->resp.team != attacker->client->resp.team);
+	if (!enemyteam)
+		return;		// whoever died isn't on a team
+
+	// // same team, if the flag at base, check to he has the enemy flag
+	// flag_item = team_flag[targ->client->resp.team];
+	// enemy_flag_item = team_flag[otherteam];
+
+	// did the attacker frag the flag carrier?
+	if (targ->client->inventory[ITEM_INDEX(enemy_flag_item)]) {
+		attacker->client->resp.ctf_lastfraggedcarrier = level.framenum;
+		attacker->client->resp.score += CTF_FRAG_CARRIER_BONUS;
+		gi.cprintf(attacker, PRINT_MEDIUM,
+			   "BONUS: %d points for fragging enemy flag carrier.\n", CTF_FRAG_CARRIER_BONUS);
+
+		// the the target had the flag, clear the hurt carrier
+		// field on the other team
+		for (i = 1; i <= game.maxclients; i++) {
+			ent = g_edicts + i;
+			if (ent->inuse && ent->client->resp.team == enemyteam)
+				ent->client->resp.ctf_lasthurtcarrier = 0;
+		}
+		return;
+	}
+
+	if (targ->client->resp.ctf_lasthurtcarrier &&
+	    level.framenum - targ->client->resp.ctf_lasthurtcarrier <
+	    CTF_CARRIER_DANGER_PROTECT_TIMEOUT * HZ && !attacker->client->inventory[ITEM_INDEX(flag_item)]) {
+		// attacker is on the same team as the flag carrier and
+		// fragged a guy who hurt our flag carrier
+		attacker->client->resp.score += CTF_CARRIER_DANGER_PROTECT_BONUS;
+		gi.bprintf(PRINT_MEDIUM,
+			   "%s defends %s's flag carrier against an agressive enemy\n",
+			   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
+		IRC_printf(IRC_T_GAME,
+			   "%n defends %n's flag carrier against an agressive enemy\n",
+			   attacker->client->pers.netname,
+			   CTFTeamName(attacker->client->resp.team));
+		return;
+	}
+	// flag and flag carrier area defense bonuses
+	// we have to find the flag and carrier entities
+	// find the flag
+	flag = NULL;
+	while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
+		if (!(flag->spawnflags & DROPPED_ITEM))
+			break;
+	}
+
+	if (!flag)
+		return;		// can't find attacker's flag
+
+	// find attacker's team's flag carrier
+	for (i = 1; i <= game.maxclients; i++) {
+		carrier = g_edicts + i;
+		if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
+			break;
+		carrier = NULL;
+	}
+
+	// ok we have the attackers flag and a pointer to the carrier
+	// check to see if we are defending the base's flag
+	VectorSubtract(targ->s.origin, flag->s.origin, v1);
+	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
+
+	if (VectorLength(v1) < CTF_TARGET_PROTECT_RADIUS || VectorLength(v2) < CTF_TARGET_PROTECT_RADIUS
+		|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
+		// we defended the base flag
+		attacker->client->resp.score += CTF_FLAG_DEFENSE_BONUS;
+		if (flag->solid == SOLID_NOT) {
+			gi.bprintf(PRINT_MEDIUM, "%s defends the %s base.\n",
+				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
+			IRC_printf(IRC_T_GAME, "%n defends the %n base.\n",
+				   attacker->client->pers.netname,
+				   CTFTeamName(attacker->client->resp.team));
+		} else {
+			gi.bprintf(PRINT_MEDIUM, "%s defends the %s flag.\n",
+				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
+			IRC_printf(IRC_T_GAME, "%n defends the %n flag.\n",
+				   attacker->client->pers.netname,
+				   CTFTeamName(attacker->client->resp.team));
+		}
+		return;
+	}
+
+	if (carrier && carrier != attacker) {
+		VectorSubtract(targ->s.origin, carrier->s.origin, v1);
+		VectorSubtract(attacker->s.origin, carrier->s.origin, v1);
+
+		if (VectorLength(v1) < CTF_ATTACKER_PROTECT_RADIUS ||
+		    VectorLength(v2) < CTF_ATTACKER_PROTECT_RADIUS ||
+			visible(carrier, targ, MASK_SOLID) || visible(carrier, attacker, MASK_SOLID)) {
+			attacker->client->resp.score += CTF_CARRIER_PROTECT_BONUS;
+			gi.bprintf(PRINT_MEDIUM, "%s defends the %s's flag carrier.\n",
+				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
+			IRC_printf(IRC_T_GAME, "%n defends the %n's flag carrier.\n",
+				   attacker->client->pers.netname,
+				   CTFTeamName(attacker->client->resp.team));
+			return;
+		}
+	}
+}
+
+void EspCheckHurtLeader(edict_t * targ, edict_t * attacker)
+{
+	int enemyteam;
+
+	if (!targ->client || !attacker->client)
+		return;
+
+	// Enemy team is any team that is not the attacker's (supports >2 teams)
+	enemyteam = (targ->client->resp.team != attacker->client->resp.team);
+	if (!enemyteam)
+		return;
+
+	if (targ->client->resp.team != attacker->client->resp.team)
+		attacker->client->resp.esp_lasthurtleader = level.framenum;
+}
 
 void SetDomStats( edict_t *ent )
 {

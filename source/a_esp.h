@@ -1,5 +1,8 @@
 extern cvar_t *esp;
 
+#define IS_LEADER(ent) (teams[(ent)->client->resp.team].leader == (ent))
+#define	HAVE_LEADER(teamNum) (teams[(teamNum)].leader)
+
 int EspFlagOwner( edict_t *flag );
 qboolean EspCheckRules( void );
 void EspRemember( const edict_t *ent, const gitem_t *item );
@@ -28,6 +31,7 @@ typedef struct espgame_s {
 	int spawn_blue;
     int spawn_green;
 	qboolean custom_spawns;
+	qboolean custom_skins;
 	char author[64];
 	char name[128];
 } espgame_t;
