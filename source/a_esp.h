@@ -7,35 +7,6 @@ qboolean EspLoadConfig( const char *mapname );
 void EspSetupStatusbar( void );
 void SetEspStats( edict_t *ent );
 
-//-----------------------------------------------------------------------------
-// ESP related definitions
-//
-// $Id: a_ctf.h,v 1.11 2003/02/10 02:12:25 ra Exp $
-//
-//-----------------------------------------------------------------------------
-// $Log: a_ctf.h,v $
-// Revision 1.11  2003/02/10 02:12:25  ra
-// Zcam fixes, kick crashbug in ESP fixed and some code cleanup.
-//
-// Revision 1.10  2001/09/28 13:48:34  ra
-// I ran indent over the sources. All .c and .h files reindented.
-//
-// Revision 1.9  2001/08/08 12:42:22  slicerdw
-// Ctf Should finnaly be fixed now, lets hope so
-//
-// Revision 1.8  2001/06/26 18:47:30  igor_rock
-// added ctf_respawn cvar
-//
-// Revision 1.7  2001/06/15 14:18:07  igor_rock
-// corrected bug with destroyed flags (won't be destroyed anymore, instead they
-// return to the base).
-//
-// Revision 1.6  2001/06/13 07:55:17  igor_rock
-// Re-Added a_match.h and a_match.c
-// Added ESP Header for a_ctf.h and a_ctf.c
-//
-//-----------------------------------------------------------------------------
-
 typedef enum
 {
   ESP_STATE_START,
@@ -58,7 +29,7 @@ typedef struct espgame_s {
     int spawn_green;
 	qboolean custom_spawns;
 	char author[64];
-	char comment[128];
+	char name[128];
 } espgame_t;
 
 extern espgame_t espgame;
@@ -103,7 +74,6 @@ extern cvar_t *esp_model;
 #define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
 
 void ESPInit (void);
-qboolean ESPLoadConfig(char *);
 void ESPSetFlag(int, char *);
 void ESPSetTeamSpawns(int, char *);
 int ESPGetRespawnTime(edict_t *);

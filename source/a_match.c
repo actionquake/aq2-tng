@@ -135,11 +135,22 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 {
 	int i;
 	edict_t *oldCaptain = teams[teamNum].captain;
+	edict_t *oldLeader = teams[teamNum].leader;
 
 	if (teamNum == NOTEAM)
 		ent = NULL;
 
 	teams[teamNum].captain = ent;
+	if(esp->value) {
+		// If Espionage is enabled, in ATL mode, also set captain as leader
+		// If ETV mode is abled, and the entity asking to become captain is on Team 1 (Red)
+		if((esp_mode->value) == 0 || (esp_mode->value == 1 && teamNum == TEAM1)){
+			teams[teamNum].leader = ent;
+		} else {
+			// Do not set leader attribute to team 2 in ETV
+			teams[teamNum].leader = NULL;
+		}
+	}
 	if (!ent) {
 		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
 			if (teams[teamNum].ready) {
@@ -149,14 +160,14 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 			}
 			teams[teamNum].ready = 0;
 		}
-		if (oldCaptain) {
+		if (oldCaptain || oldLeader) {
 			gi.bprintf( PRINT_HIGH, "%s is no longer %s's captain\n", oldCaptain->client->pers.netname, teams[teamNum].name );
 		}
 		teams[teamNum].locked = 0;
 		return;
 	}
 
-	if (ent != oldCaptain) {
+	if (ent != oldCaptain || ent != oldLeader) {
 		gi.bprintf( PRINT_HIGH, "%s is now %s's captain\n", ent->client->pers.netname, teams[teamNum].name );
 		gi.cprintf( ent, PRINT_CHAT, "You are the captain of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );

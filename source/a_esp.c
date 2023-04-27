@@ -226,13 +226,13 @@ void EspMakeMarker( edict_t *marker )
 
 	marker->solid = SOLID_TRIGGER;
 	marker->movetype = MOVETYPE_NONE;
-	marker->s.modelindex = dom_blue_marker;
+	marker->s.modelindex = esp_marker;
 	marker->s.skinnum = 0;
 	marker->s.effects = esp_team_effect[ NOTEAM ];
 	marker->s.renderfx = esp_team_fx[ NOTEAM ];
 	marker->owner = NULL;
 	marker->touch = EspTouchFlag;
-	NEXT_KEYFRAME( marker, DomFlagThink );
+	NEXT_KEYFRAME( marker, EspMarkerThink );
 	marker->classname = "item_marker";
 	marker->svflags &= ~SVF_NOCLIENT;
 	gi.linkentity( marker );
@@ -307,7 +307,7 @@ void EspSetTeamSpawns(int team, char *str)
 	} while(next != NULL);
 }
 
-qboolean EspLoadConfig(char *mapname)
+qboolean EspLoadConfig(const char *mapname)
 {
 	char buf[1024];
 	char *ptr, *ptr_team;
@@ -345,7 +345,8 @@ qboolean EspLoadConfig(char *mapname)
 		// TODO: A better GHUD method to display this?
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Hard-coded Espionage configuration loaded\n");
-		gi.dprintf(" Game type  : %s\n", "Assassinate the Leader");
+		gi.dprintf(" Name		  : Elimination");
+		gi.dprintf(" Game type    : %s\n", "Assassinate the Leader");
 		gi.dprintf(" Respawn times: 10 seconds\n");
 		gi.dprintf(" Skins\n");
 		gi.dprintf("  Red Member: %s\n", "male/ctf_r");
@@ -380,10 +381,10 @@ qboolean EspLoadConfig(char *mapname)
 			gi.dprintf(" Author    : %s\n", ptr);
 			Q_strncpyz(espgame.author, ptr, sizeof(espgame.author));
 		}
-		ptr = INI_Find(fh, "esp", "comment");
+		ptr = INI_Find(fh, "esp", "name");
 		if(ptr) {
-			gi.dprintf(" Comment   : %s\n", ptr);
-			Q_strncpyz(espgame.comment, ptr, sizeof(espgame.comment));
+			gi.dprintf(" name   : %s\n", ptr);
+			Q_strncpyz(espgame.name, ptr, sizeof(espgame.name));
 		}
 
 		ptr = INI_Find(fh, "esp", "type");
@@ -557,6 +558,11 @@ qboolean EspLoadConfig(char *mapname)
 	gi.dprintf("-------------------------------------\n");
 
 	fclose(fh);
+
+	if (espgame.type = 1 && use_3teams->value){
+		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
+		espgame.type = 0;
+	}
 
 	return true;
 }

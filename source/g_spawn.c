@@ -988,6 +988,45 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
 		Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
 	}
+	else if (esp->value)
+	{
+	gi.cvar_forceset(gm->name, "esp");
+		gameSettings |= GS_WEAPONCHOOSE;
+
+		// Make sure teamplay is enabled
+		if (!teamplay->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing teamplay on\n");
+			gi.cvar_forceset(teamplay->name, "1");
+		}
+		// ETV mode doesn't support 3 teams, but ATL does
+		if(esp_mode->value == 2) {
+			if (use_3teams->value)
+			{
+				gi.dprintf ("Espionage Enabled - Forcing 3Teams off\n");
+				gi.cvar_forceset(use_3teams->name, "0");
+			}
+		if(teamdm->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Team DM off\n");
+			gi.cvar_forceset(teamdm->name, "0");
+		}
+		if (use_tourney->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Tourney off\n");
+			gi.cvar_forceset(use_tourney->name, "0");
+		}
+		if (dom->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Domination off\n");
+			gi.cvar_forceset(dom->name, "0");
+		}
+		if (!DMFLAGS(DF_NO_FRIENDLY_FIRE))
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Friendly Fire off\n");
+			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
+		}
+	}
 	else if (dom->value)
 	{
 		gi.cvar_forceset(gm->name, "dom");
