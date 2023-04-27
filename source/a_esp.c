@@ -29,6 +29,16 @@ int esp_marker = 0;
 int esp_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
+// int teamCount = 2;
+
+// void GetTeamCount()
+// {
+// 	if (teamCount == 3){
+// 		teamCount = 3;
+// 	}
+// }
+
+
 void EspMarkerThink( edict_t *marker )
 {
 	// If the marker was touched this frame, make it owned by that team.
@@ -57,7 +67,6 @@ void EspMarkerThink( edict_t *marker )
 
 			gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
 				marker->owner->client->pers.netname,
-				(esp_marker_count == 1) ? "the" : "a",
 				location,
 				teams[ marker->owner->client->resp.team ].name );
 
@@ -182,7 +191,7 @@ void EspSetTeamSpawns(int team, char *str)
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
-	if (use_3teams->value){
+	if (teamCount == 3){
 		if(team == TEAM3)
 			team_spawn_name = "info_player_team3";
 	}
@@ -216,6 +225,9 @@ qboolean EspLoadConfig(const char *mapname)
 	qboolean no_file = false;
 	FILE *fh;
 
+	// Find out our team counts now, reference everywhere else by teamCount
+	//GetTeamCount();
+
 	memset(&espgame, 0, sizeof(espgame));
 	esp_marker = gi.modelindex("models/esp/marker.md2");
 
@@ -224,7 +236,7 @@ qboolean EspLoadConfig(const char *mapname)
 	/* zero is perfectly acceptable respawn time, but we want to know if it came from the config or not */
 	espgame.spawn_red = -1;
 	espgame.spawn_blue = -1;
-	if(use_3teams->value)
+	if(teamCount == 3)
 		espgame.spawn_green = -1;
 
 	sprintf (buf, "%s/tng/%s.esp", GAMEVERSION, mapname);
@@ -248,15 +260,15 @@ qboolean EspLoadConfig(const char *mapname)
 		// TODO: A better GHUD method to display this?
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Hard-coded Espionage configuration loaded\n");
-		gi.dprintf(" Name		  : Elimination");
-		gi.dprintf(" Game type    : %s\n", "Assassinate the Leader");
+		gi.dprintf(" Name		  : Elimination\n");
+		gi.dprintf(" Game type    : Assassinate the Leader\n");
 		gi.dprintf(" Respawn times: 10 seconds\n");
 		gi.dprintf(" Skins\n");
 		gi.dprintf("  Red Member: %s\n", "male/ctf_r");
 		gi.dprintf("  Red Leader: %s\n", "male/babarracuda");
 		gi.dprintf("  Blue Member: %s\n", "male/ctf_b");
 		gi.dprintf("  Blue Leader: %s\n", "male/blues");
-		if(use_3teams->value){
+		if(teamCount == 3){
 			gi.dprintf("  Green Member: %s\n", "male/ctf_g");
 			gi.dprintf("  Green Leader: %s\n", "male/hulk2");
 
@@ -320,7 +332,7 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("  Blue     : %s\n", ptr);
 			espgame.spawn_blue = atoi(ptr);
 		}
-		if (use_3teams->value){
+		if (teamCount == 3){
 			ptr = INI_Find(fh, "respawn", "green");
 			if(ptr) {
 				gi.dprintf("  Green     : %s\n", ptr);
@@ -343,20 +355,22 @@ qboolean EspLoadConfig(const char *mapname)
 		if(ptr) {
 			gi.dprintf("  Red      : %s\n", ptr);
 			EspSetTeamSpawns(TEAM1, ptr);
+			espgame.custom_spawns = true;
 		}
 		ptr = INI_Find(fh, "spawns", "blue");
 		if(ptr) {
 			gi.dprintf("  Blue     : %s\n", ptr);
 			EspSetTeamSpawns(TEAM2, ptr);
+			espgame.custom_spawns = true;
 		}
-		if (use_3teams->value){
+		if (teamCount == 3){
 			ptr = INI_Find(fh, "spawns", "green");
 			if(ptr) {
 				gi.dprintf("  Green     : %s\n", ptr);
 				EspSetTeamSpawns(TEAM3, ptr);
+				espgame.custom_spawns = true;
 			}
 		}
-		espgame.custom_spawns = true;
 		
 		gi.dprintf(" Skins\n");
 		ptr = INI_Find(fh, "skins", "red_member");
@@ -389,7 +403,7 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("Warning: No skin set for blue_member, defaulting to male/ctf_b\n");
 			gi.dprintf("  Blue Member: %s\n", "male/ctf_b");
 		}
-		if(use_3teams->value) {
+		if(teamCount == 3) {
 			ptr = INI_Find(fh, "skins", "green_member");
 			ptr_team = INI_Find(fh, "teams", "green");
 			if(ptr) {
@@ -437,7 +451,7 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("Warning: No skin set for blue_leader, defaulting to male/blues\n");
 			gi.dprintf("  Blue Leader: %s\n", "male/blues");
 		}
-		if(use_3teams->value){
+		if(teamCount == 3){
 			ptr = INI_Find(fh, "skins", "green_leader");
 			ptr_team = INI_Find(fh, "teams", "green_leader");
 			if(ptr) {
@@ -457,14 +471,15 @@ qboolean EspLoadConfig(const char *mapname)
 	}
 
 	// automagically change spawns *only* when we do not have team spawns
-	if(!espgame.custom_spawns)
-		ChangePlayerSpawns();
+	// if(!espgame.custom_spawns)
+	// 	ChangePlayerSpawns();
 
 	gi.dprintf("-------------------------------------\n");
 
-	fclose(fh);
+	if (fh)
+		fclose(fh);
 
-	if (espgame.type == 1 && use_3teams->value){
+	if (espgame.type == 1 && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
 		espgame.type = 0;
 	}
@@ -749,7 +764,7 @@ void SetEspStats( edict_t *ent )
 int EspOtherTeam(int team)
 {
 	// This is only used when there are 2 teams
-	if(use_3teams->value)
+	if(teamCount == 3)
 		return -1;
 
 	switch (team) {
@@ -830,31 +845,37 @@ qboolean EspCheckRules(void)
 	return false;
 }
 
-qboolean AllTeamsHaveLeaders()
+qboolean AllTeamsHaveLeaders(void)
 {
-	int teamcount, i, teamsWithLeaders;
+	int tc = teamCount;
+	int teamsWithLeaders = 0;
 
 	//AQ2:TNG Slicer Matchmode
 	if (matchmode->value && !TeamsReady())
 		return false;
 	//AQ2:TNG END
 
-	teamsWithLeaders = 0;
-	for (i = TEAM1; i <= teamCount; i++)
+	for (int i = TEAM1; i <= teamCount; i++)
 	{
 		if (HAVE_LEADER(i)) {
 			teamsWithLeaders++;
 		}
 	}
 
-	if (use_3teams->value)
-		teamcount = TEAM3;
-	else
-		teamcount = TEAM2;
-	
 	// Only Team 1 needs a leader in ETV mode
 	if (espgame.type == 1 && HAVE_LEADER(TEAM1))
-		teamcount = teamcount - 1;
+		tc = teamCount - 1;
 
-	return (teamsWithLeaders >= teamcount);
+
+	gi.dprintf("Leader count: %d\n", teamsWithLeaders);
+
+	gi.dprintf("tc count: %d\n", tc);
+
+	if(teamsWithLeaders >= tc){
+		gi.dprintf("true\n");
+		return true;
+	} else {
+		gi.dprintf("false\n");
+		return false;
+	}
 }

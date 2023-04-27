@@ -1270,8 +1270,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			}
 		}
 	}
-	else if( dom->value )
-		DomLoadConfig( level.mapname );
+	else if(dom->value)
+		DomLoadConfig(level.mapname);
+	else if (esp->value)
+		EspLoadConfig(level.mapname);
 
 	G_FindTeams();
 

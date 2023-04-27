@@ -74,6 +74,8 @@ void ESPSetFlag(int, char *);
 void ESPSetTeamSpawns(int, char *);
 int ESPGetRespawnTime(edict_t *);
 
+qboolean AllTeamsHaveLeaders(void);
+
 void SP_info_player_team1 (edict_t * self);
 void SP_info_player_team2 (edict_t * self);
 
