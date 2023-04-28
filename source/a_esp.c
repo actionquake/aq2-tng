@@ -488,19 +488,6 @@ qboolean EspLoadConfig(const char *mapname)
 			EspEnforceDefaultSettings("team");
 			espsettings.custom_skins = false;
 		} else {
-			/// Default skin/team/names - red team
-			// Q_strncpyz(teams[TEAM1].name, red_team_name, sizeof(teams[TEAM1].name));
-			// gi.dprintf("DEBUG: %s", teams[TEAM1].name);
-			// Q_strncpyz(teams[TEAM1].skin, red_skin_name, sizeof(teams[TEAM1].skin));
-			// Q_strncpyz(teams[TEAM1].leader_name, red_leader_name, sizeof(teams[TEAM1].leader_name));
-			// Q_strncpyz(teams[TEAM1].leader_skin, INI_Find(fh, "red_team", "leader"), sizeof(teams[TEAM1].leader_skin));
-			// /// Default skin/team/names - blue team
-			// Q_strncpyz(teams[TEAM2].name, blue_team_name, sizeof(teams[TEAM2].name));
-			// Q_strncpyz(teams[TEAM2].skin, blue_skin_name, sizeof(teams[TEAM2].skin));
-			// Q_strncpyz(teams[TEAM2].leader_name, blue_leader_name, sizeof(teams[TEAM2].leader_name));
-			// Q_strncpyz(teams[TEAM2].leader_skin, blue_leader_skin, sizeof(teams[TEAM2].leader_skin));
-			
-
 			espsettings.custom_skins = true;
 			esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
 			esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
