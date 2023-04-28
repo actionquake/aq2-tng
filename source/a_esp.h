@@ -2,6 +2,33 @@ extern cvar_t *esp;
 
 #define IS_LEADER(ent) (teams[(ent)->client->resp.team].leader == (ent))
 #define	HAVE_LEADER(teamNum) (teams[(teamNum)].leader)
+#define MAX_ESP_STRLEN 32
+
+// Game modes
+#define ESPMODE_ATL					0
+#define ESPMODE_ETV					1
+
+#define ESPMODE_ATL_NAME			"Assassinate the Leader"
+#define ESPMODE_ETV_NAME			"Escort the VIP"
+
+#define ESPMODE_ATL_SNAME			"atl"
+#define ESPMODE_ETV_SNAME			"etv"
+
+
+// Game default settings
+#define ESP_RESPAWN_TIME			10
+#define ESP_RED_SKIN				"male/ctf_r"
+#define ESP_BLUE_SKIN				"male/ctf_b"
+#define ESP_GREEN_SKIN				"male/ctf_g"
+#define ESP_RED_LEADER_SKIN			"male/babarracuda"
+#define ESP_BLUE_LEADER_SKIN		"male/blues"
+#define ESP_GREEN_LEADER_SKIN		"male/hulk2"
+#define ESP_RED_TEAM				"The B-Team"
+#define ESP_BLUE_TEAM				"Mall Cops"
+#define ESP_GREEN_TEAM				"Mop-up Crew"
+#define ESP_RED_LEADER_NAME			"male/babarracuda"
+#define ESP_BLUE_LEADER_NAME		"male/blues"
+#define ESP_GREEN_LEADER_NAME		"male/hulk2"
 
 int EspFlagOwner( edict_t *flag );
 void EspRemember( const edict_t *ent, const gitem_t *item );
@@ -16,27 +43,53 @@ typedef enum
 }
 espstate_t;
 
-typedef struct espgame_s {
-	int team1, team2, team3;
-	int total1, total2;	// these are only set when going into intermission!
-	int last_flag_capture;
-	int last_capture_team;
-	int halftime;
+typedef struct espteam_s {
+    char name[MAX_TEAMNAMELEN];
+    char leader[MAX_ESP_STRLEN];
+    char skin[MAX_SKINLEN];
+	char leaderskin[MAX_SKINLEN];
+	int respawn;
+	int score;
+} espteam_t;
 
-	/* ESP configuration from .esp */
-	int type;		// 0 = atl, 1 = etv
-	/* team spawn times in seconds */
-	int spawn_red;
-	int spawn_blue;
-    int spawn_green;
+typedef struct espsettings_s
+{
+	char mode[4];
+	char author[MAX_ESP_STRLEN*3];
+	char name[MAX_ESP_STRLEN];
+	float red_spawns[10][4];
+	float blue_spawns[10][4];
+	float green_spawns[10][4];
 	qboolean custom_spawns;
 	qboolean custom_skins;
-	char author[64];
-	char name[128];
-} espgame_t;
+	int halftime;
+	int capturestreak;
+    struct espteam_s *espteams[3];  // One team object for each color
+} espsettings_t;
 
-extern espgame_t espgame;
+// typedef struct espgame_s {
+// 	int team1, team2, team3;
+// 	int total1, total2;	// these are only set when going into intermission!
+// 	int last_flag_capture;
+// 	int last_capture_team;
+// 	int halftime;
 
+// 	/* ESP configuration from .esp */
+// 	int type;		// 0 = atl, 1 = etv
+// 	/* team spawn times in seconds */
+// 	int spawn_red;
+// 	int spawn_blue;
+//     int spawn_green;
+// 	qboolean custom_spawns;
+// 	qboolean custom_skins;
+// 	char author[64];
+// 	char name[128];
+// } espgame_t;
+
+//extern espgame_t espgame;
+
+extern espsettings_t *espsettings;
+extern espteam_t *espteam;
 extern gitem_t *team_flag[TEAM_TOP];
 
 #define ESP_TEAM1_SKIN "ctf_r"

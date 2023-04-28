@@ -1584,6 +1584,7 @@ void LogEndMatchStats();
 #define ANIM_REVERSE            -1
 
 #define MAX_SKINLEN				32
+#define MAX_TEAMNAMELEN			32
 
 #define MAX_GUNSTAT MOD_GRENADE //Max MOD to track
 

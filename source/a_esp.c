@@ -4,7 +4,8 @@
 
 #include "g_local.h"
 
-espgame_t espgame;
+// espteam_t *espteam;
+// espsettings_t *espsettings;
 
 cvar_t *esp_respawn = NULL;
 
@@ -32,9 +33,9 @@ int esp_last_score = 0;
 char *red_skin_name;
 char *blue_skin_name;
 char *green_skin_name;
-char *red_crew_name;
-char *blue_crew_name;
-char *green_crew_name;
+char *red_team_name;
+char *blue_team_name;
+char *green_team_name;
 char *red_leader_skin_name;
 char *blue_leader_skin_name;
 char *green_leader_skin_name;
@@ -221,6 +222,44 @@ void EspSetTeamSpawns(int team, char *str)
 	} while(next != NULL);
 }
 
+void EspEnforceDefaultSettings(char *defaulttype)
+{
+	qboolean default_team = (Q_stricmp(defaulttype,"team")==0) ? true : false;
+	qboolean default_respawn = (Q_stricmp(defaulttype,"respawn")==0) ? true : false;
+	qboolean default_author = (Q_stricmp(defaulttype,"author")==0) ? true : false;
+
+	if(default_author) {
+		Q_strncpyz(espsettings->mode, ESPMODE_ATL, sizeof(espsettings->mode));
+		Q_strncpyz(espsettings->author, "AQ2World Team", sizeof(espsettings->author));
+		Q_strncpyz(espsettings->name, "Time for Action!", sizeof(espsettings->name));
+	}
+	if(default_respawn) {
+		espteam[TEAM1].respawn = ESP_RESPAWN_TIME;
+		espteam[TEAM2].respawn = ESP_RESPAWN_TIME;
+		if(teamCount == 3)
+			espteam[TEAM3].respawn = ESP_RESPAWN_TIME;
+	}
+	if(default_team) {
+		/// Default skin/team/names - red team
+		Q_strncpyz(espteam[TEAM1].name, ESP_RED_TEAM, sizeof(espteam[TEAM1].name));
+		Q_strncpyz(espteam[TEAM1].skin, ESP_RED_SKIN, sizeof(espteam[TEAM1].skin));
+		Q_strncpyz(espteam[TEAM1].leader, ESP_RED_LEADER_NAME, sizeof(espteam[TEAM1].leader));
+		Q_strncpyz(espteam[TEAM1].leaderskin, ESP_RED_LEADER_SKIN, sizeof(espteam[TEAM1].leaderskin));
+		/// Default skin/team/names - blue team
+		Q_strncpyz(espteam[TEAM2].name, ESP_BLUE_TEAM, sizeof(espteam[TEAM2].name));
+		Q_strncpyz(espteam[TEAM2].skin, ESP_BLUE_SKIN, sizeof(espteam[TEAM2].skin));
+		Q_strncpyz(espteam[TEAM2].leader, ESP_BLUE_LEADER_NAME, sizeof(espteam[TEAM2].leader));
+		Q_strncpyz(espteam[TEAM2].leaderskin, ESP_BLUE_LEADER_SKIN, sizeof(espteam[TEAM2].leaderskin));
+		if(teamCount == 3) {
+			/// Default skin/team/names - green team
+			Q_strncpyz(espteam[TEAM3].name, ESP_GREEN_TEAM, sizeof(espteam[TEAM3].name));
+			Q_strncpyz(espteam[TEAM3].skin, ESP_GREEN_SKIN, sizeof(espteam[TEAM3].skin));
+			Q_strncpyz(espteam[TEAM3].leader, ESP_GREEN_LEADER_NAME, sizeof(espteam[TEAM3].leader));
+			Q_strncpyz(espteam[TEAM3].leaderskin, ESP_GREEN_LEADER_SKIN, sizeof(espteam[TEAM3].leaderskin));
+		}
+	}
+}
+
 qboolean EspLoadConfig(const char *mapname)
 {
 	char buf[1024];
@@ -228,26 +267,18 @@ qboolean EspLoadConfig(const char *mapname)
 	qboolean no_file = false;
 	FILE *fh;
 
-	// Find out our team counts now, reference everywhere else by teamCount
-	//GetTeamCount();
+	memset(&espsettings, 0, sizeof(espsettings));
 
-	memset(&espgame, 0, sizeof(espgame));
 	esp_marker = gi.modelindex("models/esp/marker.md2");
 
 	gi.dprintf("Trying to load Espionage configuration file\n", mapname);
-
-	/* zero is perfectly acceptable respawn time, but we want to know if it came from the config or not */
-	espgame.spawn_red = -1;
-	espgame.spawn_blue = -1;
-	if(teamCount == 3)
-		espgame.spawn_green = -1;
 
 	sprintf (buf, "%s/tng/%s.esp", GAMEVERSION, mapname);
 	fh = fopen (buf, "r");
 	if (!fh) {
 		//Default to ATL mode in this case
 		gi.dprintf ("Warning: Espionage configuration file \" %s \" was not found.\n", buf);
-		espgame.type = 0;
+		Q_strncpyz(espsettings->mode, ESPMODE_ATL, sizeof(espsettings->mode));
 		sprintf (buf, "%s/tng/default.esp", GAMEVERSION);
 		fh = fopen (buf, "r");
 		if (!fh){
@@ -268,21 +299,24 @@ qboolean EspLoadConfig(const char *mapname)
 		gi.dprintf(" Game type    : Assassinate the Leader\n");
 		gi.dprintf(" Respawn times: 10 seconds\n");
 		gi.dprintf(" Skins\n");
-		gi.dprintf("  Red Member: %s\n", "male/ctf_r");
-		gi.dprintf("  Red Leader: %s\n", "male/babarracuda");
-		gi.dprintf("  Blue Member: %s\n", "male/ctf_b");
-		gi.dprintf("  Blue Leader: %s\n", "male/blues");
+		gi.dprintf("  Red Team: %s -- %s\n", ESP_RED_TEAM, ESP_RED_SKIN);
+		gi.dprintf("  Red Leader: %s -- %s\n", ESP_RED_LEADER_NAME, ESP_RED_LEADER_SKIN);
+		gi.dprintf("  Blue Team: %s -- %s\n", ESP_BLUE_TEAM, ESP_BLUE_SKIN);
+		gi.dprintf("  Blue Leader: %s -- %s\n", ESP_BLUE_LEADER_NAME, ESP_BLUE_LEADER_SKIN);
 		if(teamCount == 3){
-			gi.dprintf("  Green Member: %s\n", "male/ctf_g");
-			gi.dprintf("  Green Leader: %s\n", "male/hulk2");
+			gi.dprintf("  Green Team: %s -- %s\n", ESP_GREEN_TEAM, ESP_GREEN_SKIN);
+			gi.dprintf("  Green Leader: %s -- %s\n", ESP_GREEN_LEADER_NAME, ESP_GREEN_LEADER_SKIN);
 
-			espgame.spawn_green = 10;
 			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
 			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
 		}
 
-		espgame.spawn_red = 10;
-		espgame.spawn_blue = 10;
+		// Set game type to ATL
+		/// Default game settings
+		EspEnforceDefaultSettings("author");
+		EspEnforceDefaultSettings("respawn");
+		EspEnforceDefaultSettings("team");
+		
 		// Skin and Team Names
 		esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
 		esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
@@ -290,62 +324,91 @@ qboolean EspLoadConfig(const char *mapname)
 		esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
 
 		// No custom spawns, use default for map
-		espgame.custom_spawns = false;
+		espsettings->custom_spawns = false;
 	} else {
 
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Espionage configuration loaded from %s\n", buf);
 		ptr = INI_Find(fh, "esp", "author");
-		if(ptr) {
-			gi.dprintf(" Author    : %s\n", ptr);
-			Q_strncpyz(espgame.author, ptr, sizeof(espgame.author));
-		}
-		ptr = INI_Find(fh, "esp", "name");
-		if(ptr) {
-			gi.dprintf(" Name      : %s\n", ptr);
-			Q_strncpyz(espgame.name, ptr, sizeof(espgame.name));
+		if(strlen(ptr) > MAX_ESP_STRLEN){
+			if(ptr) {
+				gi.dprintf(" Author    : %s\n", ptr);
+				Q_strncpyz(espsettings->author, ptr, sizeof(espsettings->author));
+			}
+			ptr = INI_Find(fh, "esp", "name");
+			if(ptr) {
+				gi.dprintf(" Name      : %s\n", ptr);
+				Q_strncpyz(espsettings->name, ptr, sizeof(espsettings->name));
+			}
+		} else {
+			gi.dprintf("Warning: String length of author or name is too large, reduce it to less than %d characters\n", MAX_ESP_STRLEN);
+			gi.dprintf("Enforcing defaults\n");
+			EspEnforceDefaultSettings("author");
 		}
 
 		ptr = INI_Find(fh, "esp", "type");
-		char *gametypename = "Assassinate the Leader";
-		if(ptr) {
-			if (esp->value == 1) {
-				if(strcmp(ptr, "etv") == 0){
-					espgame.type = 1;
-					gametypename = "Escort the VIP";	
+		char *gametypename = ESPMODE_ATL_NAME;
+		char *gametypesname = ESPMODE_ATL_SNAME;
+		int espgametype = ESPMODE_ATL; // Defaults to ATL mode
+		if((strcmp(ptr, ESPMODE_ATL_SNAME) != 0) || strcmp(ptr, ESPMODE_ETV_SNAME) != 0){
+			gi.dprintf("Value for '[esp] type is not 'etv' or 'atl', forcing ATL mode\n");
+		} else {
+			if(ptr) {
+				if (esp->value == 1) {
+					if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
+						espgametype = ESPMODE_ETV;
+						gametypename = ESPMODE_ETV_NAME;
+						gametypesname = ESPMODE_ETV_SNAME;
+					}
+					if(strcmp(ptr, ESPMODE_ATL_SNAME) == 0){
+						espgametype = ESPMODE_ATL;
+						gametypename = ESPMODE_ATL_NAME;
+						gametypesname = ESPMODE_ATL_SNAME;
+					}
+				// Enforce that we only want ATL mode even if an ETV file is loaded
+				} else if (esp->value == 2) {
+					espgametype = ESPMODE_ATL;
+					gametypename = ESPMODE_ATL_NAME;
+					gametypesname = ESPMODE_ATL_SNAME;
 				}
-				if(strcmp(ptr, "atl") == 0){
-					espgame.type = 0;
-					gametypename = "Assassinate the Leader";
-				}
-			} else if (esp->value == 2) {
-				espgame.type = 0;
-					gametypename = "Assassinate the Leader";
 			}
+			Q_strncpyz(espsettings->mode, gametypesname, sizeof(espsettings->mode));
 			gi.dprintf(" Game type : %s\n", gametypename);
 		}
 
 		gi.dprintf(" Respawn times\n");
-		ptr = INI_Find(fh, "respawn", "red");
-		if(ptr) {
-			gi.dprintf("  Red      : %s seconds\n", ptr);
-			espgame.spawn_red = atoi(ptr);
-		}
-		ptr = INI_Find(fh, "respawn", "blue");
-		if(ptr) {
-			gi.dprintf("  Blue     : %s seconds\n", ptr);
-			espgame.spawn_blue = atoi(ptr);
-		}
-		if (teamCount == 3){
-			ptr = INI_Find(fh, "respawn", "green");
-			if(ptr) {
-				gi.dprintf("  Green     : %s seconds\n", ptr);
-				espgame.spawn_green = atoi(ptr);
+		char *r_respawn_time, *b_respawn_time, *g_respawn_time;
+
+		r_respawn_time = INI_Find(fh, "respawn", "red");
+		b_respawn_time = INI_Find(fh, "respawn", "blue");
+		if(teamCount == 3)
+			g_respawn_time = INI_Find(fh, "respawn", "green");
+		else
+			g_respawn_time = NULL;
+
+		if ((!r_respawn_time || !b_respawn_time) || (teamCount == 3 && !g_respawn_time)){
+			gi.dprintf("Warning: Malformed or missing settings for respawn times\n");
+			gi.dprintf("Enforcing defaults\n");
+			EspEnforceDefaultSettings("respawn");
+		} else {
+			if(r_respawn_time) {
+				gi.dprintf("  Red      : %s seconds\n", r_respawn_time);
+				espteam[TEAM1].respawn = atoi(r_respawn_time);
+			}
+			if(b_respawn_time) {
+				gi.dprintf("  Blue     : %s seconds\n", b_respawn_time);
+				espteam[TEAM2].respawn = atoi(b_respawn_time);
+			}
+			if (teamCount == 3){
+				if(g_respawn_time) {
+					gi.dprintf("  Green     : %s seconds\n", g_respawn_time);
+					espteam[TEAM3].respawn = atoi(g_respawn_time);
+				}
 			}
 		}
 
 		// Only set the marker if the scenario is ETV
-		if(espgame.type == 1) {
+		if(strcmp(espsettings->mode, ESPMODE_ETV_SNAME) == 0) {
 			gi.dprintf(" Target\n");
 			ptr = INI_Find(fh, "target", "escort");
 			if(ptr) {
@@ -355,102 +418,71 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		//gi.dprintf(" Spawns\n");
-		ptr = INI_Find(fh, "spawns", "red");
-		if(ptr) {
-			//gi.dprintf("  Red      : %s\n", ptr);
-			EspSetTeamSpawns(TEAM1, ptr);
-			espgame.custom_spawns = true;
-		}
-		ptr = INI_Find(fh, "spawns", "blue");
-		if(ptr) {
-			//gi.dprintf("  Blue     : %s\n", ptr);
-			EspSetTeamSpawns(TEAM2, ptr);
-			espgame.custom_spawns = true;
-		}
-		if (teamCount == 3){
-			ptr = INI_Find(fh, "spawns", "green");
-			if(ptr) {
-				//gi.dprintf("  Green     : %s\n", ptr);
-				EspSetTeamSpawns(TEAM3, ptr);
-				espgame.custom_spawns = true;
+		char *r_spawnlist, *b_spawnlist, *g_spawnlist;
+
+		r_spawnlist = INI_Find(fh, "respawn", "red");
+		b_spawnlist = INI_Find(fh, "respawn", "blue");
+		if(teamCount == 3)
+			g_spawnlist = INI_Find(fh, "respawn", "green");
+
+		if ((!r_spawnlist || !b_spawnlist) || (teamCount == 3 && !g_spawnlist)){
+			gi.dprintf("Warning: Malformed or missing settings for spawn locations\n");
+			gi.dprintf("Enforcing normal spawnpoints\n");
+			espsettings->custom_spawns = false;
+		} else {
+			espsettings->custom_spawns = true;
+			EspSetTeamSpawns(TEAM1, r_spawnlist);
+			memcpy(espsettings->red_spawns, r_spawnlist, sizeof(espsettings->red_spawns));
+
+			EspSetTeamSpawns(TEAM2, b_spawnlist);
+			memcpy(espsettings->blue_spawns, b_spawnlist, sizeof(espsettings->blue_spawns));
+			if (teamCount == 3){
+				EspSetTeamSpawns(TEAM3, g_spawnlist);
+				memcpy(espsettings->green_spawns, g_spawnlist, sizeof(espsettings->green_spawns));
 			}
 		}
 		
 		gi.dprintf(" Teams\n");
-		red_skin_name = INI_Find(fh, "skins", "red_crew");
-		red_crew_name = INI_Find(fh, "teams", "red_crew");
-		if(red_skin_name) {
-			//gi.dprintf("  Red Crew: %s\n", ptr);
+		red_skin_name = INI_Find(fh, "red_team", "skin");
+		red_team_name = INI_Find(fh, "red_team", "name");
+		red_leader_name = INI_Find(fh, "red_team", "leader");
+		red_leader_skin_name = INI_Find(fh, "red_team", "leaderskin");
+
+		blue_skin_name = INI_Find(fh, "blue_team", "skin");
+		blue_team_name = INI_Find(fh, "blue_team", "name");
+		blue_leader_name = INI_Find(fh, "blue_team", "leader");
+		blue_leader_skin_name = INI_Find(fh, "blue_team", "leaderskin");
+
+		if (teamCount == 3){
+			green_skin_name = INI_Find(fh, "green_team", "skin");
+			green_team_name = INI_Find(fh, "green_team", "name");
+			green_leader_name = INI_Find(fh, "green_team", "leader");
+			green_leader_skin_name = INI_Find(fh, "green_team", "leaderskin");
+		}
+
+		if((!red_skin_name || !red_team_name || !red_leader_name || !red_leader_skin_name ||
+		!blue_skin_name || !blue_team_name || !blue_leader_name || !blue_leader_skin_name) || 
+		((teamCount == 3) && (!green_skin_name || !green_team_name || !green_leader_name || !green_leader_skin_name))){
+			gi.dprintf("Warning: Could not read value for team skin, name, leader or leaderskin, review your file\n");
+			gi.dprintf("Enforcing defaults\n");
+			EspEnforceDefaultSettings("team");
+			espsettings->custom_skins = false;
+		} else {
+			espsettings->custom_skins = true;
 			esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
-			espgame.custom_skins = true;
-		} else {
-			gi.dprintf("Warning: No skin set for red_crew, defaulting to male/ctf_r\n");
-			gi.dprintf("  Red Crew: %s\n", "male/ctf_r");
-		}
-		blue_skin_name = INI_Find(fh, "skins", "blue_crew");
-		blue_crew_name = INI_Find(fh, "teams", "blue_crew");
-		if(blue_skin_name) {
-			//gi.dprintf("  Blue Crew: %s\n", blue_skin_name);
+			esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
 			esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-			espgame.custom_skins = true;
-		} else {
-			gi.dprintf("Warning: No skin set for blue_crew, defaulting to male/ctf_b\n");
-			gi.dprintf("  Blue Crew: %s\n", "male/ctf_b");
-		}
-		if(teamCount == 3) {
-			green_skin_name = INI_Find(fh, "skins", "green_crew");
-			green_crew_name = INI_Find(fh, "teams", "green_crew");
-			if(green_skin_name) {
-				//gi.dprintf("  Green Crew: %s\n", green_skin_name);
+			esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
+			if (teamCount == 3) {
 				esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
-				espgame.custom_skins = true;
-			} else {
-				gi.dprintf("Warning: No skin set for green_crew, defaulting to male/ctf_g\n");
-				gi.dprintf("  Green Crew: %s\n", "male/ctf_g");
+				esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
 			}
-		}
-		// Leader Skins
-		red_leader_skin_name = INI_Find(fh, "skins", "red_leader");
-		red_leader_name = INI_Find(fh, "teams", "red_leader");
-		if(red_leader_skin_name) {
-			//gi.dprintf("  Red Leader: %s\n", ptr);
-			esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-			espgame.custom_skins = true;
-		} else {
-			gi.dprintf("Warning: No skin set for red_leader, defaulting to male/resdog\n");
-			gi.dprintf("  Red Leader: %s\n", "male/resdog");
-		}
-		blue_leader_skin_name = INI_Find(fh, "skins", "blue_leader");
-		blue_leader_name = INI_Find(fh, "teams", "blue_leader");
-		if(blue_leader_skin_name) {
-			//gi.dprintf("  Blue Leader: %s\n", blue_skin_name);
-			esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-			espgame.custom_skins = true;
-		} else {
-			gi.dprintf("Warning: No skin set for blue_leader, defaulting to male/blues\n");
-			gi.dprintf("  Blue Leader: %s\n", "male/blues");
-		}
-		if(teamCount == 3){
-			green_leader_skin_name = INI_Find(fh, "skins", "green_leader");
-			green_leader_name = INI_Find(fh, "teams", "green_leader");
-			if(green_leader_skin_name) {
-				//gi.dprintf("  Green Leader: %s\n", ptr);
-				esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-				espgame.custom_skins = true;
-			} else {
-				gi.dprintf("Warning: No skin set for green_leader, defaulting to male/hulk2\n");
-				gi.dprintf("  Green Leader: %s\n", "male/hulk2");
-			}
-		}
 
-		if(red_crew_name && red_skin_name && red_leader_name)
-			gi.dprintf("  Red Crew : %s, Leader: %s, Skin: %s\n", red_crew_name, red_leader_name, red_skin_name);
-		if(blue_crew_name && blue_skin_name && blue_leader_name)
-			gi.dprintf("  Blue Crew : %s, Leader: %s, Skin: %s\n", blue_crew_name, blue_leader_name, blue_skin_name);
-		if(teamCount == 3)
-			if(green_crew_name && green_skin_name && green_leader_name)
-				gi.dprintf("  Green Crew : %s, Leader: %s, Skin: %s\n", green_crew_name, green_leader_name, green_skin_name);
-
+			gi.dprintf("  Red Team : %s, Leader: %s, Skin: %s\n", red_team_name, red_leader_name, red_skin_name);
+			gi.dprintf("  Blue Team : %s, Leader: %s, Skin: %s\n", blue_team_name, blue_leader_name, blue_skin_name);
+			if(teamCount == 3)
+				gi.dprintf("  Green Team : %s, Leader: %s, Skin: %s\n", green_team_name, green_leader_name, green_skin_name);
+		}
 	}
 
 	// automagically change spawns *only* when we do not have team spawns
@@ -462,9 +494,9 @@ qboolean EspLoadConfig(const char *mapname)
 	if (fh)
 		fclose(fh);
 
-	if (espgame.type == 1 && teamCount == 3){
+	if((strcmp(espsettings->mode, ESPMODE_ETV_SNAME) == 0) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
-		espgame.type = 0;
+		Q_strncpyz(espsettings->mode, ESPMODE_ATL_SNAME, sizeof(espsettings->mode));
 	}
 
 	return true;
@@ -473,12 +505,12 @@ qboolean EspLoadConfig(const char *mapname)
 int EspGetRespawnTime(edict_t *ent)
 {
 	int spawntime = esp_respawn->value;
-	if(ent->client->resp.team == TEAM1 && espgame.spawn_red > -1)
-		spawntime = espgame.spawn_red;
-	else if(ent->client->resp.team == TEAM2 && espgame.spawn_blue > -1)
-		spawntime = espgame.spawn_blue;
-	else if(ent->client->resp.team == TEAM3 && espgame.spawn_green > -1)
-		spawntime = espgame.spawn_green;
+	if(ent->client->resp.team == TEAM1 && espteam[TEAM1].respawn > -1)
+		spawntime = espteam[TEAM1].respawn;
+	else if(ent->client->resp.team == TEAM2 && espteam[TEAM2].respawn > -1)
+		spawntime = espteam[TEAM2].respawn;
+	else if((teamCount == 3) && ent->client->resp.team == TEAM3 && espteam[TEAM3].respawn > -1)
+		spawntime = espteam[TEAM3].respawn;
 
 	gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
 
@@ -775,9 +807,9 @@ void EspSwapTeams()
 	}
 
 	/* swap scores too! */
-	i = espgame.team1;
-	espgame.team1 = espgame.team2;
-	espgame.team2 = i;
+	i = espteam[TEAM1].score;
+	espteam[TEAM1].score = espteam[TEAM2].score;
+	espteam[TEAM2].score = i;
 
 	// Swap matchmode team captains.
 	ent = teams[TEAM1].captain;
@@ -789,32 +821,34 @@ void EspSwapTeams()
 
 qboolean EspCheckRules(void)
 {
-	// Espionage uses the same capturelimit cvars as CTF
-	if( capturelimit->value && (espgame.team1 >= capturelimit->value || espgame.team2 >= capturelimit->value) )
-	{
-		gi.bprintf(PRINT_HIGH, "Capturelimit hit.\n");
-		IRC_printf(IRC_T_GAME, "Capturelimit hit.\n");
-		return true;
+	// Espionage ETV uses the same capturelimit cvars as CTF
+	if(strcmp(espsettings->mode, ESPMODE_ETV_SNAME) == 0) {
+		if( capturelimit->value && (espteam[TEAM1].score >= capturelimit->value || espteam[TEAM2].score >= capturelimit->value) )
+		{
+			gi.bprintf(PRINT_HIGH, "Capturelimit hit.\n");
+			IRC_printf(IRC_T_GAME, "Capturelimit hit.\n");
+			return true;
+		}
 	}
 
-	if( timelimit->value > 0 && espgame.type > 0 )
+	if( timelimit->value > 0 && espsettings->mode > 0 )
 	{
-		if( espgame.halftime == 0 && level.matchTime >= (timelimit->value * 60) / 2 - 60 )
+		if( espsettings->halftime == 0 && level.matchTime >= (timelimit->value * 60) / 2 - 60 )
 		{
 			if( use_warnings->value )
 			{
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 			}
-			espgame.halftime = 1;
+			espsettings->halftime = 1;
 		}
-		else if( espgame.halftime == 1 && level.matchTime >= (timelimit->value * 60) / 2 - 10 )
+		else if( espsettings->halftime == 1 && level.matchTime >= (timelimit->value * 60) / 2 - 10 )
 		{
 			if( use_warnings->value )
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
-			espgame.halftime = 2;
+			espsettings->halftime = 2;
 		}
-		else if( espgame.halftime < 3 && level.matchTime >= (timelimit->value * 60) / 2 + 1 && esp_etv_halftime->value && esp_mode->value == 1)
+		else if( espsettings->halftime < 3 && level.matchTime >= (timelimit->value * 60) / 2 + 1 && esp_etv_halftime->value && esp_mode->value == 1)
 		{
 			team_round_going = team_round_countdown = team_game_going = 0;
 			MakeAllLivePlayersObservers ();
@@ -822,7 +856,7 @@ qboolean EspCheckRules(void)
 			CenterPrintAll("The teams have been switched!");
 			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				 gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
-			espgame.halftime = 3;
+			espsettings->halftime = 3;
 		}
 	}
 	return false;
@@ -846,9 +880,8 @@ qboolean AllTeamsHaveLeaders(void)
 	}
 
 	// Only Team 1 needs a leader in ETV mode
-	if (espgame.type == 1 && HAVE_LEADER(TEAM1))
+	if((strcmp(espsettings->mode, ESPMODE_ETV_SNAME) == 0) && HAVE_LEADER(TEAM1))
 		tc = teamCount - 1;
-
 
 	gi.dprintf("Leader count: %d\n", teamsWithLeaders);
 
