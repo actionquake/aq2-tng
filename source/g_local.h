@@ -2328,6 +2328,9 @@ typedef struct team_s
 	edict_t	*captain;
 	// Espionage
 	edict_t *leader;
+	int respawn_timer;
+	char leader_name[MAX_SKINLEN];
+	char leader_skin[MAX_QPATH];
 	char leader_skin_index[MAX_QPATH];
 }team_t;
 

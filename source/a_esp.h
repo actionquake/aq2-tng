@@ -26,9 +26,9 @@ extern cvar_t *esp;
 #define ESP_RED_TEAM				"The B-Team"
 #define ESP_BLUE_TEAM				"Mall Cops"
 #define ESP_GREEN_TEAM				"Mop-up Crew"
-#define ESP_RED_LEADER_NAME			"male/babarracuda"
-#define ESP_BLUE_LEADER_NAME		"male/blues"
-#define ESP_GREEN_LEADER_NAME		"male/hulk2"
+#define ESP_RED_LEADER_NAME			"B. A. Barracuda"
+#define ESP_BLUE_LEADER_NAME		"Frank the Cop"
+#define ESP_GREEN_LEADER_NAME		"The Incredible Chulk"
 
 int EspFlagOwner( edict_t *flag );
 void EspRemember( const edict_t *ent, const gitem_t *item );
@@ -42,15 +42,6 @@ typedef enum
   ESP_STATE_PLAYING
 }
 espstate_t;
-
-typedef struct espteam_s {
-    char name[MAX_TEAMNAMELEN];
-    char leader[MAX_ESP_STRLEN];
-    char skin[MAX_SKINLEN];
-	char leaderskin[MAX_SKINLEN];
-	int respawn;
-	int score;
-} espteam_t;
 
 typedef struct espsettings_s
 {
@@ -88,17 +79,9 @@ typedef struct espsettings_s
 
 //extern espgame_t espgame;
 
-extern espsettings_t *espsettings;
-extern espteam_t *espteam;
+extern espsettings_t espsettings;
+
 extern gitem_t *team_flag[TEAM_TOP];
-
-#define ESP_TEAM1_SKIN "ctf_r"
-#define ESP_TEAM2_SKIN "ctf_b"
-#define ESP_TEAM3_SKIN "ctf_g"
-#define ESP_TEAMLEADER1_SKIN "babarracuda"
-#define ESP_TEAMLEADER2_SKIN "blues"
-#define ESP_TEAMLEADER3_SKIN "hulk2"
-
 
 #define DF_ESP_FORCEJOIN	131072
 
