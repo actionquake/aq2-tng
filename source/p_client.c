@@ -1315,7 +1315,7 @@ void EjectMedKit( edict_t *ent, int medkit )
 void TossItemsOnDeath(edict_t * ent)
 {
 	gitem_t *item;
-	qboolean quad;
+	qboolean quad = false;
 	int i;
 
 	// don't bother dropping stuff when allweapons/items is active
@@ -1601,38 +1601,6 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	// in ctf, when a player dies check if he should be moved to the other team
 	if(ctf->value)
 		CheckForUnevenTeams(self);
-}
-
-
-void KillEveryone (int teamNum)
-{
-	edict_t *ent;
-	int i;
-
-	for (i = 0; i < game.maxclients; i++)
-	{
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse)
-			continue;
-		if(ent->solid == SOLID_NOT && !ent->deadflag)
-			continue;
-		if (game.clients[i].resp.team == teamNum){
-			killPlayer(ent, false);
-		}
-	}
-}
-
-void MakeTeamInvulnerable(int winner, int uvtime)
-{
-	edict_t *ent;
-
-	for (int i = 0; i < game.maxclients; i++){
-		ent = &g_edicts[1 + i];
-		// Make alive clients invulnerable
-		if (game.clients[i].resp.team == winner && (!ent->solid == SOLID_NOT && !ent->deadflag)){
-			ent->client->uvTime = uvtime;
-		}
-	}
 }
 
 /*

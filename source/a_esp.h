@@ -74,6 +74,8 @@ void ESPSetFlag(int, char *);
 void ESPSetTeamSpawns(int, char *);
 int ESPGetRespawnTime(edict_t *);
 
+void Cmd_Volunteer_f(edict_t * ent);
+void EspSetLeader( int teamNum, edict_t *ent );
 qboolean AllTeamsHaveLeaders(void);
 
 void SP_info_player_team1 (edict_t * self);
@@ -91,7 +93,7 @@ void ESPDrop_Flag (edict_t * ent, gitem_t * item);
 void ESPEffects (edict_t * player);
 void ESPCalcScores (void);
 void SetESPStats (edict_t * ent);
-void ESPDeadDropFlag (edict_t * self);
+void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
 void ESPFlagSetup (edict_t * ent);
 void ESPScoreBonuses (edict_t * targ, edict_t * inflictor, edict_t * attacker);
 void ESPCheckHurtCarrier (edict_t * targ, edict_t * attacker);

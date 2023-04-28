@@ -1335,3 +1335,33 @@ void Cmd_Placenode_f (edict_t *ent)
 		ACEND_AddNode(ent,NODE_MOVE);
 }
 #endif
+
+void Cmd_Volunteer_f(edict_t * ent)
+{
+	int teamNum;
+	edict_t *oldLeader;
+
+	if (!esp->value) {
+		gi.cprintf(ent, PRINT_HIGH, "This command needs Espionage to be enabled\n");
+		return;
+	}
+
+	teamNum = ent->client->resp.team;
+	if (teamNum == NOTEAM) {
+		gi.cprintf(ent, PRINT_HIGH, "You need to be on a team for that...\n");
+		return;
+	}
+
+	oldLeader = teams[teamNum].leader;
+	if (oldLeader == ent) {
+		EspSetLeader( teamNum, NULL );
+		return;
+	}
+
+	if (oldLeader) {
+		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader\n" );
+		return;
+	}
+
+	EspSetLeader( teamNum, ent );
+}

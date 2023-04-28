@@ -1932,7 +1932,9 @@ static cmdList_t commandList[] =
 	{ "configlist", Cmd_Configlist_f, 0 },
 	{ "votescramble", Cmd_Votescramble_f, 0 },
 	// JumpMod
-	{ "jmod", Cmd_Jmod_f, 0 }
+	{ "jmod", Cmd_Jmod_f, 0 },
+	// Espionage
+	{ "volunteer", Cmd_Volunteer_f, 0}
 };
 
 #define MAX_COMMAND_HASH 64

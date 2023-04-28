@@ -1838,7 +1838,7 @@ int CheckForWinner()
 		return WINNER_NONE;
 
 	if(esp->value){
-		if (esp_mode == 0){
+		if (esp_mode->value == 0){
 			for (i = TEAM1; i <= teamCount; i++){
 				if (!IS_ALIVE(teams[i].leader)) {
 					teamsWithAliveLeaders++;
@@ -1849,12 +1849,10 @@ int CheckForWinner()
 				return (teamsWithAliveLeaders > 1) ? WINNER_NONE : teamNum;
 
 			return WINNER_TIE;
-		// Round ends if team 1's leader die in ETV mode
-		} else if (esp_mode == 1){
+		// Round ends if team 1's leader dies in ETV mode
+		} else if (esp_mode->value == 1){
 			if (!IS_ALIVE(teams[TEAM1].leader)) {
 				return TEAM2;
-			} else if (teams[TEAM2].leader->touch = EspTouchMarker()){
-				return TEAM1;
 			}
 		}
 	} else {
@@ -1879,9 +1877,8 @@ int CheckForWinner()
 		}
 		if (teamsWithPlayers)
 			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
-
-		return WINNER_TIE;
 	}
+	return WINNER_TIE;
 }
 
 // CheckForForcedWinner: A winner is being forced, find who it is.
@@ -2311,6 +2308,37 @@ static qboolean CheckRoundLimit( void )
 	return false;
 }
 
+void KillEveryone (int teamNum)
+{
+	edict_t *ent;
+	int i;
+
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse)
+			continue;
+		if(ent->solid == SOLID_NOT && !ent->deadflag)
+			continue;
+		if (game.clients[i].resp.team == teamNum){
+			killPlayer(ent, false);
+		}
+	}
+}
+
+void MakeTeamInvulnerable(int winner, int uvtime)
+{
+	edict_t *ent;
+
+	for (int i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		// Make alive clients invulnerable
+		if (game.clients[i].resp.team == winner && (!ent->solid == SOLID_NOT && !ent->deadflag)){
+			ent->client->uvTime = uvtime;
+		}
+	}
+}
+
 // WonGame: returns true if we're exiting the level.
 int WonGame (int winner)
 {
@@ -2365,7 +2393,7 @@ int WonGame (int winner)
 	if(esp->value){
 		if(esp_punish->value == 1){
 			// Immediately kill all losing members of the remaining team
-			for (i = TEAM1, i < TEAM_TOP; i++;){
+			for (i = TEAM1; i < TEAM_TOP; i++){
 				if (i != winner){
 					KillEveryone(i);
 				}
@@ -2375,9 +2403,6 @@ int WonGame (int winner)
 			int uvtime = 50;
 			MakeTeamInvulnerable(winner, uvtime);
 		}
-		// Reset marker owner
-		edict_t *marker;
-		marker->owner == NULL;
 	}
 
 	if (CheckTimelimit())
@@ -2472,7 +2497,7 @@ int CheckTeamRules (void)
 				team_game_going = 1;
 				StartLCA();	
 			}
-			if (BothTeamsHavePlayers())
+			else if (BothTeamsHavePlayers())
 			{
 				in_warmup = 0;
 				team_game_going = 1;
