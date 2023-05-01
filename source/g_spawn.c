@@ -886,6 +886,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		teams[i].ready = teams[i].locked = 0;
 		teams[i].pauses_used = teams[i].wantReset = 0;
 		teams[i].captain = NULL;
+		if (esp->value)
+			teams[i].leader = NULL;
 		gi.cvar_forceset(teams[i].teamscore->name, "0");
 	}
 
@@ -1662,6 +1664,14 @@ void SP_worldspawn (edict_t * ent)
 			level.pic_ctf_flagdropped[TEAM2] = gi.imageindex("i_ctf2d");
 			gi.imageindex("sbfctf1");
 			gi.imageindex("sbfctf2");
+		}
+
+		if (esp->value) {
+			if (espsettings.mode == ESPMODE_ATL) {
+				level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
+				level.pic_esp_teamtag[TEAM2] = gi.imageindex("ctfsb2");
+				level.pic_esp_teamtag[TEAM3] = gi.imageindex("ctfsb3");
+			}
 		}
 
 		// TODO: Add espionage leader skin/index items

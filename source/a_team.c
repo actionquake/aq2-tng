@@ -1120,10 +1120,10 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 	}
 	else if (esp->value)
 	{
-		// if IS_LEADER(ent) {
-		// 	Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[ent->client->resp.team].leader_skin);
-		// 	gi.dprintf("I assigned %s to %s\n", teams[ent->client->resp.team].leader_skin, ent->client->pers.netname);
-		// }
+		/*
+		In ATL mode (espsettings == 0), all teams must have a leader, and will have their own skin
+		In ETV mode (espsettings == 1), only TEAM1 gets a leader.
+		*/
 		
 		switch (ent->client->resp.team)
 		{
@@ -2614,8 +2614,17 @@ int CheckTeamRules (void)
 
 		if (!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers ())
+			if ((!esp->value && BothTeamsHavePlayers ()) || (esp->value && AllTeamsHaveLeaders()))
 			{
+				if (esp->value && !AllTeamsHaveLeaders()){
+					if (espsettings.mode == 0) {
+						CenterPrintAll("The game will begin when all teams have Leaders\n");
+						CenterPrintAll("To volunteer for duty, enter 'leader' or 'volunteer'\n");
+					} else if (espsettings.mode == 1) {
+						CenterPrintAll("The game will begin when Team 1 has a Leader\n");
+						CenterPrintAll("To volunteer for duty, enter 'leader' or 'volunteer'\n");
+					}
+				}
 				if (use_tourney->value)
 				{
 					TourneyNewRound ();
