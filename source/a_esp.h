@@ -45,7 +45,7 @@ espstate_t;
 
 typedef struct espsettings_s
 {
-	char mode[4];
+	int mode;
 	char author[MAX_ESP_STRLEN*3];
 	char name[MAX_ESP_STRLEN];
 	float red_spawns[10][4];
@@ -55,7 +55,7 @@ typedef struct espsettings_s
 	qboolean custom_skins;
 	int halftime;
 	int capturestreak;
-    struct espteam_s *espteams[3];  // One team object for each color
+	char target_name[MAX_ESP_STRLEN];
 } espsettings_t;
 
 // typedef struct espgame_s {

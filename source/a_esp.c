@@ -72,6 +72,7 @@ void EspMarkerThink( edict_t *marker )
 				marker->owner->client->pers.netname,
 				location,
 				teams[ marker->owner->client->resp.team ].name );
+				espsettings.capturestreak++;
 
 			if( (esp_team_markers[ marker->owner->client->resp.team ] == esp_marker_count) && (esp_marker_count > 2) )
 				gi.bprintf( PRINT_HIGH, "%s IS DOMINATING!\n",
@@ -230,7 +231,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	gi.dprintf("I was called to set the default for %s\n", defaulttype);
 
 	if(default_author) {
-		Q_strncpyz(espsettings.mode, ESPMODE_ATL, sizeof(espsettings.mode));
+		espsettings.mode = ESPMODE_ATL;
 		Q_strncpyz(espsettings.author, "AQ2World Team", sizeof(espsettings.author));
 		Q_strncpyz(espsettings.name, "Time for Action!", sizeof(espsettings.name));
 	}
@@ -290,7 +291,7 @@ qboolean EspLoadConfig(const char *mapname)
 	if (!fh) {
 		//Default to ATL mode in this case
 		gi.dprintf ("Warning: Espionage configuration file \" %s \" was not found.\n", buf);
-		Q_strncpyz(espsettings.mode, ESPMODE_ATL_SNAME, sizeof(espsettings.mode));
+		espsettings.mode = 0;
 		sprintf (buf, "%s/tng/default.esp", GAMEVERSION);
 		fh = fopen (buf, "r");
 		if (!fh){
@@ -323,7 +324,6 @@ qboolean EspLoadConfig(const char *mapname)
 			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
 
 		}
-
 		// Set game type to ATL
 		/// Default game settings
 		EspEnforceDefaultSettings("author");
@@ -338,53 +338,54 @@ qboolean EspLoadConfig(const char *mapname)
 
 		// No custom spawns, use default for map
 		espsettings.custom_spawns = false;
+
 	} else {
 
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Espionage configuration found at %s\n", buf);
 		ptr = INI_Find(fh, "esp", "author");
 		if(ptr) {
-			gi.dprintf(" Author    : %s\n", ptr);
+			gi.dprintf("- Author    : %s\n", ptr);
 			Q_strncpyz(espsettings.author, ptr, sizeof(espsettings.author));
 		}
 		ptr = INI_Find(fh, "esp", "name");
 		if(ptr) {
-			gi.dprintf(" Name      : %s\n", ptr);
+			gi.dprintf("- Name      : %s\n", ptr);
 			Q_strncpyz(espsettings.name, ptr, sizeof(espsettings.name));
 		}
 
 		ptr = INI_Find(fh, "esp", "type");
 		char *gametypename = ESPMODE_ATL_NAME;
-		char *gametypesname = ESPMODE_ATL_SNAME;
 		int espgametype = ESPMODE_ATL; // Defaults to ATL mode
-		if((strcmp(ptr, ESPMODE_ATL_SNAME) != 0) || strcmp(ptr, ESPMODE_ETV_SNAME) != 0){
+		if((strcmp(ptr, ESPMODE_ATL_SNAME) != 0) && strcmp(ptr, ESPMODE_ETV_SNAME) != 0){
 			gi.dprintf("Warning: Value for '[esp] type is not 'etv' or 'atl', forcing ATL mode\n");
-		    gi.dprintf(" Game type : %s\n", ESPMODE_ATL_NAME);
+		    gi.dprintf("- Game type : %s\n", ESPMODE_ATL_NAME);
 		} else {
 			if(ptr) {
 				if (esp->value == 1) {
 					if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
 						espgametype = ESPMODE_ETV;
 						gametypename = ESPMODE_ETV_NAME;
-						gametypesname = ESPMODE_ETV_SNAME;
 					}
 					if(strcmp(ptr, ESPMODE_ATL_SNAME) == 0){
 						espgametype = ESPMODE_ATL;
 						gametypename = ESPMODE_ATL_NAME;
-						gametypesname = ESPMODE_ATL_SNAME;
 					}
 				// Enforce that we only want ATL mode even if an ETV file is loaded
 				} else if (esp->value == 2) {
 					espgametype = ESPMODE_ATL;
 					gametypename = ESPMODE_ATL_NAME;
-					gametypesname = ESPMODE_ATL_SNAME;
 				}
 			}
-			Q_strncpyz(espsettings.mode, gametypesname, sizeof(espsettings.mode));
+			espsettings.mode = espgametype;
 			gi.dprintf(" Game type : %s\n", gametypename);
 		}
+		// Force 3teams off if ETV mode
+		if (espsettings.mode == ESPMODE_ETV && use_3teams->value){
+			gi.cvar_forceset(use_3teams->name, "0");
+		}
 
-		gi.dprintf(" Respawn times\n");
+		gi.dprintf("- Respawn times\n");
 		char *r_respawn_time, *b_respawn_time, *g_respawn_time;
 
 		r_respawn_time = INI_Find(fh, "respawn", "red");
@@ -409,20 +410,30 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 			if (teamCount == 3){
 				if(g_respawn_time) {
-					gi.dprintf("  Green     : %s seconds\n", g_respawn_time);
+					gi.dprintf("  Green    : %s seconds\n", g_respawn_time);
 					teams[TEAM3].respawn_timer = atoi(g_respawn_time);
 				}
 			}
 		}
 
 		// Only set the marker if the scenario is ETV
-		if(strcmp(espsettings.mode, ESPMODE_ETV_SNAME) == 0) {
-			gi.dprintf(" Target\n");
+		if(espsettings.mode == ESPMODE_ETV) {
+			gi.dprintf("- Target\n");
 			ptr = INI_Find(fh, "target", "escort");
 			if(ptr) {
-				gi.dprintf("  Target      : %s\n", ptr);
 				EspSetMarker(TEAM1, ptr);
 			}
+			ptr = INI_Find(fh, "target", "name");
+			size_t ptr_len = strlen(ptr);
+			if(ptr) {
+				if (ptr_len <= MAX_ESP_STRLEN) {
+					gi.dprintf("  Area     : %s\n", ptr);
+				} else {
+					gi.dprintf("Warning: [target] name > 32 characters, setting to \"The Spot\"");
+					ptr = "The Spot";
+				}
+				Q_strncpyz(espsettings.target_name, ptr, sizeof(espsettings.target_name));
+		}
 		}
 
 		//gi.dprintf(" Spawns\n");
@@ -450,7 +461,7 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 		
-		gi.dprintf(" Teams\n");
+		gi.dprintf("- Teams\n");
 		ptr = INI_Find(fh, "red_team", "name");
 		Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
 		ptr = INI_Find(fh, "red_team", "skin");
@@ -526,9 +537,9 @@ qboolean EspLoadConfig(const char *mapname)
 	if (fh)
 		fclose(fh);
 
-	if((strcmp(espsettings.mode, ESPMODE_ETV_SNAME) == 0) && teamCount == 3){
+	if((espsettings.mode == ESPMODE_ETV) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
-		Q_strncpyz(espsettings.mode, ESPMODE_ATL_SNAME, sizeof(espsettings.mode));
+		espsettings.mode = ESPMODE_ATL;
 	}
 
 	return true;
@@ -660,10 +671,10 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 {
 	int i, enemyteam;
 	gitem_t *flag_item, *enemy_flag_item;
-	edict_t *ent, *flag, *carrier;
+	edict_t *ent, *flag, *leader;
 	vec3_t v1, v2;
 
-	carrier = NULL;
+	leader = IS_LEADER(targ);
 
 	// no bonus for fragging yourself
 	if (!targ->client || !attacker->client || targ == attacker)
@@ -678,18 +689,16 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	// enemy_flag_item = team_flag[otherteam];
 
 	// did the attacker frag the flag carrier?
-	if (targ->client->inventory[ITEM_INDEX(enemy_flag_item)]) {
-		attacker->client->resp.ctf_lastfraggedcarrier = level.framenum;
-		attacker->client->resp.score += CTF_FRAG_CARRIER_BONUS;
+	if (IS_LEADER(targ)){
+		attacker->client->resp.esp_lasthurtleader = level.framenum;
+		attacker->client->resp.score += ESP_LEADER_HARASS_BONUS;
 		gi.cprintf(attacker, PRINT_MEDIUM,
-			   "BONUS: %d points for fragging enemy flag carrier.\n", CTF_FRAG_CARRIER_BONUS);
+			   "BONUS: %d points for killing the enemy leader!\n", ESP_LEADER_HARASS_BONUS);
 
-		// the the target had the flag, clear the hurt carrier
-		// field on the other team
 		for (i = 1; i <= game.maxclients; i++) {
 			ent = g_edicts + i;
 			if (ent->inuse && ent->client->resp.team == enemyteam)
-				ent->client->resp.ctf_lasthurtcarrier = 0;
+				ent->client->resp.esp_lasthurtleader = 0;
 		}
 		return;
 	}
@@ -722,12 +731,12 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		return;		// can't find attacker's flag
 
 	// find attacker's team's flag carrier
-	for (i = 1; i <= game.maxclients; i++) {
-		carrier = g_edicts + i;
-		if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
-			break;
-		carrier = NULL;
-	}
+	// for (i = 1; i <= game.maxclients; i++) {
+	// 	leader = g_edicts + i;
+	// 	if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
+	// 		break;
+	// 	leader = NULL;
+	// }
 
 	// ok we have the attackers flag and a pointer to the carrier
 	// check to see if we are defending the base's flag
@@ -754,13 +763,13 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		return;
 	}
 
-	if (carrier && carrier != attacker) {
-		VectorSubtract(targ->s.origin, carrier->s.origin, v1);
-		VectorSubtract(attacker->s.origin, carrier->s.origin, v1);
+	if (leader && leader != attacker) {
+		VectorSubtract(targ->s.origin, leader->s.origin, v1);
+		VectorSubtract(attacker->s.origin, leader->s.origin, v1);
 
 		if (VectorLength(v1) < CTF_ATTACKER_PROTECT_RADIUS ||
 		    VectorLength(v2) < CTF_ATTACKER_PROTECT_RADIUS ||
-			visible(carrier, targ, MASK_SOLID) || visible(carrier, attacker, MASK_SOLID)) {
+			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
 			attacker->client->resp.score += CTF_CARRIER_PROTECT_BONUS;
 			gi.bprintf(PRINT_MEDIUM, "%s defends the %s's flag carrier.\n",
 				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
@@ -798,6 +807,11 @@ void SetEspStats( edict_t *ent )
 	ent->client->ps.stats[ STAT_TEAM1_PIC ] = esp_pics[ TEAM1 ];
 	ent->client->ps.stats[ STAT_TEAM2_PIC ] = esp_pics[ TEAM2 ];
 
+	if (teamCount == 3) {
+		ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
+		ent->client->ps.stats[ STAT_TEAM3_PIC ] = esp_pics[ TEAM3 ];
+	}
+
 	// During intermission, blink the team icon of the winning team.
 	if( level.intermission_framenum && ((level.realFramenum / FRAMEDIV) & 8) )
 	{
@@ -805,6 +819,8 @@ void SetEspStats( edict_t *ent )
 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
 		else if (esp_winner == TEAM2)
 			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
+		else if (teamCount == 3 && esp_winner == TEAM3)
+			ent->client->ps.stats[ STAT_TEAM3_PIC ] = 0;
 	}
 }
 
@@ -854,7 +870,7 @@ void EspSwapTeams()
 qboolean EspCheckRules(void)
 {
 	// Espionage ETV uses the same capturelimit cvars as CTF
-	if(strcmp(espsettings.mode, ESPMODE_ETV_SNAME) == 0) {
+	if(espsettings.mode == ESPMODE_ETV) {
 		if( capturelimit->value && (teams[TEAM1].score >= capturelimit->value || teams[TEAM2].score >= capturelimit->value) )
 		{
 			gi.bprintf(PRINT_HIGH, "Capturelimit hit.\n");
@@ -912,7 +928,7 @@ qboolean AllTeamsHaveLeaders(void)
 	}
 
 	// Only Team 1 needs a leader in ETV mode
-	if((strcmp(espsettings.mode, ESPMODE_ETV_SNAME) == 0) && HAVE_LEADER(TEAM1))
+	if((espsettings.mode == ESPMODE_ETV) && HAVE_LEADER(TEAM1))
 		tc = teamCount - 1;
 
 	gi.dprintf("Leader count: %d\n", teamsWithLeaders);

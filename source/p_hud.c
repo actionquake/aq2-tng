@@ -635,6 +635,8 @@ void G_SetStats (edict_t * ent)
 		SetCTFStats (ent);
 	else if (dom->value)
 		SetDomStats (ent);
+	else if (esp->value)
+		SetEspStats (ent);
 	else if (teamplay->value)
 		A_Scoreboard (ent);
 	//FIREBLADE

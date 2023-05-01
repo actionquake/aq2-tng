@@ -1000,7 +1000,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.cvar_forceset(teamplay->name, "1");
 		}
 		// ETV mode doesn't support 3 teams, but ATL does
-		if(esp_mode->value == 2) {
+		if(espsettings.mode == 1) {
 			if (use_3teams->value)
 			{
 				gi.dprintf ("Espionage Enabled - Forcing 3Teams off\n");

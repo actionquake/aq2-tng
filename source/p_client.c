@@ -703,6 +703,11 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 
 	self->client->resp.ctf_capstreak = 0;
 
+	if(esp->value && IS_LEADER(self)) {
+		// Reset capture streak to 0
+		espsettings.capturestreak = 0;
+	}
+
 	friendlyFire = meansOfDeath & MOD_FRIENDLY_FIRE;
 	mod = meansOfDeath & ~MOD_FRIENDLY_FIRE;
 	loc = locOfDeath;	// useful for location based hits

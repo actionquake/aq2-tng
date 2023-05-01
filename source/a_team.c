@@ -3148,7 +3148,7 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 						totalaliveprinted++;
 
 					playername[0] = 0;
-					if (IS_CAPTAIN(cl_ent)) {
+					if (IS_CAPTAIN(cl_ent) || IS_LEADER(cl_ent)) {
 						playername[0] = '@';
 						playername[1] = 0;
 					}
