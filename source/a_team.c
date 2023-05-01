@@ -1118,6 +1118,38 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 			break;
 		}
 	}
+	else if (esp->value)
+	{
+		// if IS_LEADER(ent) {
+		// 	Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[ent->client->resp.team].leader_skin);
+		// 	gi.dprintf("I assigned %s to %s\n", teams[ent->client->resp.team].leader_skin, ent->client->pers.netname);
+		// }
+		
+		switch (ent->client->resp.team)
+		{
+		case TEAM1:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].skin);
+			if (IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].leader_skin);
+			}
+			break;
+		case TEAM2:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].skin);
+			if ((espsettings.mode == 0) && IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].leader_skin);
+			}
+			break;
+		case TEAM3:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].skin);
+			if ((espsettings.mode == 0) && IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].leader_skin);
+			}
+			break;
+		default:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, default_skin);
+			break;
+		}
+	}
 	else
 	{
 		switch (ent->client->resp.team)
@@ -2753,6 +2785,13 @@ void A_Scoreboard (edict_t * ent)
 			ent->client->ps.stats[STAT_TEAM2_PIC] = level.pic_teamskin[TEAM2];
 			if (teamCount == 3)
 				ent->client->ps.stats[STAT_TEAM3_PIC] = level.pic_teamskin[TEAM3];
+
+			if (esp->value){
+				ent->client->ps.stats[STAT_TEAM1_LEADERPIC] = level.pic_leaderskin[TEAM1];
+				ent->client->ps.stats[STAT_TEAM2_LEADERPIC] = level.pic_leaderskin[TEAM2];
+				if (teamCount == 3)
+					ent->client->ps.stats[STAT_TEAM3_LEADERPIC] = level.pic_leaderskin[TEAM3];
+				}
 		}
 
 		ent->client->ps.stats[STAT_TEAM1_SCORE] = teams[TEAM1].score;

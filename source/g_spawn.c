@@ -1664,6 +1664,11 @@ void SP_worldspawn (edict_t * ent)
 			gi.imageindex("sbfctf2");
 		}
 
+		// TODO: Add espionage leader skin/index items
+		// if (esp->value) {
+
+		// }
+
 		for(i = TEAM1; i <= teamCount; i++)
 		{
 			if (teams[i].skin_index[0] == 0 && !esp->value) {

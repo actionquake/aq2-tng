@@ -27,20 +27,14 @@ int esp_team_markers[ TEAM_TOP ] = {0};
 int esp_winner = NOTEAM;
 int esp_marker = 0;
 int esp_pics[ TEAM_TOP ] = {0};
+int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
-char *red_skin_name;
-char *blue_skin_name;
-char *green_skin_name;
-char *red_team_name;
-char *blue_team_name;
-char *green_team_name;
-char *red_leader_skin;
-char *blue_leader_skin;
-char *green_leader_skin;
-char *red_leader_name;
-char *blue_leader_name;
-char *green_leader_name;
+char *red_skin_name, *blue_skin_name, *green_skin_name;
+char *red_team_name, *blue_team_name, *green_team_name;
+char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
+char *red_leader_name, *blue_leader_name, *green_leader_name;
+
 
 void EspMarkerThink( edict_t *marker )
 {
@@ -222,6 +216,43 @@ void EspSetTeamSpawns(int team, char *str)
 	} while(next != NULL);
 }
 
+void EspLoadSkins()
+{
+	// Load images into struct
+
+	gi.dprintf("Trying to load skins\n");
+	gi.dprintf("%s\n", red_team_name);
+	/// Team 1 / red team
+	Q_strncpyz(teams[TEAM1].name, red_team_name, sizeof(teams[TEAM1].name));
+	Q_strncpyz(teams[TEAM1].skin, red_skin_name, sizeof(teams[TEAM1].skin));
+	Q_strncpyz(teams[TEAM1].leader_name, red_leader_name, sizeof(teams[TEAM1].leader_name));
+	Q_strncpyz(teams[TEAM1].leader_skin, red_leader_skin, sizeof(teams[TEAM1].leader_skin));
+	gi.dprintf("Trying to load skins 2\n");
+
+	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+	Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
+	/// Team 2 / blue team
+	Q_strncpyz(teams[TEAM2].name, blue_team_name, sizeof(teams[TEAM2].name));
+	Q_strncpyz(teams[TEAM2].skin, blue_skin_name, sizeof(teams[TEAM2].skin));
+	Q_strncpyz(teams[TEAM2].leader_name, blue_leader_name, sizeof(teams[TEAM2].leader_name));
+	Q_strncpyz(teams[TEAM2].leader_skin, blue_leader_skin, sizeof(teams[TEAM2].leader_skin));
+	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
+	Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
+
+	if(teamCount == 3) {
+		/// Team 3 / green team
+		Q_strncpyz(teams[TEAM3].name, green_team_name, sizeof(teams[TEAM3].name));
+		Q_strncpyz(teams[TEAM3].skin, green_skin_name, sizeof(teams[TEAM3].skin));
+		Q_strncpyz(teams[TEAM3].leader_name, green_leader_name, sizeof(teams[TEAM3].leader_name));
+		Q_strncpyz(teams[TEAM3].leader_skin, green_leader_skin, sizeof(teams[TEAM3].leader_skin));
+	
+		Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
+		Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
+	}
+
+	gi.dprintf("End Trying to load skins\n");
+}
+
 void EspEnforceDefaultSettings(char *defaulttype)
 {
 	qboolean default_team = (Q_stricmp(defaulttype,"team")==0) ? true : false;
@@ -319,10 +350,6 @@ qboolean EspLoadConfig(const char *mapname)
 		if(teamCount == 3){
 			gi.dprintf("  Green Team: %s -- %s\n", ESP_GREEN_TEAM, ESP_GREEN_SKIN);
 			gi.dprintf("  Green Leader: %s -- %s\n", ESP_GREEN_LEADER_NAME, ESP_GREEN_LEADER_SKIN);
-
-			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
-			esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
-
 		}
 		// Set game type to ATL
 		/// Default game settings
@@ -330,11 +357,30 @@ qboolean EspLoadConfig(const char *mapname)
 		EspEnforceDefaultSettings("respawn");
 		EspEnforceDefaultSettings("team");
 		
-		// Skin and Team Names
-		esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
-		esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
-		esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-		esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
+		// // Skin Names
+		red_skin_name = ESP_RED_SKIN;
+		red_leader_skin = ESP_RED_LEADER_SKIN;
+		blue_skin_name = ESP_BLUE_SKIN;
+		blue_leader_skin = ESP_BLUE_LEADER_SKIN;
+		if(teamCount == 3) {
+			green_skin_name = ESP_GREEN_SKIN;
+			green_leader_skin = ESP_GREEN_LEADER_SKIN;
+		}
+		
+		// esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
+		// esp_leader_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
+		// esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
+		// esp_leader_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
+
+		EspLoadSkins();
+
+		for (int z = TEAM1; z <= teamCount; z++){
+			level.pic_teamskin[z] = gi.imageindex(teams[z].skin_index);
+			gi.dprintf("Skin index %s\n", teams[z].skin_index);
+			gi.dprintf("Skin %s\n", teams[z].skin);
+			gi.dprintf("Leader Skin index %s\n", teams[z].leader_skin_index);
+			gi.dprintf("Leader Skin %s\n", teams[z].leader_skin);
+		}
 
 		// No custom spawns, use default for map
 		espsettings.custom_spawns = false;
@@ -378,11 +424,11 @@ qboolean EspLoadConfig(const char *mapname)
 				}
 			}
 			espsettings.mode = espgametype;
-			gi.dprintf(" Game type : %s\n", gametypename);
+			gi.dprintf("- Game type : %s\n", gametypename);
 		}
-		// Force 3teams off if ETV mode
+		// Force ATL mode trying to get ETV mode going with 3teams
 		if (espsettings.mode == ESPMODE_ETV && use_3teams->value){
-			gi.cvar_forceset(use_3teams->name, "0");
+			espsettings.mode = ESPMODE_ATL;
 		}
 
 		gi.dprintf("- Respawn times\n");
@@ -401,16 +447,16 @@ qboolean EspLoadConfig(const char *mapname)
 			EspEnforceDefaultSettings("respawn");
 		} else {
 			if(r_respawn_time) {
-				gi.dprintf("  Red      : %s seconds\n", r_respawn_time);
+				gi.dprintf("    Red     : %s seconds\n", r_respawn_time);
 				teams[TEAM1].respawn_timer = atoi(r_respawn_time);
 			}
 			if(b_respawn_time) {
-				gi.dprintf("  Blue     : %s seconds\n", b_respawn_time);
+				gi.dprintf("    Blue    : %s seconds\n", b_respawn_time);
 				teams[TEAM2].respawn_timer = atoi(b_respawn_time);
 			}
 			if (teamCount == 3){
 				if(g_respawn_time) {
-					gi.dprintf("  Green    : %s seconds\n", g_respawn_time);
+					gi.dprintf("    Green   : %s seconds\n", g_respawn_time);
 					teams[TEAM3].respawn_timer = atoi(g_respawn_time);
 				}
 			}
@@ -427,7 +473,7 @@ qboolean EspLoadConfig(const char *mapname)
 			size_t ptr_len = strlen(ptr);
 			if(ptr) {
 				if (ptr_len <= MAX_ESP_STRLEN) {
-					gi.dprintf("  Area     : %s\n", ptr);
+					gi.dprintf("    Area    : %s\n", ptr);
 				} else {
 					gi.dprintf("Warning: [target] name > 32 characters, setting to \"The Spot\"");
 					ptr = "The Spot";
@@ -462,6 +508,19 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 		
 		gi.dprintf("- Teams\n");
+
+		// char team_attrs[3][4][32];
+		// char* team_names[] = {"red_team", "blue_team", "green_team"};
+		// char* attr_names[] = {"name", "skin", "leader_name", "leader_skin"};
+
+		// // Use teamCount here to ignore the third element in team_names if only 2 teams
+		// for (int i = 0; i < teamCount; i++) {
+		// 	for (int j = 0; j < sizeof(attr_names); j++) {
+		// 		ptr = INI_Find(fh, team_names[i], attr_names[j]);
+		// 		Q_strncpyz(teams[i][j], ptr, sizeof(team_attrs[i][j]));
+		// 	}
+		// }
+
 		ptr = INI_Find(fh, "red_team", "name");
 		Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
 		ptr = INI_Find(fh, "red_team", "skin");
@@ -500,32 +559,49 @@ qboolean EspLoadConfig(const char *mapname)
 			espsettings.custom_skins = false;
 		} else {
 			espsettings.custom_skins = true;
-			esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
-			esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
-			esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
-			esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
-			if (teamCount == 3) {
-				esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
-				esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
-			}
 
-			gi.dprintf("  Red Team: %s, Skin: %s\n", 
+			// esp_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].skin_index);
+			// esp_leader_pics[ TEAM1 ] = gi.imageindex(teams[ TEAM1 ].leader_skin_index);
+			// esp_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].skin_index);
+			// esp_leader_pics[ TEAM2 ] = gi.imageindex(teams[ TEAM2 ].leader_skin_index);
+			// if (teamCount == 3) {
+			// 	esp_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].skin_index);
+			// 	esp_leader_pics[ TEAM3 ] = gi.imageindex(teams[ TEAM3 ].leader_skin_index);
+			// }
+
+			gi.dprintf("    Red Team: %s, Skin: %s\n", 
 			teams[TEAM1].name, teams[TEAM1].skin);
-			gi.dprintf("  Red Leader: %s, Skin: %s\n\n", 
+			gi.dprintf("    Red Leader: %s, Skin: %s\n\n", 
 			teams[TEAM1].leader_name, teams[TEAM1].leader_skin);
 			
-			gi.dprintf("  Blue Team: %s, Skin: %s\n", 
+			gi.dprintf("    Blue Team: %s, Skin: %s\n", 
 			teams[TEAM2].name, teams[TEAM2].skin);
-			gi.dprintf("  Blue Leader: %s, Skin: %s\n\n", 
+			gi.dprintf("    Blue Leader: %s, Skin: %s\n\n", 
 			teams[TEAM2].leader_name, teams[TEAM2].leader_skin);
 
 			if(teamCount == 3) {
-				gi.dprintf("  Green Team: %s, Skin: %s\n", 
+				gi.dprintf("    Green Team: %s, Skin: %s\n", 
 				teams[TEAM3].name, teams[TEAM3].skin);
-				gi.dprintf("  Green Leader: %s, Skin: %s\n", 
+				gi.dprintf("    Green Leader: %s, Skin: %s\n", 
 				teams[TEAM3].leader_name, teams[TEAM3].leader_skin);
 			}
 		}
+
+		Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+		Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
+		Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
+		Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
+
+		for (int z = TEAM1; z <= teamCount; z++){
+			level.pic_teamskin[z] = gi.imageindex(teams[z].skin_index);
+			level.pic_leaderskin[z] = gi.imageindex(teams[z].leader_skin_index);
+
+			gi.dprintf("Skin index %s\n", teams[z].skin_index);
+			gi.dprintf("Skin %s\n", teams[z].skin);
+			gi.dprintf("Leader Skin index %s\n", teams[z].leader_skin_index);
+			gi.dprintf("Leader Skin %s\n", teams[z].leader_skin);
+		}
+
 	}
 
 	// automagically change spawns *only* when we do not have team spawns
@@ -799,6 +875,9 @@ void EspCheckHurtLeader(edict_t * targ, edict_t * attacker)
 
 void SetEspStats( edict_t *ent )
 {
+	ent->client->ps.stats[STAT_TEAM1_HEADER] = level.pic_esp_teamtag[TEAM1];
+	ent->client->ps.stats[STAT_TEAM2_HEADER] = level.pic_esp_teamtag[TEAM2];
+
 	// Team scores for the score display and HUD.
 	ent->client->ps.stats[ STAT_TEAM1_SCORE ] = teams[ TEAM1 ].score;
 	ent->client->ps.stats[ STAT_TEAM2_SCORE ] = teams[ TEAM2 ].score;
@@ -806,10 +885,13 @@ void SetEspStats( edict_t *ent )
 	// Team icons for the score display and HUD.
 	ent->client->ps.stats[ STAT_TEAM1_PIC ] = esp_pics[ TEAM1 ];
 	ent->client->ps.stats[ STAT_TEAM2_PIC ] = esp_pics[ TEAM2 ];
+	ent->client->ps.stats[ STAT_TEAM1_LEADERPIC ] = esp_leader_pics[ TEAM1 ];
+	ent->client->ps.stats[ STAT_TEAM2_LEADERPIC ] = esp_leader_pics[ TEAM2 ];
 
 	if (teamCount == 3) {
 		ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
 		ent->client->ps.stats[ STAT_TEAM3_PIC ] = esp_pics[ TEAM3 ];
+		ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = esp_leader_pics[ TEAM3 ];
 	}
 
 	// During intermission, blink the team icon of the winning team.
@@ -931,17 +1013,10 @@ qboolean AllTeamsHaveLeaders(void)
 	if((espsettings.mode == ESPMODE_ETV) && HAVE_LEADER(TEAM1))
 		tc = teamCount - 1;
 
-	gi.dprintf("Leader count: %d\n", teamsWithLeaders);
-
-	gi.dprintf("tc count: %d\n", tc);
-
 	if(teamsWithLeaders >= tc){
-		gi.dprintf("true\n");
 		return true;
-	} else {
-		gi.dprintf("false\n");
-		return false;
 	}
+	return false;
 }
 
 void EspSetLeader( int teamNum, edict_t *ent )
@@ -952,12 +1027,14 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		ent = NULL;
 
 	// If Espionage is enabled, in ATL mode, also set captain as leader
-	// If ETV mode is abled, and the entity asking to become captain is on Team 1 (Red)
+	// If ETV mode is enabled, and the entity asking to become captain is on Team 1 (Red)
 	if((esp_mode->value) == 0 || (esp_mode->value == 1 && teamNum == TEAM1)){
 		teams[teamNum].leader = ent;
+		AssignSkin(ent, teams[teamNum].leader_skin, false);
 	} else {
 		// Do not set leader attribute to team 2 in ETV
 		teams[teamNum].leader = NULL;
+		gi.centerprintf(ent, "Only the Red team has a leader in this mode\n");
 	}
 	
 	if (!ent) {
@@ -982,4 +1059,5 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 	}
+
 }

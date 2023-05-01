@@ -833,6 +833,10 @@ typedef struct
   float matchTime;
   float emptyTime;
   int weapon_sound_framenum;
+
+  int pic_leaderskin[TEAM_TOP];  
+  int pic_esp_teamtag[TEAM_TOP];
+  int pic_esp_marker[TEAM_TOP];
 }
 level_locals_t;
 
@@ -1754,8 +1758,6 @@ typedef struct
   int	hud_items[128];
   int	hud_type;
 #endif
-
-  //char skin[MAX_SKINLEN];
 
   int esp_state;
   int esp_capstreak;
