@@ -35,7 +35,6 @@ char *red_team_name, *blue_team_name, *green_team_name;
 char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
 char *red_leader_name, *blue_leader_name, *green_leader_name;
 
-
 void EspMarkerThink( edict_t *marker )
 {
 	// If the marker was touched this frame, make it owned by that team.
@@ -336,6 +335,7 @@ qboolean EspLoadConfig(const char *mapname)
 
 	// Hard-coded scenario settings so things don't break
 	if(no_file){
+		espsettings.mode = 0;
 		// TODO: A better GHUD method to display this?
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Hard-coded Espionage configuration loaded\n");
@@ -389,32 +389,30 @@ qboolean EspLoadConfig(const char *mapname)
 
 		ptr = INI_Find(fh, "esp", "type");
 		char *gametypename = ESPMODE_ATL_NAME;
-		int espgametype = ESPMODE_ATL; // Defaults to ATL mode
-		if((strcmp(ptr, ESPMODE_ATL_SNAME) != 0) && strcmp(ptr, ESPMODE_ETV_SNAME) != 0){
+		if(!strcmp(ptr, ESPMODE_ATL_SNAME) && !strcmp(ptr, ESPMODE_ETV_SNAME)){
 			gi.dprintf("Warning: Value for '[esp] type is not 'etv' or 'atl', forcing ATL mode\n");
 		    gi.dprintf("- Game type : %s\n", ESPMODE_ATL_NAME);
 		} else {
 			if(ptr) {
-				if (esp->value == 1) {
-					if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
-						espgametype = ESPMODE_ETV;
-						gametypename = ESPMODE_ETV_NAME;
-					}
-					if(strcmp(ptr, ESPMODE_ATL_SNAME) == 0){
-						espgametype = ESPMODE_ATL;
-						gametypename = ESPMODE_ATL_NAME;
-					}
-				// Enforce that we only want ATL mode even if an ETV file is loaded
-				} else if (esp->value == 2) {
-					espgametype = ESPMODE_ATL;
+				if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
+					espsettings.mode = ESPMODE_ETV;
+					gametypename = ESPMODE_ETV_NAME;
+				}
+				if(strcmp(ptr, ESPMODE_ATL_SNAME) == 0){
+					espsettings.mode = ESPMODE_ATL;
 					gametypename = ESPMODE_ATL_NAME;
 				}
 			}
-			espsettings.mode = espgametype;
+			if (use_3teams->value) {
+				// Only ATL available in 3 team mode
+				espsettings.mode = ESPMODE_ATL;
+				gametypename = ESPMODE_ATL_NAME;
+			}
 			gi.dprintf("- Game type : %s\n", gametypename);
 		}
 		// Force ATL mode trying to get ETV mode going with 3teams
 		if (espsettings.mode == ESPMODE_ETV && use_3teams->value){
+			gi.dprintf("%s and use_3team are incompatible, defaulting to %s", ESPMODE_ETV_NAME, ESPMODE_ATL_NAME);
 			espsettings.mode = ESPMODE_ATL;
 		}
 
@@ -592,10 +590,14 @@ qboolean EspLoadConfig(const char *mapname)
 		fclose(fh);
 
 	// Load skin indexes
-	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
-	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
-	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
+	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "players/%s_i", teams[TEAM1].skin);
+	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "players/%s_i", teams[TEAM2].skin);
+	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "players/%s_i", teams[TEAM3].skin);
 
+
+	gi.dprintf("Debugging:\n");
+	gi.dprintf("Espionage mode: %d\n", espsettings.mode);
+	gi.dprintf("Skin index: %s\n", teams[TEAM1].skin_index);
 
 	if((espsettings.mode == ESPMODE_ETV) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");

@@ -1869,7 +1869,7 @@ int CheckForWinner()
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
-	if(esp->value){
+	if (esp->value){
 		if (esp_mode->value == 0){
 			for (i = TEAM1; i <= teamCount; i++){
 				if (!IS_ALIVE(teams[i].leader)) {
@@ -2422,7 +2422,7 @@ int WonGame (int winner)
 			PrintScores ();
 		}
 	}
-	if(esp->value){
+	if (esp->value){
 		if(esp_punish->value == 1){
 			// Immediately kill all losing members of the remaining team
 			for (i = TEAM1; i < TEAM_TOP; i++){
@@ -2635,8 +2635,13 @@ int CheckTeamRules (void)
 				{
 					int warmup_length = max( warmup->value, round_begin->value );
 					char buf[64] = "";
-					sprintf( buf, "The round will begin in %d seconds!", warmup_length );
-					CenterPrintAll( buf );
+					if (esp->value) {
+						sprintf( buf, "All teams have leaders!\nThe round will begin in %d seconds!", warmup_length );
+						CenterPrintAll( buf );
+					} else {
+						sprintf( buf, "The round will begin in %d seconds!", warmup_length );
+						CenterPrintAll( buf );
+					}
 					team_round_countdown = warmup_length * 10 + 2;
 
 					// JBravo: Autostart q2pro MVD2 recording on the server

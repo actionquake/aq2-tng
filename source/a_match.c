@@ -140,7 +140,7 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 		ent = NULL;
 
 	teams[teamNum].captain = ent;
-	if(esp->value) {
+	if (esp->value) {
 		EspSetLeader(teamNum, ent);
 	}
 	if (!ent) {
