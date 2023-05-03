@@ -275,7 +275,12 @@ void Cmd_Teamname_f(edict_t * ent)
 	}
 
 	if(ctf->value) {
-		gi.cprintf(ent, PRINT_HIGH, "You can't change teamnames in ctf mode\n");
+		gi.cprintf(ent, PRINT_HIGH, "You can't change teamnames in CTF mode\n");
+		return;
+	}
+
+	if(esp->value) {
+		gi.cprintf(ent, PRINT_HIGH, "You can't change teamnames in Espionage mode\n");
 		return;
 	}
 
@@ -330,6 +335,11 @@ void Cmd_Teamskin_f(edict_t * ent)
 	int i, teamNum;
 	team_t *team;
 	edict_t *e;
+
+	if (!esp->value) {
+		gi.cprintf(ent, PRINT_HIGH, "Espionage skins are set in the .esp file\n");
+		return;
+	}
 
 	if (!matchmode->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs matchmode to be enabled\n");

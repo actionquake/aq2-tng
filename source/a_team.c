@@ -1149,6 +1149,7 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, default_skin);
 			break;
 		}
+		//gi.dprintf("I assigned skin %s to %s\n", skin, ent->client->pers.netname);
 	}
 	else
 	{
@@ -2638,6 +2639,7 @@ int CheckTeamRules (void)
 					if (esp->value) {
 						sprintf( buf, "All teams have leaders!\nThe round will begin in %d seconds!", warmup_length );
 						CenterPrintAll( buf );
+						gi.dprintf("Leaders: %s\n", teams[TEAM1].leader->client->pers.netname);
 					} else {
 						sprintf( buf, "The round will begin in %d seconds!", warmup_length );
 						CenterPrintAll( buf );

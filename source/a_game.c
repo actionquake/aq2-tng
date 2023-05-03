@@ -264,13 +264,12 @@ void PrintMOTD(edict_t * ent)
 			}
 			else if (esp->value) // Is it Espionage?
 			{
-				if (teamCount == 3 && esp_mode->value == 0)
+				if (teamCount == 3)
 					server_type = "3 Team Espionage: Assassinate the Leader";
-				else if (teamCount == 2 && esp_mode->value == 1)
+				else if (teamCount == 2 && espsettings.mode == 1)
 					server_type = "Espionage: Escort the VIP";
-				else if (esp_mode->value == 0){
+				else
 					server_type = "Espionage: Assassinate the Leader";
-				}
 			}
 			else if (use_tourney->value) // Is it Tourney?
 				server_type = "Tourney";
@@ -355,6 +354,55 @@ void PrintMOTD(edict_t * ent)
 			}
 		}
 
+		/* new Espionage settings added here for better readability */
+		if(esp->value) {
+			strcat(msg_buf, "\n");
+			lines++;
+
+			if(espsettings.mode == 0)
+				sprintf(msg_buf + strlen(msg_buf), "Espionage Mode: Assassinate the Leader\n");
+			else if(espsettings.mode == 1)
+				sprintf(msg_buf + strlen(msg_buf), "Espionage Mode: Escort the VIP\n");
+			else
+				strcat(msg_buf, "\n");
+			lines++;
+
+			if(teams[TEAM1].respawn_timer > -1 || teams[TEAM2].respawn_timer > -1 || teams[TEAM3].respawn_timer > -1) {
+				sprintf(msg_buf + strlen(msg_buf), "Spawn times: ");
+				if(teams[TEAM1].respawn_timer > -1)
+					sprintf(msg_buf + strlen(msg_buf), "%s: %ds ", teams[TEAM1].name, teams[TEAM1].respawn_timer);
+				if(teams[TEAM2].respawn_timer > -1)
+					sprintf(msg_buf + strlen(msg_buf), "%s: %ds", teams[TEAM2].name, teams[TEAM2].respawn_timer);
+				if(use_3teams->value){
+					if(teams[TEAM3].respawn_timer > -1)
+						sprintf(msg_buf + strlen(msg_buf), "%s: %ds", teams[TEAM3].name, teams[TEAM3].respawn_timer);
+					}
+				strcat(msg_buf, "\n");
+				lines++;
+			}
+
+			sprintf(msg_buf + strlen(msg_buf), "Using %s spawns\n",
+					(espsettings.custom_spawns ? "CUSTOM" : "ORIGINAL"));
+			lines++;
+
+			if(strlen(espsettings.author) > 0) {
+				strcat(msg_buf, "\n");
+				lines++;
+
+				sprintf(msg_buf + strlen(msg_buf), "Espionage configuration by %s\n",
+						espsettings.author);
+				lines++;
+
+				/* no comment without author, grr */
+				if(strlen(espsettings.name) > 0) {
+					/* max line length is 39 chars + new line */
+					Q_strncatz(msg_buf + strlen(msg_buf), espsettings.name, 39);
+					strcat(msg_buf, "\n");
+					lines++;
+				}
+			}
+		}
+
 		/*
 		   Darkmatch
 		 */
@@ -393,10 +441,19 @@ void PrintMOTD(edict_t * ent)
 			else
 				strcat(msg_buf, "Roundlimit: none");
 
-			if ((int)roundtimelimit->value) // What is the roundtimelimit?
-				sprintf(msg_buf + strlen(msg_buf), "  Roundtimelimit: %d\n", (int)roundtimelimit->value);
-			else
-				strcat(msg_buf, "  Roundtimelimit: none\n");
+			if (!esp->value) { // No Roundtimelimits on Espionage
+				if ((int)roundtimelimit->value) // What is the roundtimelimit?
+					sprintf(msg_buf + strlen(msg_buf), "  Roundtimelimit: %d\n", (int)roundtimelimit->value);
+				else
+					strcat(msg_buf, "  Roundtimelimit: none\n");
+			}
+
+			if (esp->value && espsettings.mode == 1) {
+				if ((int) capturelimit->value) // What is the capturelimit?
+					sprintf(msg_buf + strlen(msg_buf), "  Capturelimit: %d\n", (int) capturelimit->value);
+				else
+					strcat(msg_buf, "  Capturelimit: none\n");
+			}
 			lines++;
 		}
 		else if (ctf->value) // If we're in CTF, we want to know the capturelimit

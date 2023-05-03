@@ -113,6 +113,7 @@ int ESPGetRespawnTime(edict_t *);
 void Cmd_Volunteer_f(edict_t * ent);
 void EspSetLeader( int teamNum, edict_t *ent );
 qboolean AllTeamsHaveLeaders(void);
+void EspLeaderLeftTeam( edict_t *ent );
 
 void SP_info_player_team1 (edict_t * self);
 void SP_info_player_team2 (edict_t * self);

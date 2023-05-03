@@ -1005,8 +1005,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		if(espsettings.mode == 1) {
 			if (use_3teams->value)
 			{
-				gi.dprintf ("Espionage Enabled - Forcing 3Teams off\n");
-				gi.cvar_forceset(use_3teams->name, "0");
+				gi.dprintf ("Espionage ETV Enabled - Incompatible with 3 Teams, reverting to ATL mode\n");
+				espsettings.mode = 0;
 			}
 		}
 		if(teamdm->value)

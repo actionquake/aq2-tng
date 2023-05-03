@@ -71,8 +71,6 @@ void EspMarkerThink( edict_t *marker )
 				gi.bprintf( PRINT_HIGH, "%s IS DOMINATING!\n",
 				teams[ marker->owner->client->resp.team ].name );
 
-			gi.sound( marker, CHAN_ITEM, gi.soundindex("tng/markerret.wav"), 0.75, 0.125, 0 );
-
 			for( ent = g_edicts + 1; ent <= g_edicts + game.maxclients; ent ++ )
 			{
 				if( ! (ent->inuse && ent->client && ent->client->resp.team) )
@@ -91,7 +89,6 @@ void EspMarkerThink( edict_t *marker )
 
 	marker->nextthink = level.framenum + FRAMEDIV;
 }
-
 
 void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf )
 {
@@ -467,7 +464,6 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 		}
 
-		//gi.dprintf(" Spawns\n");
 		char *r_spawnlist, *b_spawnlist, *g_spawnlist;
 
 		r_spawnlist = INI_Find(fh, "spawns", "red");
@@ -562,22 +558,6 @@ qboolean EspLoadConfig(const char *mapname)
 				teams[TEAM3].leader_name, teams[TEAM3].leader_skin);
 			}
 		}
-
-		// Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
-		// Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
-		// Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
-		// Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
-
-		// for (int z = TEAM1; z <= teamCount; z++){
-		// 	level.pic_teamskin[z] = gi.imageindex(teams[z].skin_index);
-		// 	level.pic_leaderskin[z] = gi.imageindex(teams[z].leader_skin_index);
-
-		// 	gi.dprintf("Skin index %s\n", teams[z].skin_index);
-		// 	gi.dprintf("Skin %s\n", teams[z].skin);
-		// 	gi.dprintf("Leader Skin index %s\n", teams[z].leader_skin_index);
-		// 	gi.dprintf("Leader Skin %s\n", teams[z].leader_skin);
-		// }
-
 	}
 
 	// automagically change spawns *only* when we do not have team spawns
@@ -931,10 +911,10 @@ void EspSwapTeams()
 	teams[TEAM1].score = teams[TEAM2].score;
 	teams[TEAM2].score = i;
 
-	// Swap matchmode team captains.
-	ent = teams[TEAM1].captain;
-	teams[TEAM1].captain = teams[TEAM2].captain;
-	teams[TEAM2].captain = ent;
+	// Swap matchmode team leaders.
+	ent = teams[TEAM1].leader;
+	teams[TEAM1].leader = teams[TEAM2].leader;
+	teams[TEAM2].leader = ent;
 
 	teams_changed = true;
 }
@@ -1020,7 +1000,8 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	// If ETV mode is enabled, and the entity asking to become captain is on Team 1 (Red)
 	if((esp_mode->value) == 0 || (esp_mode->value == 1 && teamNum == TEAM1)){
 		teams[teamNum].leader = ent;
-		AssignSkin(ent, teams[teamNum].leader_skin, false);
+		if(ent) // Only assign a skin to an ent
+			AssignSkin(ent, teams[teamNum].leader_skin, false);
 	} else {
 		// Do not set leader attribute to team 2 in ETV
 		teams[teamNum].leader = NULL;
@@ -1048,7 +1029,18 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
 		CenterPrintAll(temp);
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
+		//gi.dprintf("%s became leader for team %d !  Clientnum check: %d %d!\n", ent->client->pers.netname, ent->client->resp.team, ent->client->clientNum, teams[ent->client->resp.team].leader->client->clientNum);
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
+		AssignSkin(ent, teams[teamNum].leader_skin, false);
 	}
+}
 
+void EspLeaderLeftTeam( edict_t *ent )
+{
+	int teamNum = ent->client->resp.team;
+
+	if (teams[teamNum].leader == ent) {
+		EspSetLeader( teamNum, NULL );
+	}
+	ent->client->resp.subteam = 0;
 }

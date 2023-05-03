@@ -703,7 +703,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 
 	self->client->resp.ctf_capstreak = 0;
 
-	if(esp->value && IS_LEADER(self)) {
+	if (esp->value && IS_LEADER(self)) {
 		// Reset capture streak to 0
 		espsettings.capturestreak = 0;
 	}
@@ -2702,7 +2702,7 @@ void PutClientInServer(edict_t * ent)
 		AllWeapons(ent);
 
 	// Team leaders in Espionage receive all items by default
-	if(esp->value){
+	if (esp->value){
 		for (i = TEAM1; i <= teamCount; i++){
 			if (ent == teams[i].leader) {
 				AllItems(ent);
@@ -3117,6 +3117,7 @@ void ClientDisconnect(edict_t * ent)
 		return;
 
 	MM_LeftTeam( ent );
+	EspLeaderLeftTeam ( ent );
 	ent->client->resp.team = 0;
 
 	// drop items if they are alive/not observer
