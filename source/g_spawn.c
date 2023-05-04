@@ -993,7 +993,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	else if (esp->value)
 	{
 	gi.cvar_forceset(gm->name, "esp");
-		gameSettings |= GS_WEAPONCHOOSE;
+		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
 
 		// Make sure teamplay is enabled
 		if (!teamplay->value)
@@ -1029,6 +1029,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Espionage Enabled - Forcing Friendly Fire off\n");
 			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
 		}
+		// Espionage respawns do not have uvtime
 		if (uvtime->value)
 		{
 			gi.cvar_forceset(uvtime->name, "0");

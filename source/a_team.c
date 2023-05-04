@@ -1865,59 +1865,33 @@ qboolean BothTeamsHavePlayers()
 int CheckForWinner()
 {
 	int players[TEAM_TOP] = { 0 };
-	int leaders[TEAM_TOP] = { 0 };
-	int i = 0, teamNum = 0, teamsWithPlayers = 0, teamsWithAliveLeaders = 0;
+	int i = 0, teamNum = 0, teamsWithPlayers = 0;
 	edict_t *ent;
 
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
-	if (esp->value){
-		if (espsettings.mode == ESPMODE_ATL){
-			for (i = TEAM1; i <= teamCount; i++){
-				gi.dprintf("Team %d found\n", i);
-				if (!IS_ALIVE(teams[i].leader)) {
-					teamsWithAliveLeaders++;
-					teamNum = i;
-				}
-			}
-			if (teamsWithAliveLeaders)
-				return (teamsWithAliveLeaders > 1) ? WINNER_NONE : teamNum;
+	// Normal teamplay check
+	for (i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse || ent->solid == SOLID_NOT)
+			continue;
 
+		teamNum = game.clients[i].resp.team;
+		if (teamNum == NOTEAM)
+			continue;
 
-			return WINNER_TIE;
-		// Round ends if team 1's leader dies in ETV mode
-		} else if (espsettings.mode == ESPMODE_ETV){
-			if (!IS_ALIVE(teams[TEAM1].leader)) {
-				return TEAM2;
-			}
-		}
-	gi.dprintf("Teams with alive leaders: %d\n", teamsWithAliveLeaders);
-	gi.dprintf("Espsettings: %d\n", espsettings.mode);
-
-	} else {
-		// Normal teamplay check
-		for (i = 0; i < game.maxclients; i++){
-			ent = &g_edicts[1 + i];
-			if (!ent->inuse || ent->solid == SOLID_NOT)
-				continue;
-
-			teamNum = game.clients[i].resp.team;
-			if (teamNum == NOTEAM)
-				continue;
-
-			players[teamNum]++;
-		}
-		teamsWithPlayers = 0;
-		for (i = TEAM1; i <= teamCount; i++){
-			if (players[i]) {
-				teamsWithPlayers++;
-				teamNum = i;
-			}
-		}
-		if (teamsWithPlayers)
-			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
+		players[teamNum]++;
 	}
+	teamsWithPlayers = 0;
+	for (i = TEAM1; i <= teamCount; i++){
+		if (players[i]) {
+			teamsWithPlayers++;
+			teamNum = i;
+		}
+	}
+	if (teamsWithPlayers)
+		return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 	return WINNER_TIE;
 }
 
@@ -2094,7 +2068,7 @@ void StartRound ()
 
 static void StartLCA(void)
 {
-	if (gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED))
+	if ((gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED)) || (esp->value))
 		CleanLevel();
 
 	if (use_tourney->value && !tourney_lca->value)

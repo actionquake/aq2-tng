@@ -989,7 +989,7 @@ void CheckDMRules (void)
 			{
 				gi.bprintf (PRINT_HIGH, "Fraglimit hit.\n");
 				IRC_printf (IRC_T_GAME, "Fraglimit hit.");
-				if (ctf->value)
+				if (ctf->value || esp->value)
 					ResetPlayers ();
 				EndDMLevel ();
 				return;
