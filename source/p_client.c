@@ -1469,6 +1469,9 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		if (ctf->value) {
 			self->client->respawn_framenum = level.framenum + CTFGetRespawnTime(self) * HZ;
 		}
+		else if (esp->value) {
+			self->client->respawn_framenum = level.framenum + EspGetRespawnTime(self) * HZ;
+		}
 		else if(teamdm->value) {
 			self->client->respawn_framenum = level.framenum + (int)(teamdm_respawn->value * HZ);
 		}
@@ -1607,9 +1610,11 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	if(ctf->value)
 		CheckForUnevenTeams(self);
 
-	if (esp->value && IS_LEADER(self))
+	if (esp->value && IS_LEADER(self)) {
 		EspReportLeaderDeath(self);
-		gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_STATIC, 0);}
+		gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_STATIC, 0);
+	}
+}
 
 /*
 =======================================================================
@@ -3698,8 +3703,13 @@ void ClientBeginServerFrame(edict_t * ent)
 				// in deathmatch, only wait for attack button
 				buttonMask = BUTTON_ATTACK;
 				if ((client->latched_buttons & buttonMask) || DMFLAGS(DF_FORCE_RESPAWN)) {
-					respawn(ent);
-					client->latched_buttons = 0;
+					if (esp->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+						respawn(ent);
+						client->latched_buttons = 0;
+					} else {
+						respawn(ent);
+						client->latched_buttons = 0;
+					}
 				}
 			}
 		}

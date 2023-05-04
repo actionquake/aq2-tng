@@ -533,7 +533,7 @@ qboolean EspLoadConfig(const char *mapname)
 
 int EspGetRespawnTime(edict_t *ent)
 {
-	int spawntime = esp_respawn->value;
+	int spawntime = 0;
 	if(ent->client->resp.team == TEAM1 && teams[TEAM1].respawn_timer > -1)
 		spawntime = teams[TEAM1].respawn_timer;
 	else if(ent->client->resp.team == TEAM2 && teams[TEAM2].respawn_timer > -1)

@@ -108,7 +108,7 @@ extern gitem_t *team_flag[TEAM_TOP];
 void ESPInit (void);
 void ESPSetFlag(int, char *);
 void ESPSetTeamSpawns(int, char *);
-int ESPGetRespawnTime(edict_t *);
+int EspGetRespawnTime(edict_t *ent);
 
 void Cmd_Volunteer_f(edict_t * ent);
 void EspSetLeader( int teamNum, edict_t *ent );
@@ -122,6 +122,7 @@ char *ESPTeamName (int team);
 char *ESPOtherTeamName (int team);
 void ESPAssignTeam (gclient_t * who);
 edict_t *SelectESPSpawnPoint (edict_t * ent);
+void EspReportLeaderDeath(edict_t *ent);
 
 void ESPResetFlags(void);
 

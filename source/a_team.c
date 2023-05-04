@@ -2430,7 +2430,8 @@ int WonGame (int winner)
 			PrintScores ();
 		}
 	}
-	if (esp->value){
+	// Only perform team punishments if there's only 2 teams
+	if (esp->value && teamCount == 2){
 		if(esp_punish->value == 1){
 			// Immediately kill all losing members of the remaining team
 			for (i = TEAM1; i < TEAM_TOP; i++){
