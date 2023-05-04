@@ -1871,7 +1871,6 @@ int CheckForWinner()
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
-	// Normal teamplay check
 	for (i = 0; i < game.maxclients; i++){
 		ent = &g_edicts[1 + i];
 		if (!ent->inuse || ent->solid == SOLID_NOT)
@@ -1892,6 +1891,7 @@ int CheckForWinner()
 	}
 	if (teamsWithPlayers)
 		return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
+
 	return WINNER_TIE;
 }
 
@@ -2687,7 +2687,11 @@ int CheckTeamRules (void)
 			return 0; //CTF and teamDM dont need to check winner, its not round based
 		}
 
-		winner = CheckForWinner();
+		if (esp->value)
+			EspReportLeaderDeath();
+		else // Non-Espionage Winner check
+			winner = CheckForWinner();
+		gi.dprintf("The winner was team %d\n", winner);
 		if (winner != WINNER_NONE)
 		{
 			if (!checked_tie)
@@ -3821,15 +3825,23 @@ void NS_SetupTeamSpawnPoints ()
 	}
 }
 
-void EspReportLeaderDeath(edict_t *ent)
+int EspReportLeaderDeath(void)
 {
+	// Get the team the leader was on
+	int i;
+	int dead_leader_team = 0;
+	int winner = 0;
+
 	// This is called from player_die, and only called
 	// if the player was a leader
 
-	// Get the team the leader was on
-	int dead_leader_team = ent->client->resp.team;
-	int winner = 0;
+	for (i = TEAM1; i < TEAM_TOP; i++){
+		if (!IS_ALIVE(teams[i].leader)) {
+			gi.dprintf("Team %d's leader died\n", i);
 
+			dead_leader_team = i;
+		}
+	}
 	// This checks if leader was on TEAM 1 in ETV mode
 	if (espsettings.mode == ESPMODE_ETV) {
 		winner = TEAM2;
@@ -3862,5 +3874,5 @@ void EspReportLeaderDeath(edict_t *ent)
 			}
 		}
 	}
-	WonGame(winner);
+	return winner;
 }

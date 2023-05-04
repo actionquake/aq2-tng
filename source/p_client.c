@@ -1611,7 +1611,7 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		CheckForUnevenTeams(self);
 
 	if (esp->value && IS_LEADER(self)) {
-		EspReportLeaderDeath(self);
+		EspReportLeaderDeath();
 		gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_STATIC, 0);
 	}
 }

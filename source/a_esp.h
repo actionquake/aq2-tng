@@ -122,7 +122,7 @@ char *ESPTeamName (int team);
 char *ESPOtherTeamName (int team);
 void ESPAssignTeam (gclient_t * who);
 edict_t *SelectESPSpawnPoint (edict_t * ent);
-void EspReportLeaderDeath(edict_t *ent);
+int EspReportLeaderDeath(void);
 
 void ESPResetFlags(void);
 
