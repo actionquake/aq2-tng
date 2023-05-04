@@ -192,7 +192,6 @@ qboolean TeamsReady( void )
 		else if( TeamHasPlayers(i) )
 			return false;
 	}
-
 	return (ready >= 2);
 }
 

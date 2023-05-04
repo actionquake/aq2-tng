@@ -1149,7 +1149,7 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, default_skin);
 			break;
 		}
-		//gi.dprintf("I assigned skin %s to %s\n", skin, ent->client->pers.netname);
+		//gi.dprintf("I assigned skin  %s  to  %s\n", skin, ent->client->pers.netname);
 	}
 	else
 	{
@@ -1392,7 +1392,7 @@ void LeaveTeam (edict_t * ent)
 	IRC_printf (IRC_T_GAME, "%n left %n team.", ent->client->pers.netname, genderstr);
 
 	MM_LeftTeam( ent );
-
+	EspLeaderLeftTeam ( ent );
 	ent->client->resp.joined_team = 0;
 	ent->client->resp.team = NOTEAM;
 	G_UpdatePlayerStatusbar(ent, 1);
@@ -1864,15 +1864,18 @@ qboolean BothTeamsHavePlayers()
 // CheckForWinner: Checks for a winner (or not).
 int CheckForWinner()
 {
-	int players[TEAM_TOP] = { 0 }, i = 0, teamNum = 0, teamsWithPlayers = 0, teamsWithAliveLeaders = 0;
+	int players[TEAM_TOP] = { 0 };
+	int leaders[TEAM_TOP] = { 0 };
+	int i = 0, teamNum = 0, teamsWithPlayers = 0, teamsWithAliveLeaders = 0;
 	edict_t *ent;
 
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
 	if (esp->value){
-		if (esp_mode->value == 0){
+		if (espsettings.mode == ESPMODE_ATL){
 			for (i = TEAM1; i <= teamCount; i++){
+				gi.dprintf("Team %d found\n", i);
 				if (!IS_ALIVE(teams[i].leader)) {
 					teamsWithAliveLeaders++;
 					teamNum = i;
@@ -1881,13 +1884,17 @@ int CheckForWinner()
 			if (teamsWithAliveLeaders)
 				return (teamsWithAliveLeaders > 1) ? WINNER_NONE : teamNum;
 
+
 			return WINNER_TIE;
 		// Round ends if team 1's leader dies in ETV mode
-		} else if (esp_mode->value == 1){
+		} else if (espsettings.mode == ESPMODE_ETV){
 			if (!IS_ALIVE(teams[TEAM1].leader)) {
 				return TEAM2;
 			}
 		}
+	gi.dprintf("Teams with alive leaders: %d\n", teamsWithAliveLeaders);
+	gi.dprintf("Espsettings: %d\n", espsettings.mode);
+
 	} else {
 		// Normal teamplay check
 		for (i = 0; i < game.maxclients; i++){
@@ -2523,14 +2530,13 @@ int CheckTeamRules (void)
 		team_round_countdown--;
 		if(!team_round_countdown)
 		{
-			if (esp->value)
+			if (BothTeamsHavePlayers())
 			{
-				if(AllTeamsHaveLeaders() && BothTeamsHavePlayers())
 				in_warmup = 0;
 				team_game_going = 1;
-				StartLCA();	
+				StartLCA();
 			}
-			else if (BothTeamsHavePlayers())
+			else if (esp->value && AllTeamsHaveLeaders())
 			{
 				in_warmup = 0;
 				team_game_going = 1;
@@ -2604,8 +2610,18 @@ int CheckTeamRules (void)
 	{
 		RunWarmup();
 
+		if (!AllTeamsHaveLeaders())
+			return 1;
+
 		if (CheckTimelimit())
 			return 1;
+
+		if (esp->value && EspCheckRules())
+		{
+			EndDMLevel();
+			team_round_going = team_round_countdown = team_game_going = 0;
+			return 1;
+		}
 
 		if (vCheckVote()) {
 			EndDMLevel ();
@@ -2615,17 +2631,8 @@ int CheckTeamRules (void)
 
 		if (!team_round_countdown)
 		{
-			if ((!esp->value && BothTeamsHavePlayers ()) || (esp->value && AllTeamsHaveLeaders()))
+			if (BothTeamsHavePlayers() || (esp->value && AllTeamsHaveLeaders()))
 			{
-				if (esp->value && !AllTeamsHaveLeaders()){
-					if (espsettings.mode == 0) {
-						CenterPrintAll("The game will begin when all teams have Leaders\n");
-						CenterPrintAll("To volunteer for duty, enter 'leader' or 'volunteer'\n");
-					} else if (espsettings.mode == 1) {
-						CenterPrintAll("The game will begin when Team 1 has a Leader\n");
-						CenterPrintAll("To volunteer for duty, enter 'leader' or 'volunteer'\n");
-					}
-				}
 				if (use_tourney->value)
 				{
 					TourneyNewRound ();
@@ -2636,14 +2643,13 @@ int CheckTeamRules (void)
 				{
 					int warmup_length = max( warmup->value, round_begin->value );
 					char buf[64] = "";
+
 					if (esp->value) {
 						sprintf( buf, "All teams have leaders!\nThe round will begin in %d seconds!", warmup_length );
-						CenterPrintAll( buf );
-						gi.dprintf("Leaders: %s\n", teams[TEAM1].leader->client->pers.netname);
 					} else {
 						sprintf( buf, "The round will begin in %d seconds!", warmup_length );
-						CenterPrintAll( buf );
 					}
+					CenterPrintAll( buf );
 					team_round_countdown = warmup_length * 10 + 2;
 
 					// JBravo: Autostart q2pro MVD2 recording on the server
@@ -2678,13 +2684,6 @@ int CheckTeamRules (void)
 			}
 
 			if (dom->value && DomCheckRules())
-			{
-				EndDMLevel();
-				team_round_going = team_round_countdown = team_game_going = 0;
-				return 1;
-			}
-
-			if (esp->value && EspCheckRules())
 			{
 				EndDMLevel();
 				team_round_going = team_round_countdown = team_game_going = 0;
@@ -3012,11 +3011,13 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 		
 		base_x = 160 - ((rowWidth + rowGap) * teamCount) / 2 + rowGap / 2;
 
-		if(ctf->value)
+		if(ctf->value || esp->value)
 		{
 			base_x += 8;
 			tpic[TEAM1][0] = 30;
 			tpic[TEAM2][0] = 31;
+			if(teamCount == 3)
+				tpic[TEAM3][0] = 32;
 		}
 		else if(teamdm->value)
 		{
@@ -3843,4 +3844,48 @@ void NS_SetupTeamSpawnPoints ()
 		if (l != NS_randteam && NS_SelectFarTeamplaySpawnPoint(l, teams_assigned) == false)
 			return;
 	}
+}
+
+void EspReportLeaderDeath(edict_t *ent)
+{
+	// This is called from player_die, and only called
+	// if the player was a leader
+
+	// Get the team the leader was on
+	int dead_leader_team = ent->client->resp.team;
+	int winner = 0;
+
+	// This checks if leader was on TEAM 1 in ETV mode
+	if (espsettings.mode == ESPMODE_ETV) {
+		winner = TEAM2;
+	}
+
+	if (espsettings.mode == ESPMODE_ATL) {
+		if (teamCount == 2) {
+			if (dead_leader_team == TEAM1)
+				winner = TEAM2;
+			else
+				winner = TEAM1;
+		} else {
+			if (dead_leader_team == TEAM1) {
+				if (IS_ALIVE(teams[TEAM2].leader) && !IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM2;
+				else if (!IS_ALIVE(teams[TEAM2].leader) && IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM3;
+			}
+			else if (dead_leader_team == TEAM2) {
+				if (IS_ALIVE(teams[TEAM1].leader) && !IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM1;
+				else if (!IS_ALIVE(teams[TEAM1].leader) && IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM3;
+			}
+			else if (dead_leader_team == TEAM3) {
+				if (IS_ALIVE(teams[TEAM1].leader) && !IS_ALIVE(teams[TEAM2].leader))
+					winner = TEAM1;
+				else if (!IS_ALIVE(teams[TEAM1].leader) && IS_ALIVE(teams[TEAM2].leader))
+					winner = TEAM2;
+			}
+		}
+	}
+	WonGame(winner);
 }

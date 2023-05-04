@@ -1029,6 +1029,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Espionage Enabled - Forcing Friendly Fire off\n");
 			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
 		}
+		if (uvtime->value)
+		{
+			gi.cvar_forceset(uvtime->name, "0");
+		}
 	}
 	else if (dom->value)
 	{

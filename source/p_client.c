@@ -1606,7 +1606,10 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	// in ctf, when a player dies check if he should be moved to the other team
 	if(ctf->value)
 		CheckForUnevenTeams(self);
-}
+
+	if (esp->value && IS_LEADER(self))
+		EspReportLeaderDeath(self);
+		gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_STATIC, 0);}
 
 /*
 =======================================================================

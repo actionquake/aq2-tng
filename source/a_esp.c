@@ -212,65 +212,33 @@ void EspSetTeamSpawns(int team, char *str)
 	} while(next != NULL);
 }
 
-void EspLoadSkins()
-{
-	// Load images into struct
-
-	gi.dprintf("Trying to load skins\n");
-	gi.dprintf("%s\n", red_team_name);
-	/// Team 1 / red team
-	Q_strncpyz(teams[TEAM1].name, red_team_name, sizeof(teams[TEAM1].name));
-	Q_strncpyz(teams[TEAM1].skin, red_skin_name, sizeof(teams[TEAM1].skin));
-	Q_strncpyz(teams[TEAM1].leader_name, red_leader_name, sizeof(teams[TEAM1].leader_name));
-	Q_strncpyz(teams[TEAM1].leader_skin, red_leader_skin, sizeof(teams[TEAM1].leader_skin));
-	gi.dprintf("Trying to load skins 2\n");
-
-	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
-	Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
-	/// Team 2 / blue team
-	Q_strncpyz(teams[TEAM2].name, blue_team_name, sizeof(teams[TEAM2].name));
-	Q_strncpyz(teams[TEAM2].skin, blue_skin_name, sizeof(teams[TEAM2].skin));
-	Q_strncpyz(teams[TEAM2].leader_name, blue_leader_name, sizeof(teams[TEAM2].leader_name));
-	Q_strncpyz(teams[TEAM2].leader_skin, blue_leader_skin, sizeof(teams[TEAM2].leader_skin));
-	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
-	Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
-
-	if(teamCount == 3) {
-		/// Team 3 / green team
-		Q_strncpyz(teams[TEAM3].name, green_team_name, sizeof(teams[TEAM3].name));
-		Q_strncpyz(teams[TEAM3].skin, green_skin_name, sizeof(teams[TEAM3].skin));
-		Q_strncpyz(teams[TEAM3].leader_name, green_leader_name, sizeof(teams[TEAM3].leader_name));
-		Q_strncpyz(teams[TEAM3].leader_skin, green_leader_skin, sizeof(teams[TEAM3].leader_skin));
-	
-		Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
-		Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
-	}
-
-	gi.dprintf("End Trying to load skins\n");
-}
-
 void EspEnforceDefaultSettings(char *defaulttype)
 {
 	qboolean default_team = (Q_stricmp(defaulttype,"team")==0) ? true : false;
 	qboolean default_respawn = (Q_stricmp(defaulttype,"respawn")==0) ? true : false;
 	qboolean default_author = (Q_stricmp(defaulttype,"author")==0) ? true : false;
 
-	gi.dprintf("I was called to set the default for %s\n", defaulttype);
+	//gi.dprintf("I was called to set the default for %s\n", defaulttype);
 
 	if(default_author) {
 		espsettings.mode = ESPMODE_ATL;
 		Q_strncpyz(espsettings.author, "AQ2World Team", sizeof(espsettings.author));
 		Q_strncpyz(espsettings.name, "Time for Action!", sizeof(espsettings.name));
+
+		gi.dprintf(" Author           : %s\n", espsettings.author);
+		gi.dprintf(" Name		  : %s\n", espsettings.name);
+		gi.dprintf(" Game type        : Assassinate the Leader\n");
 	}
+
 	if(default_respawn) {
 		teams[TEAM1].respawn_timer = ESP_RESPAWN_TIME;
 		teams[TEAM2].respawn_timer = ESP_RESPAWN_TIME;
-
 		if (teamCount == 3){
 			teams[TEAM3].respawn_timer = ESP_RESPAWN_TIME;
 		}
-		gi.dprintf("  Respawn Rate: %s seconds\n", ESP_RESPAWN_TIME);
+		gi.dprintf("  Respawn Rate: %d seconds\n", ESP_RESPAWN_TIME);
 	}
+
 	if(default_team) {
 		/// Default skin/team/names - red team
 		Q_strncpyz(teams[TEAM1].name, ESP_RED_TEAM, sizeof(teams[TEAM1].name));
@@ -336,39 +304,15 @@ qboolean EspLoadConfig(const char *mapname)
 		// TODO: A better GHUD method to display this?
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Hard-coded Espionage configuration loaded\n");
-		gi.dprintf(" Name		  : Elimination\n");
-		gi.dprintf(" Game type    : Assassinate the Leader\n");
-		gi.dprintf(" Respawn times: 10 seconds\n");
-		gi.dprintf(" Skins\n");
-		gi.dprintf("  Red Team: %s -- %s\n", ESP_RED_TEAM, ESP_RED_SKIN);
-		gi.dprintf("  Red Leader: %s -- %s\n", ESP_RED_LEADER_NAME, ESP_RED_LEADER_SKIN);
-		gi.dprintf("  Blue Team: %s -- %s\n", ESP_BLUE_TEAM, ESP_BLUE_SKIN);
-		gi.dprintf("  Blue Leader: %s -- %s\n", ESP_BLUE_LEADER_NAME, ESP_BLUE_LEADER_SKIN);
-		if(teamCount == 3){
-			gi.dprintf("  Green Team: %s -- %s\n", ESP_GREEN_TEAM, ESP_GREEN_SKIN);
-			gi.dprintf("  Green Leader: %s -- %s\n", ESP_GREEN_LEADER_NAME, ESP_GREEN_LEADER_SKIN);
-		}
+
 		// Set game type to ATL
 		/// Default game settings
 		EspEnforceDefaultSettings("author");
 		EspEnforceDefaultSettings("respawn");
 		EspEnforceDefaultSettings("team");
-		
-		// // Skin Names
-		red_skin_name = ESP_RED_SKIN;
-		red_leader_skin = ESP_RED_LEADER_SKIN;
-		blue_skin_name = ESP_BLUE_SKIN;
-		blue_leader_skin = ESP_BLUE_LEADER_SKIN;
-		if(teamCount == 3) {
-			green_skin_name = ESP_GREEN_SKIN;
-			green_leader_skin = ESP_GREEN_LEADER_SKIN;
-		}
-
-		EspLoadSkins();
 
 		// No custom spawns, use default for map
 		espsettings.custom_spawns = false;
-
 	} else {
 
 		gi.dprintf("-------------------------------------\n");
@@ -461,7 +405,7 @@ qboolean EspLoadConfig(const char *mapname)
 					ptr = "The Spot";
 				}
 				Q_strncpyz(espsettings.target_name, ptr, sizeof(espsettings.target_name));
-		}
+			}
 		}
 
 		char *r_spawnlist, *b_spawnlist, *g_spawnlist;
@@ -985,6 +929,8 @@ qboolean AllTeamsHaveLeaders(void)
 	if(teamsWithLeaders == teamCount){
 		return true;
 	}
+
+	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
 	return false;
 }
 
@@ -1035,6 +981,36 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	}
 }
 
+void ChooseRandomLeader(int teamNum)
+{
+	// Call this if esp_mustvolunteer is 0
+	// or if a the leader of a team disconnects/leaves
+
+	int players[TEAM_TOP] = { 0 }, i;
+	edict_t *ent;
+
+	if (matchmode->value && !TeamsReady())
+		return;
+
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse || game.clients[i].resp.team == NOTEAM)
+			continue;
+		if (!game.clients[i].resp.subteam)
+			players[game.clients[i].resp.team]++;
+	}
+
+	if (ent->client->resp.team == teamNum) {
+		if (matchmode->value && ent->client->resp.subteam == teamNum)
+			;
+		else
+			// Congrats, you're the new leader
+			EspSetLeader(teamNum, ent);
+	}
+
+}
+
 void EspLeaderLeftTeam( edict_t *ent )
 {
 	int teamNum = ent->client->resp.team;
@@ -1043,4 +1019,11 @@ void EspLeaderLeftTeam( edict_t *ent )
 		EspSetLeader( teamNum, NULL );
 	}
 	ent->client->resp.subteam = 0;
+
+	// esp_mustvolunteer is off, anyone can get picked, except a bot
+	if (!teams[teamNum].leader && !ent->is_bot) {
+		if (!esp_mustvolunteer->value) {
+			ChooseRandomLeader(teamNum);
+		}
+	}
 }
