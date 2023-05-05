@@ -1402,6 +1402,13 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 
 	if (level.intermission_framenum)
 		return;
+	
+	// Espionage join a game in progress
+	if (esp->value && team_round_going && ent->inuse && ent->client->resp.team)
+	{
+		PutClientInServer (ent);
+		//AddToTransparentList (ent);
+	}
 
 	if (!(gameSettings & GS_ROUNDBASED) && team_round_going && ent->inuse && ent->client->resp.team)
 	{
@@ -2146,7 +2153,7 @@ void StartRound ()
 
 static void StartLCA(void)
 {
-	if ((gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED)) || (esp->value))
+	if ((gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED)))
 		CleanLevel();
 
 	if (use_tourney->value && !tourney_lca->value)

@@ -1771,6 +1771,9 @@ void SelectSpawnPoint(edict_t * ent, vec3_t origin, vec3_t angles)
 	//FIREBLADE
 	if (ctf->value)
 		spot = SelectCTFSpawnPoint(ent);
+	// TODO: Fix this
+	// else if (esp->value)
+	// 	spot = SelectEspSpawnPoint(ent);
 	else if (dom->value)
 		spot = SelectDeathmatchSpawnPoint();
 	else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup) {
@@ -1917,11 +1920,7 @@ void respawn(edict_t *self)
 
 	if (!(self->svflags & SVF_NOCLIENT))
 	{
-		// Enables respawns in espionage mode
-		if (team_round_going && esp->value)
-			AddToTransparentList(self);
-		// Do not respawn in roundbased games
-		else if (team_round_going && !(gameSettings & GS_ROUNDBASED))
+		if (team_round_going && !(gameSettings & GS_ROUNDBASED))
 			AddToTransparentList(self);
 
 		if (respawn_effect->value) {
@@ -3770,8 +3769,7 @@ void ClientBeginServerFrame(edict_t * ent)
 							(client->resp.team == ctfgame.offence ?
 							"ATTACKING" : "DEFENDING"),
 							CTFOtherTeamName(ctfgame.offence));
-					}
-					else {
+					} else {
 						gi.centerprintf(ent, "ACTION!");
 					}
 				}
