@@ -1261,11 +1261,11 @@ temp_event_t;
 // Espionage
 
 #define STAT_MARKER_PIC                 STAT_FLAG_PIC
-#define STAT_TEAM1_LEADERPIC            34
-#define STAT_TEAM2_LEADERPIC            35
-#define STAT_TEAM3_LEADERPIC            36
+// #define STAT_TEAM1_LEADERPIC            34
+// #define STAT_TEAM2_LEADERPIC            35
+// #define STAT_TEAM3_LEADERPIC            36
 
-#define STAT_TEAM3_HEADER               37
+// #define STAT_TEAM3_HEADER               37
 
 
 

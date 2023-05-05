@@ -2780,12 +2780,12 @@ void A_Scoreboard (edict_t * ent)
 			if (teamCount == 3)
 				ent->client->ps.stats[STAT_TEAM3_PIC] = level.pic_teamskin[TEAM3];
 
-			if (esp->value){
-				ent->client->ps.stats[STAT_TEAM1_LEADERPIC] = level.pic_leaderskin[TEAM1];
-				ent->client->ps.stats[STAT_TEAM2_LEADERPIC] = level.pic_leaderskin[TEAM2];
-				if (teamCount == 3)
-					ent->client->ps.stats[STAT_TEAM3_LEADERPIC] = level.pic_leaderskin[TEAM3];
-				}
+			// if (esp->value){
+			// 	ent->client->ps.stats[STAT_TEAM1_LEADERPIC] = level.pic_leaderskin[TEAM1];
+			// 	ent->client->ps.stats[STAT_TEAM2_LEADERPIC] = level.pic_leaderskin[TEAM2];
+			// 	if (teamCount == 3)
+			// 		ent->client->ps.stats[STAT_TEAM3_LEADERPIC] = level.pic_leaderskin[TEAM3];
+			// 	}
 		}
 
 		ent->client->ps.stats[STAT_TEAM1_SCORE] = teams[TEAM1].score;

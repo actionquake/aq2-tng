@@ -607,7 +607,7 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
 {
 	int mod;
 	int loc;
-	int chosenItem;
+	int chosenItem = 0;
 	int gametime = 0;
 	int roundNum;
 	int eventtime;
