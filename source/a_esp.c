@@ -475,6 +475,7 @@ qboolean EspLoadConfig(const char *mapname)
 			Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
 		}
 
+		// TODO: This will always resolve to true, maybe need to validate in another way
 		if((!teams[TEAM1].skin || !teams[TEAM1].name || !teams[TEAM1].leader_name || !teams[TEAM1].leader_skin ||
 		!teams[TEAM2].skin || !teams[TEAM2].name || !teams[TEAM2].leader_name || !teams[TEAM2].leader_skin) || 
 		((teamCount == 3) && (!teams[TEAM3].skin || !teams[TEAM3].name || !teams[TEAM3].leader_name || !teams[TEAM3].leader_skin))){
@@ -541,7 +542,7 @@ int EspGetRespawnTime(edict_t *ent)
 	else if((teamCount == 3) && ent->client->resp.team == TEAM3 && teams[TEAM3].respawn_timer > -1)
 		spawntime = teams[TEAM3].respawn_timer;
 
-	gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
+	//gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
 
 	return spawntime;
 }
@@ -930,7 +931,7 @@ qboolean AllTeamsHaveLeaders(void)
 		return true;
 	}
 
-	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
+	//gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
 	return false;
 }
 

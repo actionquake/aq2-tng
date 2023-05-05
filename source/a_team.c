@@ -2347,7 +2347,7 @@ void MakeTeamInvulnerable(int winner, int uvtime)
 	for (int i = 0; i < game.maxclients; i++){
 		ent = &g_edicts[1 + i];
 		// Make alive clients invulnerable
-		if (game.clients[i].resp.team == winner && (!ent->solid == SOLID_NOT && !ent->deadflag)){
+		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){
 			ent->client->uvTime = uvtime;
 		}
 	}
@@ -2688,7 +2688,7 @@ int CheckTeamRules (void)
 		}
 
 		if (esp->value)
-			EspReportLeaderDeath();
+			winner = EspReportLeaderDeath();
 		else // Non-Espionage Winner check
 			winner = CheckForWinner();
 		gi.dprintf("The winner was team %d\n", winner);
@@ -3834,24 +3834,28 @@ int EspReportLeaderDeath(void)
 
 	// This is called from player_die, and only called
 	// if the player was a leader
-
-	for (i = TEAM1; i < TEAM_TOP; i++){
-		if (!IS_ALIVE(teams[i].leader)) {
-			gi.dprintf("Team %d's leader died\n", i);
-
-			dead_leader_team = i;
+	for (i = TEAM1; i < teamCount; i++){
+		if (HAVE_LEADER(i)){
+			if (!IS_ALIVE(teams[i].leader)) {
+				// Found a dead leader!
+				dead_leader_team = i;
+				gi.dprintf("Team with dead leader: %d -- %s\n", dead_leader_team, teams[dead_leader_team].leader->client->pers.netname);
+			}
 		}
 	}
 	// This checks if leader was on TEAM 1 in ETV mode
 	if (espsettings.mode == ESPMODE_ETV) {
-		winner = TEAM2;
+		if (dead_leader_team == TEAM1) {
+			winner = TEAM2;
+		}
 	}
 
+	// ATL mode checks
 	if (espsettings.mode == ESPMODE_ATL) {
 		if (teamCount == 2) {
 			if (dead_leader_team == TEAM1)
 				winner = TEAM2;
-			else
+			else if (dead_leader_team == TEAM2)
 				winner = TEAM1;
 		} else {
 			if (dead_leader_team == TEAM1) {
