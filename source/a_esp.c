@@ -952,7 +952,7 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	} else {
 		// Do not set leader attribute to team 2 in ETV
 		teams[teamNum].leader = NULL;
-		gi.centerprintf(ent, "Only the Red team has a leader in this mode\n");
+		gi.centerprintf(ent, "Only the Red team has a leader in ETV mode\n");
 	}
 	
 	if (!ent) {
@@ -1004,7 +1004,8 @@ void ChooseRandomLeader(int teamNum)
 
 	if (ent->client->resp.team == teamNum) {
 		if (matchmode->value && ent->client->resp.subteam == teamNum)
-			;
+			// Subs can't be elected leaders
+			return;
 		else
 			// Congrats, you're the new leader
 			EspSetLeader(teamNum, ent);
@@ -1016,15 +1017,18 @@ void EspLeaderLeftTeam( edict_t *ent )
 {
 	int teamNum = ent->client->resp.team;
 
-	if (teams[teamNum].leader == ent) {
+	if (!IS_LEADER(ent)){
+		return;
+	} else {
 		EspSetLeader( teamNum, NULL );
-	}
-	ent->client->resp.subteam = 0;
 
-	// esp_mustvolunteer is off, anyone can get picked, except a bot
-	if (!teams[teamNum].leader && !ent->is_bot) {
-		if (!esp_mustvolunteer->value) {
-			ChooseRandomLeader(teamNum);
+		ent->client->resp.subteam = 0;
+
+		// esp_mustvolunteer is off, anyone can get picked, except a bot
+		if (!teams[teamNum].leader && !ent->is_bot) {
+			if (!esp_mustvolunteer->value) {
+				ChooseRandomLeader(teamNum);
+			}
 		}
 	}
 }

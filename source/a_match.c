@@ -200,6 +200,12 @@ void Cmd_Captain_f(edict_t * ent)
 	int teamNum;
 	edict_t *oldCaptain;
 
+	// Aliases `captain` command to `volunteer` if Espionage is enabled
+	if (esp->value && !matchmode->value) {
+		Cmd_Volunteer_f(ent);
+		return;
+	}
+
 	if (!matchmode->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs matchmode to be enabled\n");
 		return;
@@ -214,6 +220,9 @@ void Cmd_Captain_f(edict_t * ent)
 	oldCaptain = teams[teamNum].captain;
 	if (oldCaptain == ent) {
 		MM_SetCaptain( teamNum, NULL );
+		if (esp->value) {
+			EspSetLeader(teamNum, NULL);
+		}
 		return;
 	}
 
@@ -223,6 +232,8 @@ void Cmd_Captain_f(edict_t * ent)
 	}
 
 	MM_SetCaptain( teamNum, ent );
+	if (esp->value) {
+		EspSetLeader( teamNum, ent );
 }
 
 //extern int started; // AQ2:M - Matchmode - Used for ready command

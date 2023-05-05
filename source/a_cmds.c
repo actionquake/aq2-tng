@@ -1341,25 +1341,36 @@ void Cmd_Volunteer_f(edict_t * ent)
 	int teamNum;
 	edict_t *oldLeader;
 
+	// Ignore if not Espionage mode
 	if (!esp->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs Espionage to be enabled\n");
 		return;
 	}
 
+	// Ignore entity if not on a team
 	teamNum = ent->client->resp.team;
 	if (teamNum == NOTEAM) {
 		gi.cprintf(ent, PRINT_HIGH, "You need to be on a team for that...\n");
 		return;
 	}
 
+	// Ignore entity if they are a sub
+	if (ent->client->resp.subteam == teamNum) {
+		gi.cprintf(ent, PRINT_HIGH, "Subs cannot be leaders...\n");
+		return;
+	}
+
+	// If the current leader is issuing this command again, remove them as leader
 	oldLeader = teams[teamNum].leader;
 	if (oldLeader == ent) {
 		EspSetLeader( teamNum, NULL );
 		return;
 	}
 
+	// If the team already has a leader, send this message to the ent volunteering
 	if (oldLeader) {
-		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader\n" );
+		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\n",
+			teams[teamNum].leader->client->pers.netname );
 		return;
 	}
 
