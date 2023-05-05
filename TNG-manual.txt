@@ -665,6 +665,9 @@ Features
   On player entity death, both items will drop.  LTK bots do not use kits, they will retain their normal behavior.
   e_enhancedSlippers settings are honored, boosting the effectiveness of the Stealth Kit even more
 
+* Print rules
+  printrules [0/1] - server cvar, default 0.  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes.
+
 --------------------------------------------------------------------------------------------------------------------
 Contact Information
   If you wish to contact the TNG team, to report a bug, suggest a new feature, or offer JBravo your

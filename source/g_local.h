@@ -1204,6 +1204,8 @@ extern cvar_t *am_delay;
 extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
+extern cvar_t *printrules;
+
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -2331,6 +2333,7 @@ typedef struct team_s
 	// Espionage
 	edict_t *leader;
 	int respawn_timer;
+	qboolean leader_dead;
 	char leader_name[MAX_SKINLEN];
 	char leader_skin[MAX_QPATH];
 	char leader_skin_index[MAX_QPATH];

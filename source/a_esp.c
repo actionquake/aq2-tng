@@ -1032,3 +1032,115 @@ void EspLeaderLeftTeam( edict_t *ent )
 		}
 	}
 }
+
+
+int EspReportLeaderDeath(edict_t *ent)
+{
+	// Get the team the leader was on
+	int dead_leader_team = 0;
+	int winner = 0;
+
+	dead_leader_team = ent->client->resp.team;
+
+	// Set the dead leader val
+	teams[dead_leader_team].leader_dead = true;
+
+	// This is called from player_die, and only called
+	// if the player was a leader
+	gi.dprintf("Leaders found: %s -- %s\n", teams[TEAM1].leader->client->pers.netname, teams[TEAM2].leader->client->pers.netname);
+
+	// for (i = TEAM1; i < teamCount; i++){
+	// 	if (HAVE_LEADER(i)){
+	// 		if (!IS_ALIVE(teams[i].leader)) {
+	// 			// Found a dead leader!
+	// 			dead_leader_team = i;
+	// 			gi.dprintf("Team with dead leader: %d -- %s\n", dead_leader_team, teams[dead_leader_team].leader->client->pers.netname);
+	// 		} else {
+	// 			continue;
+	// 		}
+	// 	}
+	// }
+
+	// This checks if leader was on TEAM 1 in ETV mode
+	if (espsettings.mode == ESPMODE_ETV) {
+		if (dead_leader_team == TEAM1) {
+			winner = TEAM2;
+		}
+	}
+
+	// ATL mode checks
+	if (espsettings.mode == ESPMODE_ATL) {
+		if (teamCount == 2) {
+			if (dead_leader_team == TEAM1)
+				winner = TEAM2;
+			else if (dead_leader_team == TEAM2)
+				winner = TEAM1;
+		} else {
+			if (dead_leader_team == TEAM1) {
+				if (IS_ALIVE(teams[TEAM2].leader) && !IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM2;
+				else if (!IS_ALIVE(teams[TEAM2].leader) && IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM3;
+			}
+			else if (dead_leader_team == TEAM2) {
+				if (IS_ALIVE(teams[TEAM1].leader) && !IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM1;
+				else if (!IS_ALIVE(teams[TEAM1].leader) && IS_ALIVE(teams[TEAM3].leader))
+					winner = TEAM3;
+			}
+			else if (dead_leader_team == TEAM3) {
+				if (IS_ALIVE(teams[TEAM1].leader) && !IS_ALIVE(teams[TEAM2].leader))
+					winner = TEAM1;
+				else if (!IS_ALIVE(teams[TEAM1].leader) && IS_ALIVE(teams[TEAM2].leader))
+					winner = TEAM2;
+			}
+		}
+	}
+	return winner;
+}
+
+void KillEveryone(int teamNum)
+{
+	edict_t *ent;
+	int i;
+
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse)
+			continue;
+		if(ent->solid == SOLID_NOT && !ent->deadflag)
+			continue;
+		if (game.clients[i].resp.team == teamNum){
+			killPlayer(ent, false);
+		}
+	}
+}
+
+void MakeTeamInvulnerable(int winner, int uvtime)
+{
+	edict_t *ent;
+
+	for (int i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		// Make alive clients invulnerable
+		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){
+			ent->client->uvTime = uvtime;
+		}
+	}
+}
+
+void EspPunishment(int teamNum)
+{
+	// Only perform team punishments if there's only 2 teams
+	if (esp->value && teamCount == 2){
+		if(esp_punish->value == 1){
+			// Immediately kill all losing members of the remaining team
+			KillEveryone(teamNum);
+		} else if (esp_punish->value == 2){
+			// Grant uv shield to winning team
+			int uvtime = 60;
+			MakeTeamInvulnerable(OtherTeam(teamNum), uvtime);
+		}
+	}
+}

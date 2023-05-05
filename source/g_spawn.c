@@ -886,8 +886,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		teams[i].ready = teams[i].locked = 0;
 		teams[i].pauses_used = teams[i].wantReset = 0;
 		teams[i].captain = NULL;
-		if (esp->value)
+		if (esp->value) {
 			teams[i].leader = NULL;
+			teams[i].leader_dead = false;
+		}
 		gi.cvar_forceset(teams[i].teamscore->name, "0");
 	}
 

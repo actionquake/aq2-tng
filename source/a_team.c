@@ -422,6 +422,56 @@ void ReprintMOTD (edict_t * ent, pmenu_t * p)
 	PrintMOTD (ent);
 }
 
+void PrintMatchRules ()
+{
+	char rulesmsg[256];
+
+	// Espionage rules
+	if (esp->value) {
+		if (espsettings.mode == ESPMODE_ATL) {
+			if (teamCount == TEAM2) {
+				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leader to win!\n",
+					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
+					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name );
+				} else if (teamCount == TEAM3) {
+					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leaders to win!\n",
+					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
+					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name,
+					teams[TEAM3].name, teams[TEAM3].leader->client->pers.netname, teams[TEAM3].leader_name );
+				}
+		}
+	}
+	// CTF rules
+	else if (ctf->value) {
+		if (capturelimit->value) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture the other team's flag!\nNo capturelimit set!\n",
+						teams[TEAM1].name, teams[TEAM2].name );
+		} else {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture the other team's flag!\nThe first team to %s captures wins!\n",
+						teams[TEAM1].name, teams[TEAM2].name, capturelimit->string );
+		}
+	}
+	else if (dom->value) {
+		// I'll fill this in later
+		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture all of the checkpoints!\nNo capturelimit set!\n",
+						teams[TEAM1].name, teams[TEAM2].name );
+	}
+	else if (!deathmatch->value) {
+		if (teamCount == TEAM2) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nFrag the other team!\n",
+							teams[TEAM1].name, teams[TEAM2].name );
+		} else if (teamCount == TEAM3) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus %s versus %s\n\nFrag the other team!\n",
+							teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
+		}
+	} else {
+		// If nothing else matches, just say glhf
+		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "Frag 'em all!  Good luck and have fun!\n");
+	}
+
+	CenterPrintAll(rulesmsg);
+}
+
 void JoinTeamAuto (edict_t * ent, pmenu_t * p)
 {
 	int i, team = TEAM1, num1 = 0, num2 = 0, num3 = 0, score1, score2, score3;
@@ -1871,28 +1921,56 @@ int CheckForWinner()
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
-	for (i = 0; i < game.maxclients; i++){
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse || ent->solid == SOLID_NOT)
-			continue;
-
-		teamNum = game.clients[i].resp.team;
-		if (teamNum == NOTEAM)
-			continue;
-
-		players[teamNum]++;
-	}
-	teamsWithPlayers = 0;
-	for (i = TEAM1; i <= teamCount; i++){
-		if (players[i]) {
-			teamsWithPlayers++;
-			teamNum = i;
+	if (esp->value){
+		if (espsettings.mode == ESPMODE_ATL) {
+			if (teamCount == TEAM2) {
+				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
+					return WINNER_TIE;
+				} else if (teams[TEAM1].leader_dead) {
+					return TEAM2;
+				} else if (teams[TEAM2].leader_dead) {
+					return TEAM1;
+				}
+			} else if (teamCount == TEAM3) {
+				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) {
+					return WINNER_TIE;
+				} else if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
+					return TEAM3;
+				} else if (teams[TEAM1].leader_dead && teams[TEAM3].leader_dead) {
+					return TEAM2;
+				} else if (teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) {
+					return TEAM1;
+				} 
+			}
 		}
-	}
-	if (teamsWithPlayers)
-		return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
+		// } else if (espsettings.mode == ESPMODE_ETV) {
 
-	return WINNER_TIE;
+		// }
+	} else if (!esp->value) {
+		for (i = 0; i < game.maxclients; i++){
+			ent = &g_edicts[1 + i];
+			if (!ent->inuse || ent->solid == SOLID_NOT)
+				continue;
+
+			teamNum = game.clients[i].resp.team;
+			if (teamNum == NOTEAM)
+				continue;
+
+			players[teamNum]++;
+		}
+		teamsWithPlayers = 0;
+		for (i = TEAM1; i <= teamCount; i++){
+			if (players[i]) {
+				teamsWithPlayers++;
+				teamNum = i;
+			}
+		}
+		if (teamsWithPlayers)
+			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
+
+		return WINNER_TIE;
+	}
+	return WINNER_NONE;
 }
 
 // CheckForForcedWinner: A winner is being forced, find who it is.
@@ -2322,37 +2400,6 @@ static qboolean CheckRoundLimit( void )
 	return false;
 }
 
-void KillEveryone (int teamNum)
-{
-	edict_t *ent;
-	int i;
-
-	for (i = 0; i < game.maxclients; i++)
-	{
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse)
-			continue;
-		if(ent->solid == SOLID_NOT && !ent->deadflag)
-			continue;
-		if (game.clients[i].resp.team == teamNum){
-			killPlayer(ent, false);
-		}
-	}
-}
-
-void MakeTeamInvulnerable(int winner, int uvtime)
-{
-	edict_t *ent;
-
-	for (int i = 0; i < game.maxclients; i++){
-		ent = &g_edicts[1 + i];
-		// Make alive clients invulnerable
-		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){
-			ent->client->uvTime = uvtime;
-		}
-	}
-}
-
 // WonGame: returns true if we're exiting the level.
 int WonGame (int winner)
 {
@@ -2398,28 +2445,19 @@ int WonGame (int winner)
 				gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_teamwins[winner], 1.0, ATTN_NONE, 0.0);
 			// end of changing sound dir
 			teams[winner].score++;
+			if (esp->value) {
+				for (i = 0; i <= teamCount; i++) {
+					// Reset leader_dead for all teams before next round starts
+					gi.dprintf("Resetting team %d leader status to false\n", i);
+					teams[i].leader_dead = false;
+				}
+			}
 
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
 
 			PrintScores ();
 		}
 	}
-	// Only perform team punishments if there's only 2 teams
-	if (esp->value && teamCount == 2){
-		if(esp_punish->value == 1){
-			// Immediately kill all losing members of the remaining team
-			for (i = TEAM1; i < TEAM_TOP; i++){
-				if (i != winner){
-					KillEveryone(i);
-				}
-			}
-		} else if (esp_punish->value == 2){
-			// Grant uv shield to winning team
-			int uvtime = 50;
-			MakeTeamInvulnerable(winner, uvtime);
-		}
-	}
-
 	if (CheckTimelimit())
 		return 1;
 	
@@ -2521,6 +2559,8 @@ int CheckTeamRules (void)
 			{
 				if (!matchmode->value || TeamsReady())
 					CenterPrintAll ("Not enough players to play!");
+				else if (esp->value && !AllTeamsHaveLeaders())
+					CenterPrintAll ("Both Teams Must Have a Leader!");
 				else
 					CenterPrintAll ("Both Teams Must Be Ready!");
 
@@ -2538,6 +2578,9 @@ int CheckTeamRules (void)
 			{
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
+				if (printrules->value) {
+					PrintMatchRules();
+				}
 
 				#ifdef USE_AQTION
 				// Cleanup and remove all bots, it's go time!
@@ -2687,10 +2730,10 @@ int CheckTeamRules (void)
 			return 0; //CTF and teamDM dont need to check winner, its not round based
 		}
 
-		if (esp->value)
-			winner = EspReportLeaderDeath();
-		else // Non-Espionage Winner check
-			winner = CheckForWinner();
+		// if (esp->value)
+		// 	winner = EspReportLeaderDeath();
+		// else // Non-Espionage Winner check
+		winner = CheckForWinner();
 		gi.dprintf("The winner was team %d\n", winner);
 		if (winner != WINNER_NONE)
 		{
@@ -3825,58 +3868,22 @@ void NS_SetupTeamSpawnPoints ()
 	}
 }
 
-int EspReportLeaderDeath(void)
+/* 
+Simple function that just returns the opposite team number
+Obviously, do not use this for 3team functions
+*/
+int OtherTeam(int teamNum)
 {
-	// Get the team the leader was on
-	int i;
-	int dead_leader_team = 0;
-	int winner = 0;
-
-	// This is called from player_die, and only called
-	// if the player was a leader
-	for (i = TEAM1; i < teamCount; i++){
-		if (HAVE_LEADER(i)){
-			if (!IS_ALIVE(teams[i].leader)) {
-				// Found a dead leader!
-				dead_leader_team = i;
-				gi.dprintf("Team with dead leader: %d -- %s\n", dead_leader_team, teams[dead_leader_team].leader->client->pers.netname);
-			}
-		}
-	}
-	// This checks if leader was on TEAM 1 in ETV mode
-	if (espsettings.mode == ESPMODE_ETV) {
-		if (dead_leader_team == TEAM1) {
-			winner = TEAM2;
-		}
+	if (teamNum < 0 || teamNum > TEAM2) {
+		gi.dprintf("OtherTeam() was called but parameter supplied is not 1 or 2");
+		return 0;
 	}
 
-	// ATL mode checks
-	if (espsettings.mode == ESPMODE_ATL) {
-		if (teamCount == 2) {
-			if (dead_leader_team == TEAM1)
-				winner = TEAM2;
-			else if (dead_leader_team == TEAM2)
-				winner = TEAM1;
-		} else {
-			if (dead_leader_team == TEAM1) {
-				if (IS_ALIVE(teams[TEAM2].leader) && !IS_ALIVE(teams[TEAM3].leader))
-					winner = TEAM2;
-				else if (!IS_ALIVE(teams[TEAM2].leader) && IS_ALIVE(teams[TEAM3].leader))
-					winner = TEAM3;
-			}
-			else if (dead_leader_team == TEAM2) {
-				if (IS_ALIVE(teams[TEAM1].leader) && !IS_ALIVE(teams[TEAM3].leader))
-					winner = TEAM1;
-				else if (!IS_ALIVE(teams[TEAM1].leader) && IS_ALIVE(teams[TEAM3].leader))
-					winner = TEAM3;
-			}
-			else if (dead_leader_team == TEAM3) {
-				if (IS_ALIVE(teams[TEAM1].leader) && !IS_ALIVE(teams[TEAM2].leader))
-					winner = TEAM1;
-				else if (!IS_ALIVE(teams[TEAM1].leader) && IS_ALIVE(teams[TEAM2].leader))
-					winner = TEAM2;
-			}
-		}
-	}
-	return winner;
+	if (teamNum == 1)
+		return TEAM2;
+	else
+		return TEAM1;
+
+	// Returns zero if teamNum is not 1 or 2
+	return 0;
 }

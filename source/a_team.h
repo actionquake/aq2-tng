@@ -97,6 +97,8 @@ void NS_GetSpawnPoints ();
 qboolean NS_SelectFarTeamplaySpawnPoint (int team, qboolean teams_assigned[]);
 void NS_SetupTeamSpawnPoints ();
 
+int OtherTeam(int teamNum);
+
 typedef struct spawn_distances_s
 {
   float distance;

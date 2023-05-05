@@ -234,6 +234,7 @@ void Cmd_Captain_f(edict_t * ent)
 	MM_SetCaptain( teamNum, ent );
 	if (esp->value) {
 		EspSetLeader( teamNum, ent );
+	}
 }
 
 //extern int started; // AQ2:M - Matchmode - Used for ready command

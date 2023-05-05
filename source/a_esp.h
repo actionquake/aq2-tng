@@ -114,6 +114,7 @@ void Cmd_Volunteer_f(edict_t * ent);
 void EspSetLeader( int teamNum, edict_t *ent );
 qboolean AllTeamsHaveLeaders(void);
 void EspLeaderLeftTeam( edict_t *ent );
+void EspPunishment(int teamNum);
 
 void SP_info_player_team1 (edict_t * self);
 void SP_info_player_team2 (edict_t * self);
@@ -122,7 +123,7 @@ char *ESPTeamName (int team);
 char *ESPOtherTeamName (int team);
 void ESPAssignTeam (gclient_t * who);
 edict_t *SelectESPSpawnPoint (edict_t * ent);
-int EspReportLeaderDeath(void);
+int EspReportLeaderDeath(edict_t *ent);
 
 void ESPResetFlags(void);
 

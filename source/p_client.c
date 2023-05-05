@@ -1611,7 +1611,10 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		CheckForUnevenTeams(self);
 
 	if (esp->value && IS_LEADER(self)) {
+		EspReportLeaderDeath(self);
 		gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_NONE, 0);
+		if (esp_punish->value)
+			EspPunishment(self->client->resp.team);
 	}
 }
 
@@ -1914,7 +1917,11 @@ void respawn(edict_t *self)
 
 	if (!(self->svflags & SVF_NOCLIENT))
 	{
-		if (team_round_going && !(gameSettings & GS_ROUNDBASED))
+		// Enables respawns in espionage mode
+		if (team_round_going && esp->value)
+			AddToTransparentList(self);
+		// Do not respawn in roundbased games
+		else if (team_round_going && !(gameSettings & GS_ROUNDBASED))
 			AddToTransparentList(self);
 
 		if (respawn_effect->value) {
