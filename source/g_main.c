@@ -488,6 +488,8 @@ cvar_t *esp_mustvolunteer;
 cvar_t *esp_showleader;
 cvar_t *esp_showtarget;
 cvar_t *esp_forcejoin;
+cvar_t *esp_leaderequip;
+cvar_t *esp_leaderenhance;
 cvar_t *e_enhancedSlippers;
 // END AQ2 ETE
 

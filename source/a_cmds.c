@@ -854,7 +854,10 @@ void Bandage(edict_t * ent)
 	ent->client->bandaging = 0;
 	ent->client->attacker = NULL;
 	ent->client->bandage_stopped = 1;
-	ent->client->idle_weapon = BANDAGE_TIME;
+	if (esp->value && esp_leaderenhance->value)
+		ent->client->idle_weapon = ESP_LEADER_BANDAGE_TIME;
+	else
+		ent->client->idle_weapon = BANDAGE_TIME;
 }
 
 void Cmd_ID_f(edict_t * ent)

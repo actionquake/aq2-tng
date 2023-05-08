@@ -55,6 +55,7 @@ typedef struct espsettings_s
 	qboolean custom_skins;
 	int halftime;
 	int capturestreak;
+	int escortcap;
 	char target_name[MAX_ESP_STRLEN];
 } espsettings_t;
 

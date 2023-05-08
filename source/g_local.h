@@ -687,12 +687,13 @@ extern itemList_t items[ITEM_MAX_NUM];
 // these should be server variables, when I get around to it
 //#define UNIQUE_WEAPONS_ALLOWED 2
 //#define UNIQUE_ITEMS_ALLOWED   1
-#define SPEC_WEAPON_RESPAWN 1
-#define BANDAGE_TIME    27	// 10 = 1 second
-#define BLEED_TIME      10	// 10 = 1 second is time for losing 1 health at slowest bleed rate
+#define SPEC_WEAPON_RESPAWN 		1
+#define BANDAGE_TIME    			27	// 10 = 1 second
+#define ESP_LEADER_BANDAGE_TIME		10
+#define BLEED_TIME      			10	// 10 = 1 second is time for losing 1 health at slowest bleed rate
 // Igor's back in Time to hard grenades :-)
-#define GRENADE_DAMRAD_CLASSIC  170
-#define GRENADE_DAMRAD          250
+#define GRENADE_DAMRAD_CLASSIC  	170
+#define GRENADE_DAMRAD          	250
 
 
 typedef struct gitem_s
@@ -1192,6 +1193,7 @@ extern cvar_t *esp_showleader;
 extern cvar_t *esp_showtarget;
 extern cvar_t *esp_forcejoin;
 extern cvar_t *esp_leaderequip;
+extern cvar_t *esp_leaderenhance;
 extern cvar_t *e_enhancedSlippers;
 
 // END AQ2 ETE

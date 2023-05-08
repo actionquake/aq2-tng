@@ -705,6 +705,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 
 	if (esp->value && IS_LEADER(self)) {
 		// Reset capture streak to 0
+		self->client->resp.esp_capstreak = 0;
 		espsettings.capturestreak = 0;
 	}
 

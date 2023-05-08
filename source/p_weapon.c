@@ -1449,7 +1449,10 @@ Weapon_Generic(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		if (ent->client->ps.gunframe == FRAME_DEACTIVATE_LAST)
 		{
 			ent->client->weaponstate = WEAPON_BUSY;
-			ent->client->idle_weapon = BANDAGE_TIME;
+			if (esp->value && esp_leaderenhance->value)
+				ent->client->idle_weapon = ESP_LEADER_BANDAGE_TIME;
+			else
+				ent->client->idle_weapon = BANDAGE_TIME;
 			return;
 		}
 		ent->client->ps.gunframe++;
@@ -3186,7 +3189,10 @@ Weapon_Generic_Knife(edict_t* ent, int FRAME_ACTIVATE_LAST,
 		if (ent->client->ps.gunframe == FRAME_DEACTIVATE_LAST)
 		{
 			ent->client->weaponstate = WEAPON_BUSY;
-			ent->client->idle_weapon = BANDAGE_TIME;
+			if (esp->value && esp_leaderenhance->value)
+				ent->client->idle_weapon = ESP_LEADER_BANDAGE_TIME;
+			else
+				ent->client->idle_weapon = BANDAGE_TIME;
 			return;
 		}
 		ent->client->ps.gunframe++;
@@ -3681,7 +3687,10 @@ void Weapon_Gas(edict_t* ent)
 		if (ent->client->ps.gunframe == 0)
 		{
 			ent->client->weaponstate = WEAPON_BUSY;
-			ent->client->idle_weapon = BANDAGE_TIME;
+			if (esp->value && esp_leaderenhance->value)
+				ent->client->idle_weapon = ESP_LEADER_BANDAGE_TIME;
+			else
+				ent->client->idle_weapon = BANDAGE_TIME;
 			return;
 		}
 		ent->client->ps.gunframe--;

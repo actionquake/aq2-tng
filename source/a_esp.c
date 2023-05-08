@@ -67,8 +67,14 @@ void EspMarkerThink( edict_t *marker )
 				teams[ marker->owner->client->resp.team ].name );
 				espsettings.capturestreak++;
 
+			// Escort point captured, end round and start again
+			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_win.wav"), 1.0, ATTN_NONE, 0.0 );
+			espsettings.escortcap = marker->owner->client->resp.team;
+			if (esp_punish->value)
+				EspPunishment(OtherTeam(marker->owner->client->resp.team));
+
 			if( (esp_team_markers[ marker->owner->client->resp.team ] == esp_marker_count) && (esp_marker_count > 2) )
-				gi.bprintf( PRINT_HIGH, "%s IS DOMINATING!\n",
+				gi.bprintf( PRINT_HIGH, "%s IS UNSTOPPABLE!\n",
 				teams[ marker->owner->client->resp.team ].name );
 
 			for( ent = g_edicts + 1; ent <= g_edicts + game.maxclients; ent ++ )
@@ -1032,7 +1038,6 @@ void EspLeaderLeftTeam( edict_t *ent )
 		}
 	}
 }
-
 
 int EspReportLeaderDeath(edict_t *ent)
 {

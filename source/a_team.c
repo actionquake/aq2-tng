@@ -1837,6 +1837,7 @@ void ResetScores (qboolean playerScores)
 		ent->client->resp.streakKills = 0;
 		ent->client->resp.ctf_caps = 0;
 		ent->client->resp.ctf_capstreak = 0;
+		ent->client->resp.esp_capstreak = 0;
 		ent->client->resp.deaths = 0;
 		ent->client->resp.team_kills = 0;
 		ent->client->resp.team_wounds = 0;
@@ -1949,10 +1950,13 @@ int CheckForWinner()
 					return TEAM1;
 				} 
 			}
+		} else if (espsettings.mode == ESPMODE_ETV) {
+			// Check if this value is 1, which means the escorting team wins
+			// By default it is 0
+			if (espsettings.escortcap == 1) {
+				return TEAM1;
+			}
 		}
-		// } else if (espsettings.mode == ESPMODE_ETV) {
-
-		// }
 	} else if (!esp->value) {
 		for (i = 0; i < game.maxclients; i++){
 			ent = &g_edicts[1 + i];
@@ -2454,8 +2458,9 @@ int WonGame (int winner)
 			teams[winner].score++;
 			if (esp->value) {
 				for (i = 0; i <= teamCount; i++) {
-					// Reset leader_dead for all teams before next round starts
+					// Reset leader_dead for all teams before next round starts and set escortcap to 0
 					gi.dprintf("Resetting team %d leader status to false\n", i);
+					espsettings.escortcap = 0;
 					teams[i].leader_dead = false;
 				}
 			}
@@ -2737,9 +2742,6 @@ int CheckTeamRules (void)
 			return 0; //CTF and teamDM dont need to check winner, its not round based
 		}
 
-		// if (esp->value)
-		// 	winner = EspReportLeaderDeath();
-		// else // Non-Espionage Winner check
 		winner = CheckForWinner();
 		gi.dprintf("The winner was team %d\n", winner);
 		if (winner != WINNER_NONE)
