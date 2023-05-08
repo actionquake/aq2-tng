@@ -465,6 +465,7 @@ cvar_t *spectator_hud;
 cvar_t *medkit_drop;
 cvar_t *medkit_time;
 cvar_t *medkit_instant;
+cvar_t *medkit_max;
 
 #ifndef NO_BOTS
 cvar_t *ltk_jumpy;
@@ -1262,3 +1263,42 @@ void CheckNeedPass (void)
 }
 
 //FROM 3.20 END
+
+// This doesn't work yet but I'll keep trying
+edict_t *ChooseRandomPlayer(int teamNum, qboolean allowBot)
+{
+	int i, j;
+	edict_t *ent;
+	edict_t *plist[ MAX_CLIENTS ] = {NULL};
+	int pcount = 0;
+
+	// Supplied paramter must be a valid team number
+	if (teamNum < TEAM1 && teamNum > TEAM3)
+		return 0;
+	if (teamCount == 2 && teamNum == 3) {
+		// Somehow passing team 3 in a 2-team match?
+		gi.dprintf("Warning: Unable to ChooseRandomPlayer for a team that doesn't exist\n");
+		return 0;
+	}
+
+	for (i = 0, ent = &g_edicts[1]; i < game.maxclients; i++, ent++)
+	{
+		// Client must exist and be on a team, and not be a sub
+		if (!ent->inuse || !ent->client || !ent->client->resp.team || ent->client->resp.subteam)
+			continue;
+		if (!allowBot)
+			if (ent->is_bot)
+				continue;
+		pcount++;
+		players[i] = ent;
+		//gi.dprintf("%s\n", players[i]->client->pers.netname);
+	}
+
+	j = rand() % pcount;
+
+	ent = plist[j];
+	gi.dprintf("%s\n", ent->client->pers.netname);
+	
+	// Returns a random player
+	return ent;
+}

@@ -22,10 +22,10 @@ unsigned int esp_team_fx[] = {
 	RF_SHELL_GREEN
 };
 
-int esp_marker_count = 0;
-int esp_team_markers[ TEAM_TOP ] = {0};
+int esp_flag_count = 0;
+int esp_team_flags[ TEAM_TOP ] = {0};
 int esp_winner = NOTEAM;
-int esp_marker = 0;
+int esp_flag = 0;
 int esp_pics[ TEAM_TOP ] = {0};
 int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
@@ -35,68 +35,66 @@ char *red_team_name, *blue_team_name, *green_team_name;
 char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
 char *red_leader_name, *blue_leader_name, *green_leader_name;
 
-void EspMarkerThink( edict_t *marker )
+void EspFlagThink( edict_t *flag )
 {
-	// If the marker was touched this frame, make it owned by that team.
-	if( marker->owner && marker->owner->client && marker->owner->client->resp.team )
+	// If the flag was touched this frame, make it owned by that team.
+	if( flag->owner && flag->owner->client && flag->owner->client->resp.team )
 	{
-		unsigned int effect = esp_team_effect[ marker->owner->client->resp.team ];
-		if( marker->s.effects != effect )
+		unsigned int effect = esp_team_effect[ flag->owner->client->resp.team ];
+		if( flag->s.effects != effect )
 		{
 			char location[ 128 ] = "(";
 			qboolean has_loc = false;
 			edict_t *ent = NULL;
 
-			marker->s.effects = effect;
-			marker->s.renderfx = esp_team_fx[ marker->owner->client->resp.team ];
-			esp_team_markers[ marker->owner->client->resp.team ] ++;
+			flag->s.effects = effect;
+			flag->s.renderfx = esp_team_fx[ flag->owner->client->resp.team ];
+			esp_team_flags[ flag->owner->client->resp.team ] ++;
+			flag->s.modelindex = esp_flag;
 
-			if( marker->owner->client->resp.team == TEAM1 )
-				marker->s.modelindex = esp_marker;
-
-			// Get marker location if possible.
-			has_loc = GetPlayerLocation( marker, location + 1 );
+			// Get flag location if possible.
+			has_loc = GetPlayerLocation( flag, location + 1 );
 			if( has_loc )
 				strcat( location, ") " );
 			else
 				location[0] = '\0';
 
 			gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
-				marker->owner->client->pers.netname,
+				flag->owner->client->pers.netname,
 				location,
-				teams[ marker->owner->client->resp.team ].name );
+				teams[ flag->owner->client->resp.team ].name );
 				espsettings.capturestreak++;
 
 			// Escort point captured, end round and start again
 			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_win.wav"), 1.0, ATTN_NONE, 0.0 );
-			espsettings.escortcap = marker->owner->client->resp.team;
+			espsettings.escortcap = flag->owner->client->resp.team;
 			if (esp_punish->value)
-				EspPunishment(OtherTeam(marker->owner->client->resp.team));
+				EspPunishment(OtherTeam(flag->owner->client->resp.team));
 
-			if( (esp_team_markers[ marker->owner->client->resp.team ] == esp_marker_count) && (esp_marker_count > 2) )
+			if( (esp_team_flags[ flag->owner->client->resp.team ] == esp_flag_count) && (esp_flag_count > 2) )
 				gi.bprintf( PRINT_HIGH, "%s IS UNSTOPPABLE!\n",
-				teams[ marker->owner->client->resp.team ].name );
+				teams[ flag->owner->client->resp.team ].name );
 
 			for( ent = g_edicts + 1; ent <= g_edicts + game.maxclients; ent ++ )
 			{
 				if( ! (ent->inuse && ent->client && ent->client->resp.team) )
 					continue;
-				else if( ent == marker->owner )
-					unicastSound( ent, gi.soundindex("tng/markercap.wav"), 0.75 );
+				else if( ent == flag->owner )
+					unicastSound( ent, gi.soundindex("tng/flagcap.wav"), 0.75 );
 			}
 		}
 	}
 
-	// Reset so the marker can be touched again.
-	marker->owner = NULL;
+	// Reset so the flag can be touched again.
+	flag->owner = NULL;
 
-	// Animate the marker waving.
-	marker->s.frame = 173 + (((marker->s.frame - 173) + 1) % 16);
+	// Animate the flag waving.
+	flag->s.frame = 173 + (((flag->s.frame - 173) + 1) % 16);
 
-	marker->nextthink = level.framenum + FRAMEDIV;
+	flag->nextthink = level.framenum + FRAMEDIV;
 }
 
-void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf )
+void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *surf )
 {
 	if( ! player->client )
 		return;
@@ -108,68 +106,68 @@ void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface
 		return;
 	if( player->client->uvTime )
 		return;
-	// Player must be team leader on team 1 to activate the marker
+	// Player must be team leader on team 1 to activate the flag
 	if (!IS_LEADER(player) && player->client->resp.team != TEAM1)
 		return;
 
-	// If the marker hasn't been touched this frame, the player will take it.
-	if( ! marker->owner )
-		marker->owner = player;
+	// If the flag hasn't been touched this frame, the player will take it.
+	if( ! flag->owner )
+		flag->owner = player;
 }
 
 
-void EspMakeMarker( edict_t *marker )
+void EspMakeFlag( edict_t *flag )
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
 
-	VectorSet( marker->mins, -15, -15, -15 );
-	VectorSet( marker->maxs,  15,  15,  15 );
+	VectorSet( flag->mins, -15, -15, -15 );
+	VectorSet( flag->maxs,  15,  15,  15 );
 
-	// Put the marker on the ground.
-	VectorCopy( marker->s.origin, dest );
+	// Put the flag on the ground.
+	VectorCopy( flag->s.origin, dest );
 	dest[2] -= 128;
-	tr = gi.trace( marker->s.origin, marker->mins, marker->maxs, dest, marker, MASK_SOLID );
+	tr = gi.trace( flag->s.origin, flag->mins, flag->maxs, dest, flag, MASK_SOLID );
 	if( ! tr.startsolid )
-		VectorCopy( tr.endpos, marker->s.origin );
+		VectorCopy( tr.endpos, flag->s.origin );
 
-	VectorCopy( marker->s.origin, marker->old_origin );
+	VectorCopy( flag->s.origin, flag->old_origin );
 
-	marker->solid = SOLID_TRIGGER;
-	marker->movetype = MOVETYPE_NONE;
-	marker->s.modelindex = esp_marker;
-	marker->s.skinnum = 0;
-	marker->s.effects = esp_team_effect[ NOTEAM ];
-	marker->s.renderfx = esp_team_fx[ NOTEAM ];
-	marker->owner = NULL;
-	marker->touch = EspTouchMarker;
-	NEXT_KEYFRAME( marker, EspMarkerThink );
-	marker->classname = "item_marker";
-	marker->svflags &= ~SVF_NOCLIENT;
-	gi.linkentity( marker );
+	flag->solid = SOLID_TRIGGER;
+	flag->movetype = MOVETYPE_NONE;
+	flag->s.modelindex = esp_flag;
+	flag->s.skinnum = 0;
+	flag->s.effects = esp_team_effect[ NOTEAM ];
+	flag->s.renderfx = esp_team_fx[ NOTEAM ];
+	flag->owner = NULL;
+	flag->touch = EspTouchFlag;
+	NEXT_KEYFRAME( flag, EspFlagThink );
+	flag->classname = "item_flag";
+	flag->svflags &= ~SVF_NOCLIENT;
+	gi.linkentity( flag );
 
-	esp_marker_count ++;
+	esp_flag_count ++;
 }
 
-void EspSetMarker(int team, char *str)
+void EspSetFlag(int team, char *str)
 {
-	char *marker_name;
+	char *flag_name;
 	edict_t *ent = NULL;
 	vec3_t position;
 
-	marker_name = "item_marker_team1";
+	flag_name = "item_flag_team1";
 
 	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
 		return;
 
-	/* find and remove existing marker(s) if any */
-	while ((ent = G_Find(ent, FOFS(classname), marker_name)) != NULL) {
+	/* find and remove existing flags(s) if any */
+	while ((ent = G_Find(ent, FOFS(classname), flag_name)) != NULL) {
 		G_FreeEdict (ent);
 	}
 
 	ent = G_Spawn ();
 
-	ent->classname = ED_NewString (marker_name);
+	ent->classname = ED_NewString (flag_name);
 	ent->spawnflags &=
 		~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM | SPAWNFLAG_NOT_HARD |
 		SPAWNFLAG_NOT_COOP | SPAWNFLAG_NOT_DEATHMATCH);
@@ -178,7 +176,6 @@ void EspSetMarker(int team, char *str)
 	VectorCopy(position, ent->old_origin);
 
 	ED_CallSpawn (ent);
-
 }
 
 void EspSetTeamSpawns(int team, char *str)
@@ -283,7 +280,8 @@ qboolean EspLoadConfig(const char *mapname)
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
-	esp_marker = gi.modelindex("models/esp/marker.md2");
+	//esp_flag = gi.modelindex("models/esp/marker.md2");
+	esp_flag = gi.modelindex("models/flags/flag1.md2");
 
 	gi.dprintf("Trying to load Espionage configuration file\n", mapname);
 
@@ -394,12 +392,48 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
-		// Only set the marker if the scenario is ETV
+		// Only set the flag if the scenario is ETV
 		if(espsettings.mode == ESPMODE_ETV) {
 			gi.dprintf("- Target\n");
 			ptr = INI_Find(fh, "target", "escort");
 			if(ptr) {
-				EspSetMarker(TEAM1, ptr);
+				gi.dprintf("Firing EspSetFlag\n");
+				//EspSetFlag(TEAM1, ptr);
+
+				ptr = strchr( ptr, '<' );
+				while( ptr )
+				{
+					edict_t *flag = G_Spawn();
+
+					char *space = NULL, *end = strchr( ptr + 1, '>' );
+					if( end )
+						*end = '\0';
+
+					flag->s.origin[0] = atof( ptr + 1 );
+					space = strchr( ptr + 1, ' ' );
+					if( space )
+					{
+						flag->s.origin[1] = atof( space );
+						space = strchr( space + 1, ' ' );
+						if( space )
+						{
+							flag->s.origin[2] = atof( space );
+							space = strchr( space + 1, ' ' );
+							if( space )
+								flag->s.angles[YAW] = atof( space );
+						}
+					}
+
+					EspMakeFlag( flag );
+					ptr = strchr( (end ? end : ptr) + 1, '<' );
+				}
+
+				if( esp_flag_count )
+					gi.dprintf( "Espionage ETV mode: %i flags generated.\n", esp_flag_count );
+				else {
+					gi.dprintf( "Warning: Espionage needs escort target in: tng/%s.esp\n", mapname );
+					espsettings.mode = 0;
+				}
 			}
 			ptr = INI_Find(fh, "target", "name");
 			size_t ptr_len = strlen(ptr);
@@ -663,11 +697,11 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 {
 	int i, enemyteam;
-	gitem_t *flag_item, *enemy_flag_item;
 	edict_t *ent, *flag, *leader;
 	vec3_t v1, v2;
 
-	leader = IS_LEADER(targ);
+	if (IS_LEADER(targ))
+		leader = targ;
 
 	// no bonus for fragging yourself
 	if (!targ->client || !attacker->client || targ == attacker)
@@ -684,9 +718,9 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	// did the attacker frag the flag carrier?
 	if (IS_LEADER(targ)){
 		attacker->client->resp.esp_lasthurtleader = level.framenum;
-		attacker->client->resp.score += ESP_LEADER_HARASS_BONUS;
+		attacker->client->resp.score += ESP_LEADER_FRAG_BONUS;
 		gi.cprintf(attacker, PRINT_MEDIUM,
-			   "BONUS: %d points for killing the enemy leader!\n", ESP_LEADER_HARASS_BONUS);
+			   "BONUS: %d points for killing the enemy leader!\n", ESP_LEADER_FRAG_BONUS);
 
 		for (i = 1; i <= game.maxclients; i++) {
 			ent = g_edicts + i;
@@ -696,29 +730,29 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		return;
 	}
 
-	if (targ->client->resp.ctf_lasthurtcarrier &&
-	    level.framenum - targ->client->resp.ctf_lasthurtcarrier <
-	    CTF_CARRIER_DANGER_PROTECT_TIMEOUT * HZ && !attacker->client->inventory[ITEM_INDEX(flag_item)]) {
+	if (targ->client->resp.esp_lasthurtleader &&
+	    level.framenum - targ->client->resp.esp_lasthurtleader <
+	    ESP_LEADER_DANGER_PROTECT_TIMEOUT * HZ) {
 		// attacker is on the same team as the flag carrier and
 		// fragged a guy who hurt our flag carrier
-		attacker->client->resp.score += CTF_CARRIER_DANGER_PROTECT_BONUS;
+		attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
 		gi.bprintf(PRINT_MEDIUM,
-			   "%s defends %s's flag carrier against an agressive enemy\n",
-			   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
+			   "%s defends %s's leader against an aggressive enemy\n",
+			   attacker->client->pers.netname, teams[attacker->client->resp.team].name);
 		IRC_printf(IRC_T_GAME,
-			   "%n defends %n's flag carrier against an agressive enemy\n",
+			   "%n defends %n's leader against an aggressive enemy\n",
 			   attacker->client->pers.netname,
-			   CTFTeamName(attacker->client->resp.team));
+			   teams[attacker->client->resp.team].name);
 		return;
 	}
 	// flag and flag carrier area defense bonuses
 	// we have to find the flag and carrier entities
 	// find the flag
 	flag = NULL;
-	while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
-		if (!(flag->spawnflags & DROPPED_ITEM))
-			break;
-	}
+	// while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
+	// 	if (!(flag->spawnflags & DROPPED_ITEM))
+	// 		break;
+	// }
 
 	if (!flag)
 		return;		// can't find attacker's flag
@@ -736,22 +770,16 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	VectorSubtract(targ->s.origin, flag->s.origin, v1);
 	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
 
-	if (VectorLength(v1) < CTF_TARGET_PROTECT_RADIUS || VectorLength(v2) < CTF_TARGET_PROTECT_RADIUS
+	if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
 		|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
 		// we defended the base flag
-		attacker->client->resp.score += CTF_FLAG_DEFENSE_BONUS;
+		attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
 		if (flag->solid == SOLID_NOT) {
-			gi.bprintf(PRINT_MEDIUM, "%s defends the %s base.\n",
-				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
-			IRC_printf(IRC_T_GAME, "%n defends the %n base.\n",
+			gi.bprintf(PRINT_MEDIUM, "%s defends %s.\n",
+				   attacker->client->pers.netname, espsettings.target_name);
+			IRC_printf(IRC_T_GAME, "%n defends %n.\n",
 				   attacker->client->pers.netname,
-				   CTFTeamName(attacker->client->resp.team));
-		} else {
-			gi.bprintf(PRINT_MEDIUM, "%s defends the %s flag.\n",
-				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
-			IRC_printf(IRC_T_GAME, "%n defends the %n flag.\n",
-				   attacker->client->pers.netname,
-				   CTFTeamName(attacker->client->resp.team));
+				   espsettings.target_name);
 		}
 		return;
 	}
@@ -760,15 +788,15 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		VectorSubtract(targ->s.origin, leader->s.origin, v1);
 		VectorSubtract(attacker->s.origin, leader->s.origin, v1);
 
-		if (VectorLength(v1) < CTF_ATTACKER_PROTECT_RADIUS ||
-		    VectorLength(v2) < CTF_ATTACKER_PROTECT_RADIUS ||
+		if (VectorLength(v1) < ESP_LEADER_DANGER_PROTECT_BONUS ||
+		    VectorLength(v2) < ESP_LEADER_DANGER_PROTECT_BONUS ||
 			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
-			attacker->client->resp.score += CTF_CARRIER_PROTECT_BONUS;
-			gi.bprintf(PRINT_MEDIUM, "%s defends the %s's flag carrier.\n",
-				   attacker->client->pers.netname, CTFTeamName(attacker->client->resp.team));
-			IRC_printf(IRC_T_GAME, "%n defends the %n's flag carrier.\n",
+			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
+			gi.bprintf(PRINT_MEDIUM, "%s thwarts an assassination attempt on %s\n",
+				   attacker->client->pers.netname, teams[attacker->client->resp.team].leader_name);
+			IRC_printf(IRC_T_GAME, "%n thwarts an assassination attempt on %n\n",
 				   attacker->client->pers.netname,
-				   CTFTeamName(attacker->client->resp.team));
+				   teams[attacker->client->resp.team].leader_name);
 			return;
 		}
 	}
@@ -945,6 +973,8 @@ void EspSetLeader( int teamNum, edict_t *ent )
 {
 	edict_t *oldLeader = teams[teamNum].leader;
 	char temp[128];
+
+	//ChooseRandomPlayer(teamNum, true);
 
 	if (teamNum == NOTEAM)
 		ent = NULL;
@@ -1147,5 +1177,54 @@ void EspPunishment(int teamNum)
 			int uvtime = 60;
 			MakeTeamInvulnerable(OtherTeam(teamNum), uvtime);
 		}
+	}
+}
+
+/*
+This adds a medkit to the player's inventory, up to the medkit_max value
+Passing a true parameter instantly provides this medkit
+Passing a false parameter assumes you want to generate one at a time interval set by medkit_time
+*/
+void GenerateMedKit(qboolean instant)
+{
+	int i = 0;
+	edict_t *ent;
+	int roundseconds = current_round_length / 10;
+	int interval = (int)medkit_time->value;
+	int max_kits = (int)medkit_max->value;
+
+	// Do nothing if the ent already has max medkits
+	for (i = 0; i < game.maxclients; i++) {
+		ent = &g_edicts[1 + i];
+		if (IS_LEADER(ent)) {
+			if (ent->client->medkit >= max_kits)
+				return;
+			else if (roundseconds - ent->client->resp.medkit_award_time >= interval) {
+				ent->client->resp.medkit_award_time = roundseconds;
+				ent->client->medkit++;
+
+				gi.dprintf("I generated a medkit for %s, %d seconds since the round started, %d frames in\n", ent->client->pers.netname, roundseconds, roundseconds);
+				gi.dprintf("%s has %d medkits now\n", ent->client->pers.netname, ent->client->medkit);
+			}
+			gi.dprintf("Current seconds in round is %d\n", roundseconds);
+		}
+	}
+}
+
+void EspSetupStatusbar( void )
+{
+	Q_strncatz(level.statusbar, 
+		// Red Team
+		"yb -172 " "if 24 xr -24 pic 24 endif " "xr -92 num 4 26 "
+		// Blue Team
+		"yb -148 " "if 25 xr -24 pic 25 endif " "xr -92 num 4 27 ",
+		sizeof(level.statusbar) );
+	
+	if( teamCount >= 3 )
+	{
+		Q_strncatz(level.statusbar, 
+			// Green Team
+			"yb -124 " "if 30 xr -24 pic 30 endif " "xr -92 num 4 31 ",
+			sizeof(level.statusbar) );
 	}
 }

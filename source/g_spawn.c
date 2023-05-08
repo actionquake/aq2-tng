@@ -378,7 +378,7 @@ void ED_CallSpawn (edict_t * ent)
 				else
 					G_FreeEdict(ent);
 			}
-			else if (ctf->value)
+			else if (ctf->value || esp->value)
 			{
 				if(item->flags & IT_FLAG)
 					SpawnItem(ent, item);
@@ -1447,6 +1447,8 @@ void G_SetupStatusbar( void )
 		}
 		else if( dom->value )
 			DomSetupStatusbar();
+		else if( esp->value )
+			EspSetupStatusbar();
 		else if( jump->value )
 			strcpy( level.statusbar, jump_statusbar );
 	}

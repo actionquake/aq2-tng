@@ -74,7 +74,7 @@ extern gitem_t *team_flag[TEAM_TOP];
 
 #define ESP_LEADER_DANGER_PROTECT_BONUS 	2	// bonus for fragging someone who has recently hurt your leader
 #define ESP_LEADER_PROTECT_BONUS    		1	// bonus for fragging someone while either you or your target are near your leader
-#define ESP_MARKER_DEFENSE_BONUS    		1	// bonus for fragging someone while either you or your target are near your flag
+#define ESP_FLAG_DEFENSE_BONUS    		1	// bonus for fragging someone while either you or your target are near your flag
 
 #define ESP_LEADER_HARASS_BONUS             2   // points for attacking defenders of the leader
 
@@ -104,7 +104,7 @@ char *ESPOtherTeamName (int team);
 void ESPAssignTeam (gclient_t * who);
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);
-
+void GenerateMedKit();
 void ESPResetFlags(void);
 
 qboolean ESPPickup_Flag (edict_t * ent, edict_t * other);

@@ -2741,6 +2741,14 @@ int CheckTeamRules (void)
 			}
 			return 0; //CTF and teamDM dont need to check winner, its not round based
 		}
+		else if ((gameSettings & GS_ROUNDBASED))
+		// Team round is going, and it's GS_ROUNDBASED
+		{
+			if (esp->value) {
+				GenerateMedKit();
+				// Do something here about giving players stuff
+			}
+		}
 
 		winner = CheckForWinner();
 		gi.dprintf("The winner was team %d\n", winner);

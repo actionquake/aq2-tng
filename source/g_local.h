@@ -1182,6 +1182,7 @@ extern cvar_t *bholelife;
 extern cvar_t *medkit_drop;
 extern cvar_t *medkit_time;
 extern cvar_t *medkit_instant;
+extern cvar_t *medkit_max;
 
 // BEGIN AQ2 ETE
 extern cvar_t *esp;
@@ -1517,6 +1518,7 @@ void G_RunEntity (edict_t * ent);
 //
 void EndDMLevel (void);
 void ExitLevel (void);
+edict_t *ChooseRandomPlayer(int teamNum, qboolean allowBot);
 
 //
 // g_chase.c
@@ -1771,6 +1773,8 @@ typedef struct
   int esp_leaderfragcount;
   int esp_markerdefendercount;
   int esp_lasthurtleader;
+
+  int medkit_award_time;
 }
 client_respawn_t;
 

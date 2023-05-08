@@ -2720,18 +2720,31 @@ void PutClientInServer(edict_t * ent)
 	0 - No different loadout
 	1 - Leaders get AllItems (default)
 	2 - Leaders get AllWeapons
-	3 - Leaders get AllItems and AllWeapons 
+	3 - Leaders get AllItems and AllWeapons
+
+	With leaderenhance enabled, the leaders also get a medkit
 	*/
-	if (esp->value && esp_leaderequip->value){
-		for (i = TEAM1; i <= teamCount; i++){
-			if (ent == teams[i].leader) {
-				if (esp_leaderequip->value == 1) {
-					AllItems(ent);
-				} else if (esp_leaderequip->value == 2) {
-					AllWeapons(ent);
-				} else if (esp_leaderequip->value == 3) {
-					AllItems(ent);
-					AllWeapons(ent);
+	if (esp->value) {
+		if (esp_leaderequip->value){
+			for (i = TEAM1; i <= teamCount; i++){
+				if (ent == teams[i].leader) {
+					if (esp_leaderequip->value == 1) {
+						AllItems(ent);
+					} else if (esp_leaderequip->value == 2) {
+						AllWeapons(ent);
+					} else if (esp_leaderequip->value == 3) {
+						AllItems(ent);
+						AllWeapons(ent);
+					}
+				}
+			}
+		}
+		if (esp_leaderenhance->value){
+			for (i = TEAM1; i <= teamCount; i++){
+				if (ent == teams[i].leader) {
+					if (esp_leaderequip->value == 1) {
+						ent->client->medkit = 1;
+					}
 				}
 			}
 		}
