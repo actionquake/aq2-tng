@@ -50,6 +50,11 @@ There are some settings you need to setup to enable it:
 * **esp_forcejoin** [0/1] Forces joining a team, following autobalancing rules
     * 0 disables force joining, so players can choose a team
     * 1 enables force joining, so games get going quickly
+* **esp_leaderequip** [0/1/2/3] - This determines the loadout of equipment for a team's leader
+    * 0 means that the leaders do not get any special loadout, one item and one weapon of their choosing
+    * 1 (default) means that the leaders can choose their weapon, and have all items available at once when they spawn
+    * 2 means that the leaders can choose their item, and have all weapons available at once when they spawn
+    * 3 means that the leaders have all items and all weapons when they spawn
 * **e_enhancedSlippers** [0/1] to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
 
 Generally, these settings are great for all servers:

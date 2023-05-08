@@ -2714,11 +2714,24 @@ void PutClientInServer(edict_t * ent)
 	if (allweapon->value)
 		AllWeapons(ent);
 
-	// Team leaders in Espionage receive all items by default
-	if (esp->value){
+	/*
+	Team leaders in Espionage can receive different loadouts
+	0 - No different loadout
+	1 - Leaders get AllItems (default)
+	2 - Leaders get AllWeapons
+	3 - Leaders get AllItems and AllWeapons 
+	*/
+	if (esp->value && esp_leaderequip->value){
 		for (i = TEAM1; i <= teamCount; i++){
 			if (ent == teams[i].leader) {
-				AllItems(ent);
+				if (esp_leaderequip->value == 1) {
+					AllItems(ent);
+				} else if (esp_leaderequip->value == 2) {
+					AllWeapons(ent);
+				} else if (esp_leaderequip->value == 3) {
+					AllItems(ent);
+					AllWeapons(ent);
+				}
 			}
 		}
 	}

@@ -1191,6 +1191,7 @@ extern cvar_t *esp_mustvolunteer;
 extern cvar_t *esp_showleader;
 extern cvar_t *esp_showtarget;
 extern cvar_t *esp_forcejoin;
+extern cvar_t *esp_leaderequip;
 extern cvar_t *e_enhancedSlippers;
 
 // END AQ2 ETE
