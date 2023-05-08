@@ -1763,6 +1763,10 @@ typedef struct
 
   int esp_state;
   int esp_capstreak;
+  int esp_leaderkillstreak;
+  int esp_leaderprotectcount;
+  int esp_leaderfragcount;
+  int esp_markerdefendercount;
   int esp_lasthurtleader;
 }
 client_respawn_t;

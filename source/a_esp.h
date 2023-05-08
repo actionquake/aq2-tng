@@ -58,27 +58,6 @@ typedef struct espsettings_s
 	char target_name[MAX_ESP_STRLEN];
 } espsettings_t;
 
-// typedef struct espgame_s {
-// 	int team1, team2, team3;
-// 	int total1, total2;	// these are only set when going into intermission!
-// 	int last_flag_capture;
-// 	int last_capture_team;
-// 	int halftime;
-
-// 	/* ESP configuration from .esp */
-// 	int type;		// 0 = atl, 1 = etv
-// 	/* team spawn times in seconds */
-// 	int spawn_red;
-// 	int spawn_blue;
-//     int spawn_green;
-// 	qboolean custom_spawns;
-// 	qboolean custom_skins;
-// 	char author[64];
-// 	char name[128];
-// } espgame_t;
-
-//extern espgame_t espgame;
-
 extern espsettings_t espsettings;
 
 extern gitem_t *team_flag[TEAM_TOP];

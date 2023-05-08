@@ -589,6 +589,7 @@ Features
 
 * Espionage Additions
   Taken from AQ2:ETE, these additions are optional server vars to create a larger variety of gameplay.
+  Review the document called Espionage.md to understand how to run a server and how to create and edit scene files.
 
   esp [0/1] - Activates Espionage mode.  Default 0
   esp_mode [0/1] - Sets default scenario mode.  0 defaults to Assassinate the Leader, 1 will try Escort the VIP of the scenario file supports it, else it defaults to Assassinate the Leader
