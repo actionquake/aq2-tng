@@ -23,7 +23,7 @@ Espionage incorporated several 'sub-modes' that were [teamplay-focused objective
 Sadly, the source code for ETE was never publicly released, as much as I pleaded and asked.  So there was only one true option left -- write it from scratch.  This is no small undertaking, but I think it's doable.
 
 ### Assassinate the Leader
-The first sub-mode that we're looking at porting is Assassinate the Leader.  This is because the game flow is very straightforward and is almost exactly like normal teamplay as far as basic game logic is concerned, with two major differences:
+The first sub-mode that we're looking at porting is Assassinate the Leader.  This is because the game flow is very straightforward and is almost exactly like normal teamplay as far as basic game logic is concerned, with a few major differences:
 
 1. A player can `volunteer` to become a leader for their team.  There's only one leader per team.
 1. The goal of each team is to frag the opposing team's leader, while protecting their own.
