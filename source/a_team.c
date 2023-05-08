@@ -1955,6 +1955,8 @@ int CheckForWinner()
 			// By default it is 0
 			if (espsettings.escortcap == 1) {
 				return TEAM1;
+			} else if (teams[TEAM1].leader_dead){
+				return TEAM2;
 			}
 		}
 	} else if (!esp->value) {

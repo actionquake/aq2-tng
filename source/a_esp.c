@@ -397,9 +397,6 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("- Target\n");
 			ptr = INI_Find(fh, "target", "escort");
 			if(ptr) {
-				gi.dprintf("Firing EspSetFlag\n");
-				//EspSetFlag(TEAM1, ptr);
-
 				ptr = strchr( ptr, '<' );
 				while( ptr )
 				{
