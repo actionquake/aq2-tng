@@ -995,6 +995,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	else if (esp->value)
 	{
 	gi.cvar_forceset(gm->name, "esp");
+		//gameSettings |= GS_WEAPONCHOOSE;
 		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
 
 		// Make sure teamplay is enabled

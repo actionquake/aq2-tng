@@ -1244,6 +1244,10 @@ void Do_MedKit( edict_t *ent )
 		ent->health = ent->health + (int)medkit_value->value;
 		ent->client->medkit--;
 	}
+
+	// Handle overheals
+	if (ent->health > 100)
+		ent->health = 100;
 }
 
 

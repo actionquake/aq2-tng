@@ -1612,10 +1612,12 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		CheckForUnevenTeams(self);
 
 	if (esp->value && IS_LEADER(self)) {
-		EspReportLeaderDeath(self);
-		gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_NONE, 0);
-		if (esp_punish->value)
-			EspPunishment(self->client->resp.team);
+		if (!in_warmup && team_round_going) {
+			EspReportLeaderDeath(self);
+			gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_NONE, 0);
+			if (esp_punish->value)
+				EspPunishment(self->client->resp.team);
+		}
 	}
 }
 
@@ -1914,6 +1916,8 @@ void CleanBodies()
 
 void respawn(edict_t *self)
 {
+	gi.dprintf("%s tried to respawn\n", self->client->pers.netname);
+
 	if (self->solid != SOLID_NOT || self->deadflag == DEAD_DEAD)
 		CopyToBodyQue(self);
 
@@ -2743,7 +2747,7 @@ void PutClientInServer(edict_t * ent)
 			for (i = TEAM1; i <= teamCount; i++){
 				if (ent == teams[i].leader) {
 					if (esp_leaderequip->value == 1) {
-						ent->client->medkit = 1;
+						ent->client->medkit++;
 					}
 				}
 			}
@@ -3694,7 +3698,7 @@ void ClientBeginServerFrame(edict_t * ent)
 		// wait for any button just going down
 		if (level.framenum > client->respawn_framenum)
 		{
-
+			// Special consideration here for Espionage, as we DO want to respawn in a GS_ROUNDBASED game
 			if (teamplay->value) {
 				going_observer = ((gameSettings & GS_ROUNDBASED) || !client->resp.team || client->resp.subteam);
 			}
@@ -3735,16 +3739,13 @@ void ClientBeginServerFrame(edict_t * ent)
 				// in deathmatch, only wait for attack button
 				buttonMask = BUTTON_ATTACK;
 				if ((client->latched_buttons & buttonMask) || DMFLAGS(DF_FORCE_RESPAWN)) {
-					if (esp->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
-						respawn(ent);
-						client->latched_buttons = 0;
-					} else {
-						respawn(ent);
-						client->latched_buttons = 0;
-					}
+					respawn(ent);
+					client->latched_buttons = 0;
 				}
 			}
 		}
+		if (esp->value)
+			EspRespawnPlayer(ent);
 		return;
 	}
 

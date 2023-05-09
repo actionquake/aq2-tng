@@ -466,6 +466,7 @@ cvar_t *medkit_drop;
 cvar_t *medkit_time;
 cvar_t *medkit_instant;
 cvar_t *medkit_max;
+cvar_t *medkit_value;
 
 #ifndef NO_BOTS
 cvar_t *ltk_jumpy;

@@ -91,6 +91,7 @@ void EspSetLeader( int teamNum, edict_t *ent );
 qboolean AllTeamsHaveLeaders(void);
 void EspLeaderLeftTeam( edict_t *ent );
 void EspPunishment(int teamNum);
+void EspRespawnPlayer(edict_t *ent);
 
 void SP_info_player_team1 (edict_t * self);
 void SP_info_player_team2 (edict_t * self);

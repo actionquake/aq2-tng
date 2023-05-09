@@ -439,6 +439,9 @@ void PrintMatchRules ()
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name,
 					teams[TEAM3].name, teams[TEAM3].leader->client->pers.netname, teams[TEAM3].leader_name );
 				}
+		} else if (espsettings.mode == ESPMODE_ETV) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!",
+				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name );
 		}
 	}
 	// CTF rules
@@ -1954,11 +1957,15 @@ int CheckForWinner()
 			// Check if this value is 1, which means the escorting team wins
 			// By default it is 0
 			if (espsettings.escortcap == 1) {
+				gi.dprintf("The winner was team %d\n", TEAM1);
 				return TEAM1;
 			} else if (teams[TEAM1].leader_dead){
+				gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
 			}
 		}
+	gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
+	
 	} else if (!esp->value) {
 		for (i = 0; i < game.maxclients; i++){
 			ent = &g_edicts[1 + i];
@@ -2753,7 +2760,6 @@ int CheckTeamRules (void)
 		}
 
 		winner = CheckForWinner();
-		gi.dprintf("The winner was team %d\n", winner);
 		if (winner != WINNER_NONE)
 		{
 			if (!checked_tie)

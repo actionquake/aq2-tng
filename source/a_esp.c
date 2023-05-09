@@ -35,6 +35,13 @@ char *red_team_name, *blue_team_name, *green_team_name;
 char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
 char *red_leader_name, *blue_leader_name, *green_leader_name;
 
+int EspFlagOwner( edict_t *flag )
+{
+	if( flag->s.effects == esp_team_effect[ TEAM1 ] )
+		return TEAM1;
+	return NOTEAM;
+}
+
 void EspFlagThink( edict_t *flag )
 {
 	// If the flag was touched this frame, make it owned by that team.
@@ -44,6 +51,12 @@ void EspFlagThink( edict_t *flag )
 		if( flag->s.effects != effect )
 		{
 			edict_t *ent = NULL;
+			int prev_owner = EspFlagOwner( flag );
+
+			gi.dprintf("prev flag owner team is %d\n", prev_owner);
+
+			if( prev_owner != NOTEAM )
+				esp_team_flags[ prev_owner ] --;
 
 			flag->s.effects = effect;
 			flag->s.renderfx = esp_team_fx[ flag->owner->client->resp.team ];
@@ -284,8 +297,7 @@ qboolean EspLoadConfig(const char *mapname)
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
-	//esp_flag = gi.modelindex("models/esp/marker.md2");
-	esp_flag = gi.modelindex("models/flags/flag1.md2");
+	esp_flag = gi.modelindex("models/items/bcase/g_bc1.md2");
 
 	gi.dprintf("Trying to load Espionage configuration file\n", mapname);
 
@@ -557,9 +569,9 @@ qboolean EspLoadConfig(const char *mapname)
 	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "players/%s_i", teams[TEAM3].skin);
 
 
-	gi.dprintf("Debugging:\n");
-	gi.dprintf("Espionage mode: %d\n", espsettings.mode);
-	gi.dprintf("Skin index: %s\n", teams[TEAM1].skin_index);
+	// gi.dprintf("Debugging:\n");
+	// gi.dprintf("Espionage mode: %d\n", espsettings.mode);
+	// gi.dprintf("Skin index: %s\n", teams[TEAM1].skin_index);
 
 	if((espsettings.mode == ESPMODE_ETV) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
@@ -579,9 +591,29 @@ int EspGetRespawnTime(edict_t *ent)
 	else if((teamCount == 3) && ent->client->resp.team == TEAM3 && teams[TEAM3].respawn_timer > -1)
 		spawntime = teams[TEAM3].respawn_timer;
 
-	//gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
-
+	if (!IS_LEADER(ent)) {
+		gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
+	}
 	return spawntime;
+}
+
+void EspRespawnPlayer(edict_t *ent)
+{
+	gi.dprintf("Level framenum is %d, respawn timer is %d\n", level.framenum, ent->client->respawn_framenum);
+
+	// If your leader is alive, you can respawn
+	if (espsettings.mode == ESPMODE_ATL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+		if (ent->is_bot)
+			ACESP_Respawn(ent);
+		else
+			respawn(ent);
+	// If TEAM1's leader is alive, you can respawn
+	} else if (espsettings.mode == ESPMODE_ETV && IS_ALIVE(teams[TEAM1].leader)) {
+		if (ent->is_bot)
+			ACESP_Respawn(ent);
+		else
+			respawn(ent);
+	}
 }
 
 void EspAssignTeam(gclient_t * who)
@@ -976,18 +1008,15 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	if (teamNum == NOTEAM)
 		ent = NULL;
 
-	// If Espionage is enabled, in ATL mode, also set captain as leader
-	// If ETV mode is enabled, and the entity asking to become captain is on Team 1 (Red)
-	if((esp_mode->value) == 0 || (esp_mode->value == 1 && teamNum == TEAM1)){
-		teams[teamNum].leader = ent;
-		if(ent) // Only assign a skin to an ent
-			AssignSkin(ent, teams[teamNum].leader_skin, false);
-	} else {
-		// Do not set leader attribute to team 2 in ETV
-		teams[teamNum].leader = NULL;
-		gi.centerprintf(ent, "Only the Red team has a leader in ETV mode\n");
+	if (espsettings.mode == ESPMODE_ETV && teamNum != TEAM1) {
+		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
+		return;
 	}
-	
+
+	teams[teamNum].leader = ent;
+	if(ent) // Only assign a skin to an ent
+		AssignSkin(ent, teams[teamNum].leader_skin, false);
+
 	if (!ent) {
 		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
 			if (teams[teamNum].ready) {
@@ -1009,7 +1038,6 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
 		CenterPrintAll(temp);
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
-		//gi.dprintf("%s became leader for team %d !  Clientnum check: %d %d!\n", ent->client->pers.netname, ent->client->resp.team, ent->client->clientNum, teams[ent->client->resp.team].leader->client->clientNum);
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
 	}
@@ -1079,7 +1107,6 @@ int EspReportLeaderDeath(edict_t *ent)
 
 	// This is called from player_die, and only called
 	// if the player was a leader
-	gi.dprintf("Leaders found: %s -- %s\n", teams[TEAM1].leader->client->pers.netname, teams[TEAM2].leader->client->pers.netname);
 
 	// This checks if leader was on TEAM 1 in ETV mode
 	if (espsettings.mode == ESPMODE_ETV) {
