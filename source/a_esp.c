@@ -43,7 +43,6 @@ void EspFlagThink( edict_t *flag )
 		unsigned int effect = esp_team_effect[ flag->owner->client->resp.team ];
 		if( flag->s.effects != effect )
 		{
-			qboolean has_loc = false;
 			edict_t *ent = NULL;
 
 			flag->s.effects = effect;
@@ -55,6 +54,7 @@ void EspFlagThink( edict_t *flag )
 
 			// Commented out but may still be useful at some point
 			// This grabs the map location name
+			    // qboolean has_loc = false;
 				// char location[ 128 ] = "(";
 				// has_loc = GetPlayerLocation( flag, location + 1 );
 				// if( has_loc )

@@ -726,7 +726,6 @@ void ACESP_RemoveBot(char *name)
 void attract_mode_bot_check(void)
 {
 	int maxclientsminus2 = (int)(maxclients->value - 2);
-	int adjustment = 0;
 
 	ACEIT_RebuildPlayerList();
 	// Some sanity checking before we proceed
@@ -749,8 +748,8 @@ void attract_mode_bot_check(void)
 			gi.cvar_forceset("am_botcount", "6");
 		} else {
 			gi.dprintf( "am is 2, am_botcount is %d, maxclients is too low at %d, reducing bot count\n", (int)am_botcount->value, (int)maxclients->value);
-			adjustment = (maxclientsminus2 / 2);
-			gi.cvar_forceset("am_botcount", TOSTRING(adjustment));
+			int adjustment = (maxclientsminus2 / 2);
+			gi.cvar_forceset("am_botcount", va("%d", adjustment));
 		}
     }
 
