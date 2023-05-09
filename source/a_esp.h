@@ -48,9 +48,6 @@ typedef struct espsettings_s
 	int mode;
 	char author[MAX_ESP_STRLEN*3];
 	char name[MAX_ESP_STRLEN];
-	float red_spawns[10][4];
-	float blue_spawns[10][4];
-	float green_spawns[10][4];
 	qboolean custom_spawns;
 	qboolean custom_skins;
 	int halftime;
@@ -86,8 +83,7 @@ extern gitem_t *team_flag[TEAM_TOP];
 #define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
 
 void ESPInit (void);
-void ESPSetFlag(int, char *);
-void ESPSetTeamSpawns(int, char *);
+void EspSetTeamSpawns(int, char *);
 int EspGetRespawnTime(edict_t *ent);
 
 void Cmd_Volunteer_f(edict_t * ent);

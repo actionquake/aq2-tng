@@ -43,7 +43,6 @@ void EspFlagThink( edict_t *flag )
 		unsigned int effect = esp_team_effect[ flag->owner->client->resp.team ];
 		if( flag->s.effects != effect )
 		{
-			char location[ 128 ] = "(";
 			qboolean has_loc = false;
 			edict_t *ent = NULL;
 
@@ -53,16 +52,21 @@ void EspFlagThink( edict_t *flag )
 			flag->s.modelindex = esp_flag;
 
 			// Get flag location if possible.
-			has_loc = GetPlayerLocation( flag, location + 1 );
-			if( has_loc )
-				strcat( location, ") " );
-			else
-				location[0] = '\0';
+
+			// Commented out but may still be useful at some point
+			// This grabs the map location name
+				// char location[ 128 ] = "(";
+				// has_loc = GetPlayerLocation( flag, location + 1 );
+				// if( has_loc )
+				// 	strcat( location, ") " );
+				// else
+				// 	location[0] = '\0';
 
 			gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
 				flag->owner->client->pers.netname,
-				location,
+				espsettings.target_name,
 				teams[ flag->owner->client->resp.team ].name );
+
 				espsettings.capturestreak++;
 
 			// Escort point captured, end round and start again
@@ -149,34 +153,34 @@ void EspMakeFlag( edict_t *flag )
 	esp_flag_count ++;
 }
 
-void EspSetFlag(int team, char *str)
-{
-	char *flag_name;
-	edict_t *ent = NULL;
-	vec3_t position;
+// void EspSetFlag(int team, char *str)
+// {
+// 	char *flag_name;
+// 	edict_t *ent = NULL;
+// 	vec3_t position;
 
-	flag_name = "item_flag_team1";
+// 	flag_name = "item_flag_team1";
 
-	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
-		return;
+// 	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
+// 		return;
 
-	/* find and remove existing flags(s) if any */
-	while ((ent = G_Find(ent, FOFS(classname), flag_name)) != NULL) {
-		G_FreeEdict (ent);
-	}
+// 	/* find and remove existing flags(s) if any */
+// 	while ((ent = G_Find(ent, FOFS(classname), flag_name)) != NULL) {
+// 		G_FreeEdict (ent);
+// 	}
 
-	ent = G_Spawn ();
+// 	ent = G_Spawn ();
 
-	ent->classname = ED_NewString (flag_name);
-	ent->spawnflags &=
-		~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM | SPAWNFLAG_NOT_HARD |
-		SPAWNFLAG_NOT_COOP | SPAWNFLAG_NOT_DEATHMATCH);
+// 	ent->classname = ED_NewString (flag_name);
+// 	ent->spawnflags &=
+// 		~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM | SPAWNFLAG_NOT_HARD |
+// 		SPAWNFLAG_NOT_COOP | SPAWNFLAG_NOT_DEATHMATCH);
 
-	VectorCopy(position, ent->s.origin);
-	VectorCopy(position, ent->old_origin);
+// 	VectorCopy(position, ent->s.origin);
+// 	VectorCopy(position, ent->old_origin);
 
-	ED_CallSpawn (ent);
-}
+// 	ED_CallSpawn (ent);
+// }
 
 void EspSetTeamSpawns(int team, char *str)
 {
@@ -457,16 +461,12 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("Enforcing normal spawnpoints\n");
 			espsettings.custom_spawns = false;
 		} else {
-			espsettings.custom_spawns = true;
 			EspSetTeamSpawns(TEAM1, r_spawnlist);
-			memcpy(espsettings.red_spawns, r_spawnlist, sizeof(espsettings.red_spawns));
-
 			EspSetTeamSpawns(TEAM2, b_spawnlist);
-			memcpy(espsettings.blue_spawns, b_spawnlist, sizeof(espsettings.blue_spawns));
 			if (teamCount == 3){
 				EspSetTeamSpawns(TEAM3, g_spawnlist);
-				memcpy(espsettings.green_spawns, g_spawnlist, sizeof(espsettings.green_spawns));
 			}
+			espsettings.custom_spawns = true;
 		}
 		
 		gi.dprintf("- Teams\n");
@@ -772,9 +772,9 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		// we defended the base flag
 		attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
 		if (flag->solid == SOLID_NOT) {
-			gi.bprintf(PRINT_MEDIUM, "%s defends %s.\n",
+			gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
 				   attacker->client->pers.netname, espsettings.target_name);
-			IRC_printf(IRC_T_GAME, "%n defends %n.\n",
+			IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
 				   attacker->client->pers.netname,
 				   espsettings.target_name);
 		}
@@ -1081,18 +1081,6 @@ int EspReportLeaderDeath(edict_t *ent)
 	// if the player was a leader
 	gi.dprintf("Leaders found: %s -- %s\n", teams[TEAM1].leader->client->pers.netname, teams[TEAM2].leader->client->pers.netname);
 
-	// for (i = TEAM1; i < teamCount; i++){
-	// 	if (HAVE_LEADER(i)){
-	// 		if (!IS_ALIVE(teams[i].leader)) {
-	// 			// Found a dead leader!
-	// 			dead_leader_team = i;
-	// 			gi.dprintf("Team with dead leader: %d -- %s\n", dead_leader_team, teams[dead_leader_team].leader->client->pers.netname);
-	// 		} else {
-	// 			continue;
-	// 		}
-	// 	}
-	// }
-
 	// This checks if leader was on TEAM 1 in ETV mode
 	if (espsettings.mode == ESPMODE_ETV) {
 		if (dead_leader_team == TEAM1) {
@@ -1200,10 +1188,10 @@ void GenerateMedKit(qboolean instant)
 				ent->client->resp.medkit_award_time = roundseconds;
 				ent->client->medkit++;
 
-				gi.dprintf("I generated a medkit for %s, %d seconds since the round started, %d frames in\n", ent->client->pers.netname, roundseconds, roundseconds);
-				gi.dprintf("%s has %d medkits now\n", ent->client->pers.netname, ent->client->medkit);
+				// gi.dprintf("I generated a medkit for %s, %d seconds since the round started, %d frames in\n", ent->client->pers.netname, roundseconds, roundseconds);
+				// gi.dprintf("%s has %d medkits now\n", ent->client->pers.netname, ent->client->medkit);
 			}
-			gi.dprintf("Current seconds in round is %d\n", roundseconds);
+			//gi.dprintf("Current seconds in round is %d\n", roundseconds);
 		}
 	}
 }

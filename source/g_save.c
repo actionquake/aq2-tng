@@ -416,6 +416,7 @@ void InitGame( void )
 	medkit_time = gi.cvar( "medkit_time", "30", 0 );
 	medkit_instant = gi.cvar( "medkit_instant", "0", 0 );
 	medkit_max = gi.cvar( "medkit_max", "3", 0 );
+	medkit_value = gi.cvar( "medkit_value", "25", 0 );
 	dom = gi.cvar( "dom", "0", /*CVAR_SERVERINFO | */ CVAR_LATCH ); //Removed in favor of 'gmf' (gamemodeflags)
 	use_grapple = gi.cvar( "use_grapple", "0", 0 );
 	mv_public = gi.cvar( "mv_public", "0", 0 );	//slicer 

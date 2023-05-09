@@ -1226,16 +1226,23 @@ void Do_MedKit( edict_t *ent )
 	if( ent->client->bandaging && (ent->client->bleeding || ent->client->leg_damage) )
 		return;
 
-	for( i = 0; i < 2; i ++ )
-	{
-		// Make sure we have any medkit and need to use it.
-		if( ent->client->medkit <= 0 )
+	// Don't use a medkit if ent doesn't have one, and don't use one if ent is at max_health
+	if( ent->client->medkit <= 0 )
 			return;
-		if( ent->health >= ent->max_health )
-			return;
+	if( ent->health >= ent->max_health )
+		return;
 
-		ent->health ++;
-		ent->client->medkit --;
+	// Espionage handles medkits differently, it uses medkits like healthpacks
+	if (!esp->value) {
+		for( i = 0; i < 2; i ++ ){
+			// One medkit == One health point, use all medkits in one bandage attempt
+			ent->health++;
+			ent->client->medkit--;
+		}
+	} else {
+		// Subtract one medkit, gain health per medkit_value
+		ent->health = ent->health + (int)medkit_value->value;
+		ent->client->medkit--;
 	}
 }
 

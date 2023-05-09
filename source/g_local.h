@@ -1183,6 +1183,7 @@ extern cvar_t *medkit_drop;
 extern cvar_t *medkit_time;
 extern cvar_t *medkit_instant;
 extern cvar_t *medkit_max;
+extern cvar_t *medkit_value;
 
 // BEGIN AQ2 ETE
 extern cvar_t *esp;
