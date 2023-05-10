@@ -1293,7 +1293,7 @@ void Cmd_Ghost_f(edict_t * ent)
 void GetGhostStats(void)
 {
 	int i = 0;
-	edict_t *ent;
+	edict_t *ent = NULL;;
 	gghost_t *ghost = NULL;
 
 	if (!use_ghosts->value) {
@@ -1310,6 +1310,8 @@ void GetGhostStats(void)
 
 		strcpy(ent->client->pers.ip, ghost->ip);
 		strcpy(ent->client->pers.netname, ghost->netname);
+		strcpy(ent->client->pers.steamid, ghost->steamid);
+		strcpy(ent->client->pers.discordid, ghost->discordid);
 
 		ent->client->resp.enterframe = ghost->enterframe;
 		ent->client->resp.score = ghost->score;

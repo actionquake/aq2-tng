@@ -1655,6 +1655,11 @@ typedef struct
 	ignorelist_t ignorelist;
 	gitem_t *chosenItem2;		// Support for item kit mode
 
+
+	#ifdef USE_AQTION
+  	char steamid[24];
+  	char discordid[24];
+	#endif
 }
 client_persistant_t;
 
@@ -1747,8 +1752,6 @@ typedef struct
   int	hud_items[128];
   int	hud_type;
 #endif
-
-  //char skin[MAX_SKINLEN];
 }
 client_respawn_t;
 
@@ -2209,6 +2212,8 @@ typedef struct
 	int team_kills;
 	int streakKillsHighest;
 	int streakHSHighest;
+	char steamid[24];
+	char discordid[24];
 }
 gghost_t;
 

@@ -3211,6 +3211,10 @@ void CreateGhost(edict_t * ent)
 
 	strcpy(ghost->ip, ent->client->pers.ip);
 	strcpy(ghost->netname, ent->client->pers.netname);
+	#ifdef USE_AQTION
+	strcpy(ghost->steamid, Info_ValueForKey(ent->client->pers.userinfo, "steamid"));
+	strcpy(ghost->discordid, Info_ValueForKey(ent->client->pers.userinfo, "discordid"));
+	#endif
 
 	ghost->enterframe = ent->client->resp.enterframe;
 	ghost->disconnect_frame = level.framenum;
