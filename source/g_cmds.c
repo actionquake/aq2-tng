@@ -1585,9 +1585,9 @@ static void dmflagsSettings( char *s, size_t size, int flags )
 	if (flags & DF_NO_FRIENDLY_FIRE)
 		Q_strncatz( s, "256 = no ff ", size );
 	if (flags & DF_SPAWN_FARTHEST)
-		Q_strncatz( s, "512 = spawn fartherst ", size );
+		Q_strncatz( s, "512 = spawn farthest ", size );
 	if (flags & DF_FORCE_RESPAWN)
-		Q_strncatz( s, "1024 = forse respawn ", size );
+		Q_strncatz( s, "1024 = force respawn ", size );
 	//if(flags & DF_NO_ARMOR)
 	//	Q_strncatz(s, "2048 = no armor ", size);
 	if (flags & DF_ALLOW_EXIT)
@@ -1674,8 +1674,8 @@ static void Cmd_PrintSettings_f( edict_t * ent )
 		length = strlen( text );
 	}
 
-        Com_sprintf( text + length, sizeof( text ) - length, "sv_antilag = %d\n", (int)sv_antilag->value );
-        length = strlen( text );
+	Com_sprintf( text + length, sizeof( text ) - length, "sv_antilag = %d\n", (int)sv_antilag->value );
+	length = strlen( text );
 	
 	Com_sprintf( text + length, sizeof( text ) - length, "dmflags %i: ", (int)dmflags->value );
 	dmflagsSettings( text, sizeof( text ), (int)dmflags->value );
@@ -1691,11 +1691,11 @@ static void Cmd_PrintSettings_f( edict_t * ent )
 	length = strlen( text );
 	Com_sprintf( text + length, sizeof( text ) - length, "\n"
 		"timelimit   %2d roundlimit  %2d roundtimelimit %2d\n"
-		"limchasecam %2d tgren       %2d hc_single      %2d\n"
-		"use_punch   %2d use_classic %2d\n",
+		"limchasecam %2d tgren       %2d antilag_interp %2d\n"
+		"use_xerp    %2d llsound     %2d\n",
 		(int)timelimit->value, (int)roundlimit->value, (int)roundtimelimit->value,
-		(int)limchasecam->value, (int)tgren->value, (int)hc_single->value,
-		(int)use_punch->value, (int)use_classic->value );
+		(int)limchasecam->value, (int)tgren->value, (int)sv_antilag_interp->value,
+		(int)use_xerp->value, (int)llsound->value );
 
 	gi.cprintf( ent, PRINT_HIGH, text );
 }

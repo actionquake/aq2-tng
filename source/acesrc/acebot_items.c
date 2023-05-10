@@ -65,6 +65,7 @@ edict_t *players[MAX_CLIENTS];		// pointers to all players in the game
 void ACEIT_RebuildPlayerList( void )
 {
 	size_t i;
+	int bcount = 0;
 
 	num_players = 0;
 
@@ -76,7 +77,12 @@ void ACEIT_RebuildPlayerList( void )
 			players[ num_players ] = ent;
 			num_players ++;
 		}
+
+		if(ent->is_bot){
+			bcount++;
+		}
 	}
+	game.bot_count = bcount;
 }
 
 ///////////////////////////////////////////////////////////////////////

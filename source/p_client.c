@@ -353,55 +353,37 @@ static void FreeClientEdicts(gclient_t *client)
 void Announce_Reward(edict_t *ent, int rewardType){
 	char buf[256];
 
+	#ifdef USE_AQTION
+	char steamid[24];
+	char discordid[24];
+
+	// Gather stat-related info
+	if (stat_logs->value) {
+		Q_strncpyz(steamid, Info_ValueForKey(ent->client->pers.userinfo, "steamid"), sizeof(steamid));
+		Q_strncpyz(discordid, Info_ValueForKey(ent->client->pers.userinfo, "cl_discord_id"), sizeof(discordid));
+	}
+	#endif
+
 	if (rewardType == IMPRESSIVE) {
 		sprintf(buf, "IMPRESSIVE %s!", ent->client->pers.netname);
-			CenterPrintAll(buf);
-			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
-					gi.soundindex("tng/impressive.wav"), 1.0, ATTN_NONE, 0.0);
-
-			#if USE_AQTION
-
-			#ifndef NO_BOTS
-				// Check if there's an AI bot in the game, if so, do nothing
-				if (game.ai_ent_found) {
-					return;
-				}
-			#endif
-			if (stat_logs->value) {
-				char steamid[24];
-				char discordid[24];
-				Q_strncpyz(steamid, Info_ValueForKey(ent->client->pers.userinfo, "steamid"), sizeof(steamid));
-				Q_strncpyz(discordid, Info_ValueForKey(ent->client->pers.userinfo, "cl_discord_id"), sizeof(discordid));
-				LogAward(steamid, discordid, IMPRESSIVE);
-			}
-			#endif
+		CenterPrintAll(buf);
+		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/impressive.wav"), 1.0, ATTN_NONE, 0.0);
 	} else if (rewardType == EXCELLENT) {
 		sprintf(buf, "EXCELLENT %s (%dx)!", ent->client->pers.netname,ent->client->resp.streakKills/12);
-				CenterPrintAll(buf);
-				gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
-					 gi.soundindex("tng/excellent.wav"), 1.0, ATTN_NONE, 0.0);
-
-				#if USE_AQTION
-				#ifndef NO_BOTS
-					// Check if there's an AI bot in the game, if so, do nothing
-					if (game.ai_ent_found) {
-						return;
-					}
-				#endif
-				if (stat_logs->value) {
-					char steamid[24];
-					char discordid[24];
-					Q_strncpyz(steamid, Info_ValueForKey(ent->client->pers.userinfo, "steamid"), sizeof(steamid));
-					Q_strncpyz(discordid, Info_ValueForKey(ent->client->pers.userinfo, "cl_discord_id"), sizeof(discordid));
-					LogAward(steamid, discordid, EXCELLENT);
-				}
-				#endif
+		CenterPrintAll(buf);
+		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/excellent.wav"), 1.0, ATTN_NONE, 0.0);
+	} else if (rewardType == ACCURACY) {
+		sprintf(buf, "ACCURACY %s!", ent->client->pers.netname);
+		CenterPrintAll(buf);
+		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/accuracy.wav"), 1.0, ATTN_NONE, 0.0);
 	}
+
+	if (stat_logs->value)
+		LogAward(steamid, discordid, rewardType);
 }
 
 void Add_Frag(edict_t * ent, int mod)
 {
-	char buf[256];
 	int frags = 0;
 
 	if (in_warmup)
@@ -416,8 +398,6 @@ void Add_Frag(edict_t * ent, int mod)
 	if (mod > 0 && ((mod == MOD_HG_SPLASH) || (mod == MOD_KICK) || (mod == MOD_PUNCH))) {
 		ent->client->resp.gunstats[mod].kills++;
 	}
-
-	ent->client->resp.score++;	// just 1 normal kill
 
 	if (IS_ALIVE(ent))
 	{
@@ -434,6 +414,10 @@ void Add_Frag(edict_t * ent, int mod)
 			Announce_Reward(ent, EXCELLENT);
 		}
 	}
+
+	// Regular frag for teamplay/matchmode
+	if (teamplay->value && teamdm->value != 2)
+		ent->client->resp.score++;	// just 1 normal kill
 
 	// Increment team score if TeamDM is enabled
 	if(teamdm->value)
@@ -2780,6 +2764,11 @@ void ClientBeginDeathmatch(edict_t * ent)
     	ACEIT_RebuildPlayerList();
 #if USE_AQTION
 		StatBotCheck();
+		#if USE_AQTION
+			if(am->value){
+				attract_mode_bot_check();
+		}
+	#endif
 #endif
 #endif
 
@@ -2812,6 +2801,12 @@ void ClientBeginDeathmatch(edict_t * ent)
 			IRC_printf(IRC_T_SERVER, "%n became a spectator", ent->client->pers.netname);
 		}
 		PrintMOTD(ent);
+	}
+
+	if(am->value && game.bot_count > 0){
+		char msg[128];
+		Com_sprintf(msg, sizeof(msg), "** This server contains BOTS for you to play with until real players join up!  Enjoy! **");
+		gi.centerprintf(ent, msg);
 	}
 
 	ent->client->resp.motd_refreshes = 1;
@@ -3171,6 +3166,12 @@ void ClientDisconnect(edict_t * ent)
 	ACEIT_RebuildPlayerList();
 #if USE_AQTION
 	StatBotCheck();
+
+	#if USE_AQTION
+		if(am->value){
+			attract_mode_bot_check();
+		}
+	#endif
 #endif
 #endif
 }

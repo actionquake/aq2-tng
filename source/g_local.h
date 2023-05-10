@@ -740,6 +740,7 @@ typedef struct
   int gamemodeflags;
   int roundNum;
   qboolean ai_ent_found;
+  int bot_count;
 }
 game_locals_t;
 
@@ -1087,6 +1088,7 @@ extern cvar_t *itm_flags;
 extern cvar_t *use_classic;	// Use_classic resets weapon balance to 1.52
 
 extern cvar_t *warmup;
+extern cvar_t *warmup_bots;
 extern cvar_t *round_begin;
 extern cvar_t *spectator_hud;
 
@@ -1166,6 +1168,12 @@ extern cvar_t *e_enhancedSlippers;
 
 // 2023
 extern cvar_t *use_killcounts;
+extern cvar_t *am;
+extern cvar_t *am_newnames;
+extern cvar_t *am_botcount;
+extern cvar_t *am_delay;
+extern cvar_t *am_team;
+extern cvar_t *zoom_comp;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -1510,6 +1518,7 @@ void ClientFixLegs(edict_t *ent);
 void ClientUserinfoChanged(edict_t* ent, char* userinfo);
 void ClientDisconnect(edict_t* ent);
 void CopyToBodyQue(edict_t* ent);
+void Announce_Reward(edict_t *ent, int rewardType);
 
 //p_weapon.c
 void Weapon_Generic( edict_t * ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
@@ -2102,7 +2111,7 @@ struct edict_s
 
 	qboolean is_bot; 
 	qboolean is_jumping; 
-	qboolean is_triggering; 
+	qboolean is_triggering;
 	 
 	// For movement 
 	vec3_t move_vector;  

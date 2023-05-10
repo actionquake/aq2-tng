@@ -4,6 +4,7 @@
 *.o
 *.tar.gz
 *.dll
+*.dylib
 *.lib
 *.obj
 *.sbr
