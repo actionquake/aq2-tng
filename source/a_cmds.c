@@ -1257,6 +1257,11 @@ void Cmd_Ghost_f(edict_t * ent)
 	ent->client->resp.deaths = ghost->deaths;
 	ent->client->resp.damage_dealt = ghost->damage_dealt;
 	ent->client->resp.ctf_caps = ghost->ctf_caps;
+	ent->client->resp.ctf_capstreak = ghost->ctf_capstreak;
+	ent->client->resp.team_kills = ghost->team_kills;
+	ent->client->resp.streakKillsHighest = ghost->streakKillsHighest;
+	ent->client->resp.streakHSHighest = ghost->streakHSHighest;
+
 
 	if (teamplay->value && ghost->team && ghost->team != ent->client->resp.team)
 			JoinTeam( ent, ghost->team, 1 );
@@ -1284,6 +1289,64 @@ void Cmd_Ghost_f(edict_t * ent)
 
 
 #if USE_AQTION
+
+void GetGhostStats(void)
+{
+	int i = 0;
+	edict_t *ent;
+	gghost_t *ghost = NULL;
+
+	if (!use_ghosts->value) {
+		// Ghosting is not enabled here
+		return;
+	}
+
+	if (num_ghost_players == 0) {
+		// No ghosts found
+		return;
+	}
+
+	for (i = 0, ghost = ghost_players; i < num_ghost_players; i++, ghost++) {
+
+		strcpy(ent->client->pers.ip, ghost->ip);
+		strcpy(ent->client->pers.netname, ghost->netname);
+
+		ent->client->resp.enterframe = ghost->enterframe;
+		ent->client->resp.score = ghost->score;
+		ent->client->resp.kills = ghost->kills;
+		ent->client->resp.deaths = ghost->deaths;
+		ent->client->resp.damage_dealt = ghost->damage_dealt;
+		ent->client->resp.ctf_caps = ghost->ctf_caps;
+		ent->client->resp.ctf_capstreak = ghost->ctf_capstreak;
+		ent->client->resp.team_kills = ghost->team_kills;
+		ent->client->resp.streakKillsHighest = ghost->streakKillsHighest;
+		ent->client->resp.streakHSHighest = ghost->streakHSHighest;
+
+		if (teamplay->value && ghost->team)
+			ent->client->resp.team = ghost->team;
+
+		if (gameSettings & GS_WEAPONCHOOSE) {
+			if (ghost->weapon)
+				ent->client->pers.chosenWeapon = ghost->weapon;
+
+			if (ghost->item)
+				ent->client->pers.chosenItem = ghost->item;
+		}
+
+		ent->client->resp.shotsTotal = ghost->shotsTotal;
+		ent->client->resp.hitsTotal = ghost->hitsTotal;
+
+		memcpy(ent->client->resp.hitsLocations, ghost->hitsLocations, sizeof(ent->client->resp.hitsLocations));
+		memcpy(ent->client->resp.gunstats, ghost->gunstats, sizeof(ent->client->resp.gunstats));
+	}
+
+	//Remove it from the list
+	for (i += 1; i < num_ghost_players; i++) {
+		ghost_players[i - 1] = ghost_players[i];
+	}
+	num_ghost_players--;
+}
+
 void generate_uuid()
 {
 #ifdef WIN32

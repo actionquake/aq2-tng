@@ -1524,6 +1524,7 @@ void G_UpdatePlayerStatusbar( edict_t *ent, int force );
 int Gamemodeflag(void);
 int Gamemode(void);
 #if USE_AQTION
+void GetGhostStats(void);
 void generate_uuid();
 #endif
 //
@@ -2204,6 +2205,10 @@ typedef struct
 	int team;
 	gitem_t *weapon;
 	gitem_t *item;
+	int ctf_capstreak;
+	int team_kills;
+	int streakKillsHighest;
+	int streakHSHighest;
 }
 gghost_t;
 

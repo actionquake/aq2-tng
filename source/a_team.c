@@ -3393,6 +3393,7 @@ void TallyEndOfLevelTeamScores (void)
 	#if USE_AQTION
 		if (stat_logs->value && !matchmode->value) {
 			LogMatch(); // Generates end of game stats
+			GetGhostStats();  // Attempt to capture ghost stats for early leavers
 			LogEndMatchStats(); // Generates end of match logs
 		}
 	#endif

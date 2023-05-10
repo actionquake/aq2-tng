@@ -511,9 +511,10 @@ void Add_Death( edict_t *ent, qboolean end_streak )
 		return;
 
 	ent->client->resp.deaths ++;
-	if( end_streak )
+	if( end_streak ) {
 		ent->client->resp.streakKills = 0;
 		ent->client->resp.roundStreakKills = 0;
+	}
 }
 
 // FRIENDLY FIRE functions
@@ -3220,6 +3221,10 @@ void CreateGhost(edict_t * ent)
 	ghost->kills = ent->client->resp.kills;
 	ghost->deaths = ent->client->resp.deaths;
 	ghost->ctf_caps = ent->client->resp.ctf_caps;
+	ghost->ctf_capstreak = ent->client->resp.ctf_capstreak;
+	ghost->team_kills = ent->client->resp.team_kills;
+	ghost->streakKillsHighest = ent->client->resp.streakKillsHighest;
+	ghost->streakHSHighest = ent->client->resp.streakHSHighest;
 
 	// Teamplay variables
 	if (teamplay->value) {
