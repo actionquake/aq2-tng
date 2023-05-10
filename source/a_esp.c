@@ -1,6 +1,6 @@
 // Espionage Mode by darksaint
 // File format inspired by a_dom.c by Raptor007 and a_ctf.c from TNG team
-// Re-worked from scratch from the original AQDT, Black Monk and hal9000
+// Re-worked from scratch from the original AQDT team, Black Monk and hal9000
 
 #include "g_local.h"
 
@@ -102,12 +102,6 @@ void EspFlagThink( edict_t *flag )
 		}
 	}
 
-	// Reset so the flag can be touched again.
-	flag->owner = NULL;
-
-	// Animate the flag waving.
-	flag->s.frame = 173 + (((flag->s.frame - 173) + 1) % 16);
-
 	flag->nextthink = level.framenum + FRAMEDIV;
 }
 
@@ -124,7 +118,7 @@ void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *
 	if( player->client->uvTime )
 		return;
 	// Player must be team leader on team 1 to activate the flag
-	if (!IS_LEADER(player) && player->client->resp.team != TEAM1)
+	if (!IS_LEADER(player) || player->client->resp.team != TEAM1)
 		return;
 
 	// If the flag hasn't been touched this frame, the player will take it.
@@ -132,8 +126,25 @@ void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *
 		flag->owner = player;
 }
 
+void EspResetFlag(void)
+{
+	int i;
+	edict_t *ent = NULL;
+	gitem_t *teamFlag = team_flag[TEAM1];
 
-void EspMakeFlag( edict_t *flag )
+	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
+		if (ent->spawnflags & DROPPED_ITEM)
+			G_FreeEdict(ent);
+		else {
+			ent->svflags &= ~SVF_NOCLIENT;
+			ent->solid = SOLID_TRIGGER;
+			gi.linkentity(ent);
+			ent->s.event = EV_ITEM_RESPAWN;
+		}
+	}
+}
+
+void EspMakeFlag( edict_t *flag)
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
@@ -442,22 +453,26 @@ qboolean EspLoadConfig(const char *mapname)
 				}
 
 				if( esp_flag_count )
-					gi.dprintf( "Espionage ETV mode: %i flags generated.\n", esp_flag_count );
+					gi.dprintf( "Espionage ETV mode: %i target generated.\n", esp_flag_count );
 				else {
 					gi.dprintf( "Warning: Espionage needs escort target in: tng/%s.esp\n", mapname );
 					espsettings.mode = 0;
 				}
-			}
-			ptr = INI_Find(fh, "target", "name");
-			size_t ptr_len = strlen(ptr);
-			if(ptr) {
-				if (ptr_len <= MAX_ESP_STRLEN) {
-					gi.dprintf("    Area    : %s\n", ptr);
-				} else {
-					gi.dprintf("Warning: [target] name > 32 characters, setting to \"The Spot\"");
-					ptr = "The Spot";
+
+				ptr = INI_Find(fh, "target", "name");
+				size_t ptr_len = strlen(ptr);
+				if(ptr) {
+					if (ptr_len <= MAX_ESP_STRLEN) {
+						gi.dprintf("    Area    : %s\n", ptr);
+					} else {
+						gi.dprintf("Warning: [target] name > 32 characters, setting to \"The Spot\"");
+						ptr = "The Spot";
+					}
+					Q_strncpyz(espsettings.target_name, ptr, sizeof(espsettings.target_name));
 				}
-				Q_strncpyz(espsettings.target_name, ptr, sizeof(espsettings.target_name));
+			} else {
+				gi.dprintf( "Warning: Escort target coordinates not found in tng/%s.esp, setting to ATL mode\n", mapname );
+				espsettings.mode = 0;
 			}
 		}
 
@@ -599,20 +614,23 @@ int EspGetRespawnTime(edict_t *ent)
 
 void EspRespawnPlayer(edict_t *ent)
 {
-	gi.dprintf("Level framenum is %d, respawn timer is %d\n", level.framenum, ent->client->respawn_framenum);
+	int cur_time = level.framenum;
+	int respawn_time = ent->client->respawn_framenum;
 
-	// If your leader is alive, you can respawn
-	if (espsettings.mode == ESPMODE_ATL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
-		if (ent->is_bot)
-			ACESP_Respawn(ent);
-		else
+	// Leaders do not respawn
+	if (IS_LEADER(ent))
+		return;
+
+	// Don't respawn until the current framenum is more than the respawn timer's framenum
+	if (level.framenum > ent->client->respawn_framenum) {
+		//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
+		// If your leader is alive, you can respawn
+		if (espsettings.mode == ESPMODE_ATL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 			respawn(ent);
-	// If TEAM1's leader is alive, you can respawn
-	} else if (espsettings.mode == ESPMODE_ETV && IS_ALIVE(teams[TEAM1].leader)) {
-		if (ent->is_bot)
-			ACESP_Respawn(ent);
-		else
+		// If TEAM1's leader is alive, you can respawn
+		} else if (espsettings.mode == ESPMODE_ETV && IS_ALIVE(teams[TEAM1].leader)) {
 			respawn(ent);
+		}
 	}
 }
 

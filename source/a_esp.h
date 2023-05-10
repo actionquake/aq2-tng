@@ -82,7 +82,6 @@ extern gitem_t *team_flag[TEAM_TOP];
 #define ESP_LEADER_HARASS_TIMEOUT       	8
 #define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
 
-void ESPInit (void);
 void EspSetTeamSpawns(int, char *);
 int EspGetRespawnTime(edict_t *ent);
 
@@ -93,37 +92,18 @@ void EspLeaderLeftTeam( edict_t *ent );
 void EspPunishment(int teamNum);
 void EspRespawnPlayer(edict_t *ent);
 
-void SP_info_player_team1 (edict_t * self);
-void SP_info_player_team2 (edict_t * self);
-
-char *ESPTeamName (int team);
-char *ESPOtherTeamName (int team);
-void ESPAssignTeam (gclient_t * who);
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);
-void GenerateMedKit();
-void ESPResetFlags(void);
+void EspResetFlag(void);
+void GenerateMedKit(qboolean instant);
 
-qboolean ESPPickup_Flag (edict_t * ent, edict_t * other);
-void ESPDrop_Flag (edict_t * ent, gitem_t * item);
-void ESPEffects (edict_t * player);
-void ESPCalcScores (void);
-void EspTouchMarker( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
-void ESPFlagSetup (edict_t * ent);
-void ESPScoreBonuses (edict_t * targ, edict_t * inflictor, edict_t * attacker);
-void ESPCheckHurtCarrier (edict_t * targ, edict_t * attacker);
-
-void ESPOpenJoinMenu (edict_t * ent);
+void EspTouchFlag( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
+void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker);
+void EspCheckHurtLeader (edict_t * targ, edict_t * attacker);
 
 qboolean EspCheckRules (void);
 qboolean HasFlag (edict_t * ent);
 
-void SP_misc_ctf_banner (edict_t * ent);
-void SP_misc_ctf_small_banner (edict_t * ent);
-
-void SP_trigger_teleport (edict_t * ent);
-void SP_info_teleport_destination (edict_t * ent);
-
 void ResetPlayers ();
-void GetESPScores(int *t1score, int *t2score);
-void ESPCapReward(edict_t *);
+void GetEspScores(int *t1score, int *t2score);
+void EspCapReward(edict_t *);

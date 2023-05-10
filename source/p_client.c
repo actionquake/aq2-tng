@@ -1614,9 +1614,15 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	if (esp->value && IS_LEADER(self)) {
 		if (!in_warmup && team_round_going) {
 			EspReportLeaderDeath(self);
-			gi.sound(self, CHAN_VOICE, gi.soundindex("tng/leader_death.wav"), 1, ATTN_NONE, 0);
+			for( self = g_edicts + 1; self <= g_edicts + game.maxclients; self ++ ){
+				// Don't send the sound if the ent is not a client or if the client is a bit
+				if(!self->inuse || !self->client || !self->is_bot)
+					continue;
+				else
+					unicastSound( self, gi.soundindex("tng/leader_death.wav"), 0.75 );
 			if (esp_punish->value)
 				EspPunishment(self->client->resp.team);
+			}
 		}
 	}
 }
@@ -1916,7 +1922,7 @@ void CleanBodies()
 
 void respawn(edict_t *self)
 {
-	gi.dprintf("%s tried to respawn\n", self->client->pers.netname);
+	//gi.dprintf("%s tried to respawn\n", self->client->pers.netname);
 
 	if (self->solid != SOLID_NOT || self->deadflag == DEAD_DEAD)
 		CopyToBodyQue(self);
@@ -2747,7 +2753,7 @@ void PutClientInServer(edict_t * ent)
 			for (i = TEAM1; i <= teamCount; i++){
 				if (ent == teams[i].leader) {
 					if (esp_leaderequip->value == 1) {
-						ent->client->medkit++;
+						ent->client->medkit = 1;
 					}
 				}
 			}
@@ -3733,6 +3739,9 @@ void ClientBeginServerFrame(edict_t * ent)
 					ent->client->chase_mode = 0;
 					NextChaseMode( ent );
 				}
+
+				if (esp->value)
+					EspRespawnPlayer(ent);
 			}
 			else
 			{
@@ -3744,8 +3753,6 @@ void ClientBeginServerFrame(edict_t * ent)
 				}
 			}
 		}
-		if (esp->value)
-			EspRespawnPlayer(ent);
 		return;
 	}
 

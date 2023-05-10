@@ -1788,6 +1788,9 @@ void CleanLevel ()
 	CleanBodies();
 	// fix glass
 	CGF_SFX_RebuildAllBrokenGlass ();
+	// Reset Espionage flag
+	if (esp->value && espsettings.mode == ESPMODE_ETV)
+		EspResetFlag();
 }
 
 void MakeAllLivePlayersObservers(void);
@@ -1964,7 +1967,7 @@ int CheckForWinner()
 				return TEAM2;
 			}
 		}
-	gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
+	//gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
 	
 	} else if (!esp->value) {
 		for (i = 0; i < game.maxclients; i++){
@@ -2754,7 +2757,7 @@ int CheckTeamRules (void)
 		// Team round is going, and it's GS_ROUNDBASED
 		{
 			if (esp->value) {
-				GenerateMedKit();
+				GenerateMedKit(false);
 				// Do something here about giving players stuff
 			}
 		}
