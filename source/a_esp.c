@@ -612,6 +612,79 @@ int EspGetRespawnTime(edict_t *ent)
 	return spawntime;
 }
 
+// edict_t *getLeaderCoordinates (edict_t *leader)
+// {
+//         edict_t *leadercoords;
+//         float   bestdistance, bestplayerdistance;
+//         edict_t *spot;
+
+//         spot = NULL;
+//         leadercoords = NULL;
+//         bestdistance = -1;
+
+
+//         while ((spot = G_Find (spot, FOFS(classname), "info_player_deathmatch")) != NULL)
+//         {
+//                 bestplayerdistance = PlayersRangeFromSpot (spot);
+//                 if ((bestplayerdistance < bestdistance) || (bestdistance < 0))
+//                 {
+//                         leadercoords = spot;
+//                         bestdistance = bestplayerdistance;
+//                 }
+//         }
+//         return leadercoords;
+// }
+
+
+static void SelectEspRespawnPoint(edict_t *ent)
+{
+	vec3_t		respawn_coords, angles;
+	edict_t 	*spot = NULL;
+	int i;
+
+	// Gets the leader entity
+	spot = teams[ent->client->resp.team].leader;
+
+	// Copies the entity's coordinates
+	VectorCopy (spot->s.origin, respawn_coords);
+	respawn_coords[2] += 9;
+	VectorCopy (spot->s.angles, angles);
+
+	
+
+	ent->client->jumping = 0;
+	ent->movetype = MOVETYPE_NOCLIP;
+	gi.unlinkentity (ent);
+
+	VectorCopy (respawn_coords, ent->s.origin);
+	VectorCopy (respawn_coords, ent->s.old_origin);
+
+	// clear the velocity and hold them in place briefly
+	VectorClear (ent->velocity);
+
+	ent->client->ps.pmove.pm_time = 160>>3;		// hold time
+	//ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
+	
+	VectorClear (ent->s.angles);
+	VectorClear (ent->client->ps.viewangles);
+	VectorClear (ent->client->v_angle);
+
+	VectorCopy(angles,ent->s.angles);
+	VectorCopy(ent->s.angles,ent->client->v_angle);
+
+	for (i=0;i<2;i++)
+		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(ent->client->v_angle[i] - ent->client->resp.cmd_angles[i]);
+	
+	if (ent->client->pers.spectator)
+		ent->solid = SOLID_BBOX;
+	else
+		ent->solid = SOLID_TRIGGER;
+	
+	ent->deadflag = DEAD_NO;
+	gi.linkentity (ent);
+	ent->movetype = MOVETYPE_WALK;
+}
+
 void EspRespawnPlayer(edict_t *ent)
 {
 	int cur_time = level.framenum;
@@ -627,6 +700,7 @@ void EspRespawnPlayer(edict_t *ent)
 		// If your leader is alive, you can respawn
 		if (espsettings.mode == ESPMODE_ATL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 			respawn(ent);
+
 		// If TEAM1's leader is alive, you can respawn
 		} else if (espsettings.mode == ESPMODE_ETV && IS_ALIVE(teams[TEAM1].leader)) {
 			respawn(ent);
@@ -677,11 +751,12 @@ void EspAssignTeam(gclient_t * who)
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
-	edict_t *spot, *spot1, *spot2;
-	int count = 0;
-	int selection;
-	float range, range1, range2;
-	char *cname;
+	edict_t 	*spot, *spot1, *spot2;
+	int 		count = 0;
+	int 		selection;
+	float 		range, range1, range2;
+	char 		*cname;
+	vec3_t 		respawn_coords, angles;
 
 	ent->client->resp.esp_state = ESP_STATE_PLAYING;
 
@@ -704,41 +779,55 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	range1 = range2 = 99999;
 	spot1 = spot2 = NULL;
 
-	while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-		count++;
-		range = PlayersRangeFromSpot(spot);
-		if (range < range1) {
-			if (range1 < range2) {
-				range2 = range1;
-				spot2 = spot1;
+	// This is a respawn, not a regular spawn!
+	if (team_round_going) {
+		// Gets the leader entity
+		spot = teams[ent->client->resp.team].leader;
+
+		// Copies the entity's coordinates
+		VectorCopy (spot->s.origin, respawn_coords);
+		respawn_coords[2] += 9;
+		VectorCopy (spot->s.angles, angles);
+
+		return spot;
+	} else {
+
+		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+			count++;
+			range = PlayersRangeFromSpot(spot);
+			if (range < range1) {
+				if (range1 < range2) {
+					range2 = range1;
+					spot2 = spot1;
+				}
+				range1 = range;
+				spot1 = spot;
+			} else if (range < range2) {
+				range2 = range;
+				spot2 = spot;
 			}
-			range1 = range;
-			spot1 = spot;
-		} else if (range < range2) {
-			range2 = range;
-			spot2 = spot;
 		}
+
+		if (!count)
+			return SelectRandomDeathmatchSpawnPoint();
+
+		if (count <= 2) {
+			spot1 = spot2 = NULL;
+		} else
+			count -= 2;
+
+		selection = rand() % count;
+
+		spot = NULL;
+		do {
+			spot = G_Find(spot, FOFS(classname), cname);
+			if (spot == spot1 || spot == spot2)
+				selection++;
+		}
+		while (selection--);
+
+		return spot;
 	}
-
-	if (!count)
-		return SelectRandomDeathmatchSpawnPoint();
-
-	if (count <= 2) {
-		spot1 = spot2 = NULL;
-	} else
-		count -= 2;
-
-	selection = rand() % count;
-
-	spot = NULL;
-	do {
-		spot = G_Find(spot, FOFS(classname), cname);
-		if (spot == spot1 || spot == spot2)
-			selection++;
-	}
-	while (selection--);
-
-	return spot;
 }
 
 void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)

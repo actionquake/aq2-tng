@@ -1778,14 +1778,13 @@ void SelectSpawnPoint(edict_t * ent, vec3_t origin, vec3_t angles)
 	edict_t *spot = NULL;
 
 	//FIREBLADE
-	if (ctf->value)
+	if (ctf->value) {
 		spot = SelectCTFSpawnPoint(ent);
-	// TODO: Fix this
-	// else if (esp->value)
-	// 	spot = SelectEspSpawnPoint(ent);
-	else if (dom->value)
+	} else if (esp->value) {
+		spot = SelectEspSpawnPoint(ent);
+	} else if (dom->value) {
 		spot = SelectDeathmatchSpawnPoint();
-	else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup) {
+	} else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup) {
 		spot = SelectTeamplaySpawnPoint(ent);
 	} else {
 		spot = SelectDeathmatchSpawnPoint();
