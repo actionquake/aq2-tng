@@ -211,8 +211,6 @@ void EspSetTeamSpawns(int team, char *str)
 	vec3_t pos;
 	float angle;
 
-	gi.dprintf("str: %s\n");
-
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
@@ -226,11 +224,11 @@ void EspSetTeamSpawns(int team, char *str)
 
 	next = strtok(str, ",");
 	do {
+		
 		if (sscanf(next, "<%f %f %f %f>", &pos[0], &pos[1], &pos[2], &angle) != 4) {
 			gi.dprintf("EspSetTeamSpawns: invalid spawn point: %s, expected <x y z a>\n", next);
 			continue;
 		}
-
 		spawn = G_Spawn ();
 		VectorCopy(pos, spawn->s.origin);
 		spawn->s.angles[YAW] = angle;
@@ -239,6 +237,7 @@ void EspSetTeamSpawns(int team, char *str)
 
 		next = strtok(NULL, ",");
 	} while(next != NULL);
+	
 }
 
 void EspEnforceDefaultSettings(char *defaulttype)
@@ -362,6 +361,9 @@ qboolean EspLoadConfig(const char *mapname)
 		if(!strcmp(ptr, ESPMODE_ATL_SNAME) && !strcmp(ptr, ESPMODE_ETV_SNAME)){
 			gi.dprintf("Warning: Value for '[esp] type is not 'etv' or 'atl', forcing ATL mode\n");
 		    gi.dprintf("- Game type : %s\n", ESPMODE_ATL_NAME);
+		} else if (!esp_mode->value) {
+			espsettings.mode = ESPMODE_ATL;
+			gametypename = ESPMODE_ATL_NAME;
 		} else {
 			if(ptr) {
 				if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
@@ -474,38 +476,29 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
-		ptr = INI_Find(fh, "spawns", "red");
-		if(ptr) {
-			EspSetTeamSpawns(TEAM1, ptr);
-			espsettings.custom_spawns = true;
-		}
-		ptr = INI_Find(fh, "spawns", "blue");
-		if(ptr) {
-			EspSetTeamSpawns(TEAM2, ptr);
-			espsettings.custom_spawns = true;
-		}
-		if (teamCount == 3){
-			ptr = INI_Find(fh, "spawns", "green");
+
+		if (esp_customspawns->value){
+			ptr = INI_Find(fh, "spawns", "red");
 			if(ptr) {
-				EspSetTeamSpawns(TEAM3, ptr);
+				EspSetTeamSpawns(TEAM1, ptr);
 				espsettings.custom_spawns = true;
 			}
-		}
-
-		if (!espsettings.custom_spawns){
-			gi.dprintf("Warning: Malformed or missing settings for spawn locations\n");
+			ptr = INI_Find(fh, "spawns", "blue");
+			if(ptr) {
+				EspSetTeamSpawns(TEAM2, ptr);
+				espsettings.custom_spawns = true;
+			}
+			if (teamCount == 3){
+				ptr = INI_Find(fh, "spawns", "green");
+				if(ptr) {
+					EspSetTeamSpawns(TEAM3, ptr);
+					espsettings.custom_spawns = true;
+				}
+			}
+		} else {
 			gi.dprintf("Enforcing normal spawnpoints\n");
+			espsettings.custom_spawns = false;
 		}
-		//  else {
-		// 	gi.dprintf("Team1 spawns: %s\n", r_spawnlist);
-		// 	gi.dprintf("Team2 spawns: %s\n", b_spawnlist);
-		// 	if (teamCount == 3){
-		// 		gi.dprintf("Team3 spawns: %s\n", b_spawnlist);
-		// 		EspSetTeamSpawns(TEAM3, g_spawnlist);
-		// 	}
-		// 	espsettings.custom_spawns = true;
-		// }		
-
 
 		gi.dprintf("- Teams\n");
 
