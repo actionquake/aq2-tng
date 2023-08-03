@@ -211,6 +211,8 @@ void EspSetTeamSpawns(int team, char *str)
 	vec3_t pos;
 	float angle;
 
+	gi.dprintf("str: %s\n");
+
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
@@ -472,26 +474,39 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
-		char *r_spawnlist, *b_spawnlist, *g_spawnlist;
-
-		r_spawnlist = INI_Find(fh, "spawns", "red");
-		b_spawnlist = INI_Find(fh, "spawns", "blue");
-		if(teamCount == 3)
-			g_spawnlist = INI_Find(fh, "spawns", "green");
-
-		if ((!r_spawnlist || !b_spawnlist) || (teamCount == 3 && !g_spawnlist)){
-			gi.dprintf("Warning: Malformed or missing settings for spawn locations\n");
-			gi.dprintf("Enforcing normal spawnpoints\n");
-			espsettings.custom_spawns = false;
-		} else {
-			EspSetTeamSpawns(TEAM1, r_spawnlist);
-			EspSetTeamSpawns(TEAM2, b_spawnlist);
-			if (teamCount == 3){
-				EspSetTeamSpawns(TEAM3, g_spawnlist);
-			}
+		ptr = INI_Find(fh, "spawns", "red");
+		if(ptr) {
+			EspSetTeamSpawns(TEAM1, ptr);
 			espsettings.custom_spawns = true;
 		}
-		
+		ptr = INI_Find(fh, "spawns", "blue");
+		if(ptr) {
+			EspSetTeamSpawns(TEAM2, ptr);
+			espsettings.custom_spawns = true;
+		}
+		if (teamCount == 3){
+			ptr = INI_Find(fh, "spawns", "green");
+			if(ptr) {
+				EspSetTeamSpawns(TEAM3, ptr);
+				espsettings.custom_spawns = true;
+			}
+		}
+
+		if (!espsettings.custom_spawns){
+			gi.dprintf("Warning: Malformed or missing settings for spawn locations\n");
+			gi.dprintf("Enforcing normal spawnpoints\n");
+		}
+		//  else {
+		// 	gi.dprintf("Team1 spawns: %s\n", r_spawnlist);
+		// 	gi.dprintf("Team2 spawns: %s\n", b_spawnlist);
+		// 	if (teamCount == 3){
+		// 		gi.dprintf("Team3 spawns: %s\n", b_spawnlist);
+		// 		EspSetTeamSpawns(TEAM3, g_spawnlist);
+		// 	}
+		// 	espsettings.custom_spawns = true;
+		// }		
+
+
 		gi.dprintf("- Teams\n");
 
 		// char team_attrs[3][4][32];
