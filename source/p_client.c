@@ -1501,9 +1501,17 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		if (!teamplay->value)
 			Cmd_Help_f(self);	// show scores
 
-		// always reset chase to killer, even if NULL
-		if(limchasecam->value < 2 && attacker && attacker->client)
-			self->client->resp.last_chase_target = attacker;
+		if (esp->value && limchasecam->value < 2 && attacker && attacker->client) {
+			if (!IS_LEADER(attacker)) {
+				self->client->resp.last_chase_target = attacker; // Normal chase cam
+			} else if (IS_ALIVE(teams[self->client->resp.team].leader)) {
+				self->client->resp.last_chase_target = teams[self->client->resp.team].leader; // Chase cam your own leader
+			} else {
+				self->client->resp.last_chase_target = NULL; // If you can't chase your own leader, the round is over anyway
+			}
+		} else if (limchasecam->value < 2 && attacker && attacker->client) {
+			self->client->resp.last_chase_target = attacker; // Always reset chase to killer, even if NULL
+		}
 	}
 	// remove powerups
 	self->client->quad_framenum = 0;
@@ -2391,7 +2399,10 @@ void PutClientInServer(edict_t * ent)
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
-	SelectSpawnPoint(ent, spawn_origin, spawn_angles);
+	if (esp->value)
+		SelectEspSpawnPoint(ent);
+	else
+		SelectSpawnPoint(ent, spawn_origin, spawn_angles);
 
 	index = ent - g_edicts - 1;
 	client = ent->client;

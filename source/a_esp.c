@@ -1,6 +1,6 @@
 // Espionage Mode by darksaint
 // File format inspired by a_dom.c by Raptor007 and a_ctf.c from TNG team
-// Re-worked from scratch from the original AQDT team, Black Monk and hal9000
+// Re-worked from scratch from the original AQDT team, Black Monk, hal9000 and crew
 
 #include "g_local.h"
 
@@ -30,10 +30,10 @@ int esp_pics[ TEAM_TOP ] = {0};
 int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
-char *red_skin_name, *blue_skin_name, *green_skin_name;
-char *red_team_name, *blue_team_name, *green_team_name;
-char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
-char *red_leader_name, *blue_leader_name, *green_leader_name;
+// char *red_skin_name, *blue_skin_name, *green_skin_name;
+// char *red_team_name, *blue_team_name, *green_team_name;
+// char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
+// char *red_leader_name, *blue_leader_name, *green_leader_name;
 
 int EspFlagOwner( edict_t *flag )
 {
@@ -45,8 +45,7 @@ int EspFlagOwner( edict_t *flag )
 void EspFlagThink( edict_t *flag )
 {
 	// If the flag was touched this frame, make it owned by that team.
-	if( flag->owner && flag->owner->client && flag->owner->client->resp.team )
-	{
+	if( flag->owner && flag->owner->client && flag->owner->client->resp.team ) {
 		unsigned int effect = esp_team_effect[ flag->owner->client->resp.team ];
 		if( flag->s.effects != effect )
 		{
@@ -128,7 +127,6 @@ void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *
 
 void EspResetFlag(void)
 {
-	int i;
 	edict_t *ent = NULL;
 	gitem_t *teamFlag = team_flag[TEAM1];
 
@@ -216,10 +214,8 @@ void EspSetTeamSpawns(int team, char *str)
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
-	if (teamCount == 3){
-		if(team == TEAM3)
-			team_spawn_name = "info_player_team3";
-	}
+	if (teamCount == 3 && team == TEAM3)
+		team_spawn_name = "info_player_team3";
 
 	/* find and remove all team spawns for this team */
 	while ((spawn = G_Find(spawn, FOFS(classname), team_spawn_name)) != NULL) {
@@ -649,9 +645,6 @@ static void SelectEspRespawnPoint(edict_t *ent)
 	VectorCopy (spot->s.origin, respawn_coords);
 	respawn_coords[2] += 9;
 	VectorCopy (spot->s.angles, angles);
-
-	
-
 	ent->client->jumping = 0;
 	ent->movetype = MOVETYPE_NOCLIP;
 	gi.unlinkentity (ent);
@@ -687,9 +680,6 @@ static void SelectEspRespawnPoint(edict_t *ent)
 
 void EspRespawnPlayer(edict_t *ent)
 {
-	int cur_time = level.framenum;
-	int respawn_time = ent->client->respawn_framenum;
-
 	// Leaders do not respawn
 	if (IS_LEADER(ent))
 		return;
@@ -788,6 +778,9 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		VectorCopy (spot->s.origin, respawn_coords);
 		respawn_coords[2] += 9;
 		VectorCopy (spot->s.angles, angles);
+
+		gi.dprintf("Team %i leader x y z is %i %i %i", 
+		ent->client->resp.team, respawn_coords[0], respawn_coords[1], respawn_coords[2]);
 
 		return spot;
 	} else {

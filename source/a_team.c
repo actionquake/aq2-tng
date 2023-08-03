@@ -448,30 +448,29 @@ void PrintMatchRules ()
 	else if (ctf->value) {
 		if (capturelimit->value) {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture the other team's flag!\nNo capturelimit set!\n",
-						teams[TEAM1].name, teams[TEAM2].name );
+			teams[TEAM1].name, teams[TEAM2].name );
 		} else {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture the other team's flag!\nThe first team to %s captures wins!\n",
-						teams[TEAM1].name, teams[TEAM2].name, capturelimit->string );
+			teams[TEAM1].name, teams[TEAM2].name, capturelimit->string );
 		}
 	}
 	else if (dom->value) {
 		// I'll fill this in later
 		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture all of the checkpoints!\nNo capturelimit set!\n",
-						teams[TEAM1].name, teams[TEAM2].name );
+			teams[TEAM1].name, teams[TEAM2].name );
 	}
 	else if (!deathmatch->value) {
 		if (teamCount == TEAM2) {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nFrag the other team!\n",
-							teams[TEAM1].name, teams[TEAM2].name );
+				teams[TEAM1].name, teams[TEAM2].name );
 		} else if (teamCount == TEAM3) {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus %s versus %s\n\nFrag the other team!\n",
-							teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
+				teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
 		}
 	} else {
 		// If nothing else matches, just say glhf
 		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "Frag 'em all!  Good luck and have fun!\n");
 	}
-
 	CenterPrintAll(rulesmsg);
 }
 
@@ -1177,7 +1176,7 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 		In ATL mode (espsettings == 0), all teams must have a leader, and will have their own skin
 		In ETV mode (espsettings == 1), only TEAM1 gets a leader.
 		*/
-		
+	
 		switch (ent->client->resp.team)
 		{
 		case TEAM1:
@@ -1405,7 +1404,7 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 
 	if (level.intermission_framenum)
 		return;
-	
+
 	// Espionage join a game in progress
 	if (esp->value && team_round_going && ent->inuse && ent->client->resp.team)
 	{
@@ -1453,6 +1452,7 @@ void LeaveTeam (edict_t * ent)
 
 	MM_LeftTeam( ent );
 	EspLeaderLeftTeam ( ent );
+
 	ent->client->resp.joined_team = 0;
 	ent->client->resp.team = NOTEAM;
 	G_UpdatePlayerStatusbar(ent, 1);
@@ -1928,8 +1928,7 @@ qboolean BothTeamsHavePlayers()
 // CheckForWinner: Checks for a winner (or not).
 int CheckForWinner()
 {
-	int players[TEAM_TOP] = { 0 };
-	int i = 0, teamNum = 0, teamsWithPlayers = 0;
+	int players[TEAM_TOP] = { 0 }, i = 0, teamNum = 0, teamsWithPlayers = 0;
 	edict_t *ent;
 
 	if (!(gameSettings & GS_ROUNDBASED))
@@ -2482,6 +2481,7 @@ int WonGame (int winner)
 			PrintScores ();
 		}
 	}
+
 	if (CheckTimelimit())
 		return 1;
 	
@@ -2567,7 +2567,7 @@ int CheckTeamRules (void)
 		team_round_countdown--;
 		if(!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers())
+			if (BothTeamsHavePlayers ())
 			{
 				in_warmup = 0;
 				team_game_going = 1;
@@ -2603,7 +2603,7 @@ int CheckTeamRules (void)
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
 				if (printrules->value) {
-					PrintMatchRules();
+				        PrintMatchRules();
 				}
 
 				#ifdef USE_AQTION
@@ -2685,7 +2685,6 @@ int CheckTeamRules (void)
 				{
 					int warmup_length = max( warmup->value, round_begin->value );
 					char buf[64] = "";
-
 					if (esp->value) {
 						sprintf( buf, "All teams have leaders!\nThe round will begin in %d seconds!", warmup_length );
 					} else {
@@ -2850,13 +2849,6 @@ void A_Scoreboard (edict_t * ent)
 			ent->client->ps.stats[STAT_TEAM2_PIC] = level.pic_teamskin[TEAM2];
 			if (teamCount == 3)
 				ent->client->ps.stats[STAT_TEAM3_PIC] = level.pic_teamskin[TEAM3];
-
-			// if (esp->value){
-			// 	ent->client->ps.stats[STAT_TEAM1_LEADERPIC] = level.pic_leaderskin[TEAM1];
-			// 	ent->client->ps.stats[STAT_TEAM2_LEADERPIC] = level.pic_leaderskin[TEAM2];
-			// 	if (teamCount == 3)
-			// 		ent->client->ps.stats[STAT_TEAM3_LEADERPIC] = level.pic_leaderskin[TEAM3];
-			// 	}
 		}
 
 		ent->client->ps.stats[STAT_TEAM1_SCORE] = teams[TEAM1].score;
@@ -3061,7 +3053,7 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 		
 		base_x = 160 - ((rowWidth + rowGap) * teamCount) / 2 + rowGap / 2;
 
-		if(ctf->value || esp->value)
+		if(ctf->value)
 		{
 			base_x += 8;
 			tpic[TEAM1][0] = 30;
