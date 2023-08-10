@@ -1788,9 +1788,6 @@ void CleanLevel ()
 	CleanBodies();
 	// fix glass
 	CGF_SFX_RebuildAllBrokenGlass ();
-	// Reset Espionage flag
-	if (esp->value && espsettings.mode == ESPMODE_ETV)
-		EspResetFlag();
 }
 
 void MakeAllLivePlayersObservers(void);
@@ -2248,6 +2245,10 @@ void MakeAllLivePlayersObservers (void)
 	/* if someone is carrying a flag it will disappear */
 	if(ctf->value)
 		CTFResetFlags();
+
+	// Reset Espionage flag
+	if (esp->value && espsettings.mode == ESPMODE_ETV)
+		EspResetFlag();
 
 	for (i = 0; i < game.maxclients; i++)
 	{

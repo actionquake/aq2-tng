@@ -100,6 +100,7 @@ void EspFlagThink( edict_t *flag )
 			}
 		}
 	}
+	flag->owner = NULL;
 
 	flag->nextthink = level.framenum + FRAMEDIV;
 }
@@ -130,7 +131,7 @@ void EspResetFlag(void)
 	edict_t *ent = NULL;
 	gitem_t *teamFlag = team_flag[TEAM1];
 
-	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
+	while ((ent = G_Find(ent, FOFS(classname), "item_flag_team1")) != NULL) {
 		if (ent->spawnflags & DROPPED_ITEM)
 			G_FreeEdict(ent);
 		else {
@@ -181,7 +182,7 @@ void EspMakeFlag( edict_t *flag)
 // 	edict_t *ent = NULL;
 // 	vec3_t position;
 
-// 	flag_name = "item_flag_team1";
+// 	flag_name = "item_flag_team1_team1";
 
 // 	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
 // 		return;
