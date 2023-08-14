@@ -96,6 +96,7 @@ extern cvar_t	*ltk_chat;	// Chat setting for bots, off or on (0,1)
 extern cvar_t	*ltk_routing;	// Set to 1 to drop nodes, otherwise you won't do it!
 extern cvar_t	*ltk_botfile;	// Set this to adjust which botdata file to load, default is botdata
 extern cvar_t	*ltk_loadbots;	// Set to 0 to not load bots from ltk_botfile value, 1 for normal operation
+extern cvar_t	*ltk_classic;  // Set to 0 to use the new naming system and skins.  1 for classic operation
 
 extern int lights_camera_action;
 
@@ -219,6 +220,7 @@ void     ClientUserinfoChanged (edict_t *ent, char *userinfo);
 void     CopyToBodyQue (edict_t *ent);
 qboolean ClientConnect (edict_t *ent, char *userinfo);
 void     Use_Plat (edict_t *ent, edict_t *other, edict_t *activator);
+void 	 hurt_touch (edict_t * self, edict_t * other, cplane_t * plane, csurface_t * surf);
 
 // acebot_ai.c protos
 void     ACEAI_Think (edict_t *self);
@@ -294,6 +296,7 @@ void     ACESP_SetName(edict_t *bot, char *name, char *skin, char *team);
 edict_t *ACESP_SpawnBot (char *team, char *name, char *skin, char *userinfo);
 void     ACESP_ReAddBots();
 void     ACESP_RemoveBot(char *name);
+void     attract_mode_bot_check(void);
 void	 safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...);
 void     safe_centerprintf (edict_t *ent, char *fmt, ...);
 void     debug_printf (char *fmt, ...);

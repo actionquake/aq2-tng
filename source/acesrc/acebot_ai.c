@@ -81,6 +81,13 @@ void ACEAI_Think (edict_t *self)
 	self->enemy = NULL;
 	self->movetarget = NULL;
 
+	// Force respawn if during warmup mode
+	if (self->deadflag == DEAD_DEAD && (in_warmup))
+	{
+		self->client->buttons = 0;
+		ucmd.buttons = BUTTON_ATTACK;
+	}
+
 	// Stop trying to think if the bot can't respawn.
 	if( ! IS_ALIVE(self) && ((gameSettings & GS_ROUNDBASED) || (self->client->respawn_framenum > level.framenum)) )
 	{

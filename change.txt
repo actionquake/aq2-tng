@@ -9,6 +9,11 @@ From 2.82
 + sv_idleremove: Value in seconds, removes player from their team if they reach this amount of total idle time.  Set to 0 to disable, Teamplay modes only.
 + g_spawn_items: Value [0/1], set to 1 to allow for item/ammo/weapon spawns in games that you choose your starting weapon.  Set 0 for normal play.
 + New server cvar 'scoreboard' allows customizing fields of second scoreboard screen in team modes.
++ am (attract mode): Value [0/1/2], this will set the server up in 'attract mode', where bots spawn in but are replaced by humans, depending on other values.
+- Q2Pro gl_brightness would make darkmatch too right. Adjusted darkmatch to check for this setting and force it to 0.
++ New server cvar 'use_killcounts', default `1` - enables or disables server announcing kill counts.  `0` is no kill counts printed, `1` prints for all modes.  Kill streaks reset every round ( see WonGame() )
++ zoom_comp: Value [0/1], enables zoom ping compensation. Higher ping = lower delay frames on sniper zoom
++ warmup_bots: Value in number of bots to spawn in warmup mode.  Set to 0 to not add any bots (classic).  Default '0', suggested value if you want bots is '6'.
 
 From 2.81
 * 3team mode: third team can not be locked forever anymore

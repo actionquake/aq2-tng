@@ -424,6 +424,35 @@ void Cmd_Reload_f(edict_t * ent)
 
 //+BD END CODE BLOCK
 
+// zoom_comp
+int calc_zoom_comp(edict_t * ent)
+{
+// Determine client ping to indicate how quickly we zoom from 0x to 1x
+	int default_idle_frames = 6;
+	int pingfloor = 80;
+	int clping = ent->client->ping;
+
+	int idle_weapon_frames = 0;
+	int calc_idle_weapon_frames = round(clping / pingfloor);
+
+	// No compensation if player ping is less than pingfloor
+	// For every tier of pingfloor you reduce your frames by 1
+	if (clping < pingfloor){
+		idle_weapon_frames = default_idle_frames;
+	} else if ((clping > pingfloor) && (clping <= (pingfloor * 2))){
+		idle_weapon_frames = 5;
+	} else if ((clping > (pingfloor * 2)) && (clping <= (pingfloor * 3))){
+		idle_weapon_frames = 4;
+	} else if ((clping > (pingfloor * 3))){
+		idle_weapon_frames = 3;
+	} else {
+		// Somehow clping wasn't calculated correctly, default to be safe
+		idle_weapon_frames = default_idle_frames;
+	}
+
+	return idle_weapon_frames;
+}
+
 //tempfile BEGIN
 /*
    Function _SetSniper
@@ -476,7 +505,11 @@ void _SetSniper(edict_t * ent, int zoom)
 	if (oldmode == SNIPER_1X && ent->client->weaponstate != WEAPON_RELOADING) {
 		//do idleness stuff when switching from 1x, see function below
 		ent->client->weaponstate = WEAPON_BUSY;
-		ent->client->idle_weapon = 6;
+		if(zoom_comp->value) {
+			ent->client->idle_weapon = calc_zoom_comp(ent);
+		} else {
+			ent->client->idle_weapon = 6;
+		}
 		ent->client->ps.gunframe = 22;
 	}
 }

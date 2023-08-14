@@ -233,9 +233,6 @@ void SP_point_combat (edict_t * self);
 void SP_misc_explobox (edict_t * self);
 void SP_misc_banner (edict_t * self);
 void SP_misc_satellite_dish (edict_t * self);
-void SP_misc_gib_arm (edict_t * self);
-void SP_misc_gib_leg (edict_t * self);
-void SP_misc_gib_head (edict_t * self);
 void SP_misc_deadsoldier (edict_t * self);
 void SP_misc_viper (edict_t * self);
 void SP_misc_viper_bomb (edict_t * self);
@@ -244,9 +241,6 @@ void SP_misc_strogg_ship (edict_t * self);
 void SP_misc_teleporter (edict_t * self);
 void SP_misc_teleporter_dest (edict_t * self);
 void SP_misc_blackhole (edict_t * self);
-void SP_misc_eastertank (edict_t * self);
-void SP_misc_easterchick (edict_t * self);
-void SP_misc_easterchick2 (edict_t * self);
 
 
 //zucc - item replacement function
@@ -267,14 +261,11 @@ static const spawn_t spawns[] = {
   {"item_health_small", SP_item_health_small},
   {"item_health_large", SP_item_health_large},
   {"item_health_mega", SP_item_health_mega},
-
   {"info_player_start", SP_info_player_start},
   {"info_player_deathmatch", SP_info_player_deathmatch},
   {"info_player_intermission", SP_info_player_intermission},
-
   {"info_player_team1", SP_info_player_team1},
   {"info_player_team2", SP_info_player_team2},
-
   {"func_plat", SP_func_plat},
   {"func_button", SP_func_button},
   {"func_door", SP_func_door},
@@ -291,7 +282,6 @@ static const spawn_t spawns[] = {
   {"func_timer", SP_func_timer},
   {"func_explosive", SP_func_explosive},
   {"func_killbox", SP_func_killbox},
-
   {"trigger_always", SP_trigger_always},
   {"trigger_once", SP_trigger_once},
   {"trigger_multiple", SP_trigger_multiple},
@@ -303,51 +293,31 @@ static const spawn_t spawns[] = {
   {"trigger_elevator", SP_trigger_elevator},
   {"trigger_gravity", SP_trigger_gravity},
   {"trigger_monsterjump", SP_trigger_monsterjump},
-
   {"target_temp_entity", SP_target_temp_entity},
   {"target_speaker", SP_target_speaker},
   {"target_explosion", SP_target_explosion},
   {"target_changelevel", SP_target_changelevel},
-//  {"target_secret", SP_target_secret},
-//  {"target_goal", SP_target_goal},
   {"target_splash", SP_target_splash},
   {"target_spawner", SP_target_spawner},
   {"target_blaster", SP_target_blaster},
   {"target_crosslevel_trigger", SP_target_crosslevel_trigger},
   {"target_crosslevel_target", SP_target_crosslevel_target},
   {"target_laser", SP_target_laser},
-//  {"target_help", SP_target_help},
-// monster      {"target_actor", SP_target_actor},
-//  {"target_lightramp", SP_target_lightramp},
   {"target_earthquake", SP_target_earthquake},
   {"target_character", SP_target_character},
   {"target_string", SP_target_string},
-
   {"worldspawn", SP_worldspawn},
   {"viewthing", SP_viewthing},
-
-//  {"light", SP_light},
   {"light_mine1", SP_light_mine1},
   {"light_mine2", SP_light_mine2},
   {"info_null", SP_info_null},
   {"func_group", SP_info_null},
   {"info_notnull", SP_info_notnull},
   {"path_corner", SP_path_corner},
-//  {"point_combat", SP_point_combat},
-
-//  {"misc_explobox", SP_misc_explobox},
   {"misc_banner", SP_misc_banner},
-
   {"misc_ctf_banner", SP_misc_ctf_banner},
   {"misc_ctf_small_banner", SP_misc_ctf_small_banner},
-
   {"misc_satellite_dish", SP_misc_satellite_dish},
-  // monster {"misc_actor", SP_misc_actor},
-  {"misc_gib_arm", SP_misc_gib_arm},
-  {"misc_gib_leg", SP_misc_gib_leg},
-  {"misc_gib_head", SP_misc_gib_head},
-  // monster {"misc_insane", SP_misc_insane},
-  //{"misc_deadsoldier", SP_misc_deadsoldier},
   {"misc_viper", SP_misc_viper},
   {"misc_viper_bomb", SP_misc_viper_bomb},
   {"misc_bigviper", SP_misc_bigviper},
@@ -357,9 +327,6 @@ static const spawn_t spawns[] = {
   {"trigger_teleport", SP_trigger_teleport},
   {"info_teleport_destination", SP_info_teleport_destination},
   {"misc_blackhole", SP_misc_blackhole},
-  {"misc_eastertank", SP_misc_eastertank},
-  {"misc_easterchick", SP_misc_easterchick},
-  {"misc_easterchick2", SP_misc_easterchick2},
 
   {NULL, NULL}
 };
@@ -1291,7 +1258,16 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	// Reload nodes and any persistent bots.
 	ACEND_InitNodes();
 	ACEND_LoadNodes();
-	ACESP_LoadBotConfig();
+	
+	// Normal operations, load LTK bots as normal
+	if (Q_stricmp(am->string, "0") == 0) {
+		ACESP_LoadBotConfig();
+	} else {
+		// Reset bot count, load initial bots
+		game.bot_count = 0;
+		attract_mode_bot_check();
+	}
+
 #endif
 
 #if USE_AQTION
@@ -1513,8 +1489,7 @@ G_UpdatePlayerStatusbar
 void G_UpdatePlayerStatusbar( edict_t * ent, int force )
 {
 	char *playerStatusbar;
-
-	if (!teamplay->value || teamCount != 2 || spectator_hud->value < 0 || (spectator_hud->value == 0 && !(ent->client->pers.spec_flags & SPECFL_SPECHUD))) {
+	if (!teamplay->value || teamCount != 2 || spectator_hud->value <= 0 || !(ent->client->pers.spec_flags & SPECFL_SPECHUD)) {
 		return;
 	}
 
@@ -1737,7 +1712,7 @@ void SP_worldspawn (edict_t * ent)
 	gi.soundindex("*fall2.wav");
 	gi.soundindex("*gurp1.wav");	// drowning damage
 	gi.soundindex("*gurp2.wav");
-	gi.soundindex("*jump1.wav");	// player jump
+	//gi.soundindex("*jump1.wav");	// player jump - AQ2 doesn't use this
 	gi.soundindex("*pain25_1.wav");
 	gi.soundindex("*pain25_2.wav");
 	gi.soundindex("*pain50_1.wav");
@@ -1763,6 +1738,11 @@ void SP_worldspawn (edict_t * ent)
 
 	level.model_null = gi.modelindex("sprites/null.sp2");      // null sprite
 	level.model_lsight = gi.modelindex("sprites/lsight.sp2");  // laser sight dot sprite
+#ifdef AQTION_EXTENSION
+	level.model_arrow = gi.modelindex("models/indicator/arrow_red.md2");
+	gi.modelindex("models/indicator/arrow_blue.md2");
+	gi.modelindex("models/indicator/arrow_green.md2");
+#endif
 
 	gi.soundindex("player/gasp1.wav");	// gasping for air
 	gi.soundindex("player/gasp2.wav");	// head breaking surface, not gasping
@@ -1786,12 +1766,7 @@ void SP_worldspawn (edict_t * ent)
 	gi.soundindex("infantry/inflies1.wav");
 
 	sm_meat_index = gi.modelindex("models/objects/gibs/sm_meat/tris.md2");
-	gi.modelindex("models/objects/gibs/arm/tris.md2");
-	gi.modelindex("models/objects/gibs/bone/tris.md2");
-	gi.modelindex("models/objects/gibs/bone2/tris.md2");
-	gi.modelindex("models/objects/gibs/chest/tris.md2");
 	gi.modelindex("models/objects/gibs/skull/tris.md2");
-	gi.modelindex("models/objects/gibs/head2/tris.md2");
 
 
 //
@@ -1826,40 +1801,6 @@ void SP_worldspawn (edict_t * ent)
 	gi.configstring(CS_LIGHTS + 11, "abcdefghijklmnopqrrqponmlkjihgfedcba");	// 11 SLOW PULSE NOT FADE TO BLACK
 	// styles 32-62 are assigned by the light program for switchable lights
 	gi.configstring(CS_LIGHTS + 63, "a");	// 63 testing
-
-
-#ifdef AQTION_EXTENSION
-#ifdef AQTION_HUD
-	if (teamplay->value)
-	{
-		int base_y = -8;
-		int team_amt = 2;
-
-		if (use_3teams->value)
-		{
-			teams[TEAM3].ghud_icon = -1; // just so we know these are unused
-			teams[TEAM3].ghud_num = -1;  // 
-
-			base_y -= 112;
-			team_amt = 3;
-		}
-		else
-			base_y -= 72;
-
-		int i;
-		for (i = 1; i <= team_amt; i++)
-		{
-			teams[i].ghud_icon = Ghud_AddIcon(8, base_y, level.pic_teamskin[i], 32, 32);
-			Ghud_SetAnchor(teams[i].ghud_icon, 0, 1);
-
-			teams[i].ghud_num = Ghud_AddNumber(44, base_y + 2, 0);
-			Ghud_SetAnchor(teams[i].ghud_num, 0, 1);
-
-			base_y += 40;
-		}
-	}
-#endif
-#endif
 }
 
 int LoadFlagsFromFile (const char *mapname)

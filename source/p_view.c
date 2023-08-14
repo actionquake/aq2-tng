@@ -815,24 +815,25 @@ void P_WorldEffects (void)
 	if (waterlevel == 3)
 	{
 		// breather or envirosuit give air
-		if (breather || envirosuit)
-		{
-			current_player->air_finished_framenum = level.framenum + 10 * HZ;
+		// AQ2 doesn't use the rebreather
+		// if (breather || envirosuit)
+		// {
+		// 	current_player->air_finished_framenum = level.framenum + 10 * HZ;
 
-			if (((current_client->breather_framenum - level.framenum) % (25 * FRAMEDIV)) == 0)
-			{
-				if (!current_client->breather_sound)
-					gi.sound (current_player, CHAN_AUTO,
-					gi.soundindex("player/u_breath1.wav"), 1, ATTN_NORM, 0);
-				else
-					gi.sound (current_player, CHAN_AUTO,
-					gi.soundindex("player/u_breath2.wav"), 1, ATTN_NORM, 0);
-				current_client->breather_sound ^= 1;
-				PlayerNoise (current_player, current_player->s.origin,
-				PNOISE_SELF);
-				//FIXME: release a bubble?
-			}
-		}
+		// 	if (((current_client->breather_framenum - level.framenum) % (25 * FRAMEDIV)) == 0)
+		// 	{
+		// 		if (!current_client->breather_sound)
+		// 			gi.sound (current_player, CHAN_AUTO,
+		// 			gi.soundindex("player/u_breath1.wav"), 1, ATTN_NORM, 0);
+		// 		else
+		// 			gi.sound (current_player, CHAN_AUTO,
+		// 			gi.soundindex("player/u_breath2.wav"), 1, ATTN_NORM, 0);
+		// 		current_client->breather_sound ^= 1;
+		// 		PlayerNoise (current_player, current_player->s.origin,
+		// 		PNOISE_SELF);
+		// 		//FIXME: release a bubble?
+		// 	}
+		// }
 
 		// if out of air, start drowning
 		if (current_player->air_finished_framenum < level.framenum)
@@ -1350,6 +1351,27 @@ void ClientEndServerFrame (edict_t * ent)
 
 	current_player = ent;
 	current_client = ent->client;
+
+#ifdef AQTION_EXTENSION
+	if (current_client->arrow)
+	{
+		// set new origin
+		VectorCopy(ent->s.origin, current_client->arrow->s.origin);
+		current_client->arrow->s.origin[2] += ent->maxs[2];
+		current_client->arrow->s.origin[2] += 8 + sin(level.time * 2);
+		//
+
+		// fix oldorigin
+		VectorCopy(ent->s.old_origin, current_client->arrow->s.old_origin);
+		current_client->arrow->s.old_origin[2] += ent->maxs[2];
+		current_client->arrow->s.old_origin[2] += 8 + sin((level.time - FRAMETIME) * 2);
+		//
+
+		current_client->arrow->s.modelindex = level.model_arrow + (current_client->resp.team - 1);
+		current_client->arrow->s.renderfx = RF_INDICATOR;
+		current_client->arrow->dimension_visible = (1 << current_client->resp.team);
+	}
+#endif
 
 	//AQ2:TNG - Slicer : Stuffs the client x seconds after he enters the server, needed for Video check
 	if (ent->client->resp.checkframe[0] <= level.framenum)

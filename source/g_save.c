@@ -430,8 +430,8 @@ void InitGame( void )
 	rrot = gi.cvar( "rrot", "0", 0 );
 	empty_rotate = gi.cvar( "empty_rotate", "0", 0 );
 	empty_exec = gi.cvar( "empty_exec", "", 0 );
-	llsound = gi.cvar( "llsound", "0", 0 );
-	loud_guns = gi.cvar( "loud_guns", "1", 0 );
+	llsound = gi.cvar( "llsound", "1", 0 );
+	loud_guns = gi.cvar( "loud_guns", "0", 0 );
 	sync_guns = gi.cvar( "sync_guns", "1", 0 );
 	silentwalk = gi.cvar( "silentwalk", "0", 0 );
 	slopefix = gi.cvar( "slopefix", "1", 0 );
@@ -542,8 +542,9 @@ void InitGame( void )
 	jump = gi.cvar ("jump", "0", /*CVAR_SERVERINFO|*/ CVAR_LATCH); // jumping mod -- removed from serverinfo 2022
 
 	warmup = gi.cvar( "warmup", "0", CVAR_LATCH );
+	warmup_bots = gi.cvar( "warmup_bots", "0", CVAR_LATCH );
 	round_begin = gi.cvar( "round_begin", "15", 0 );
-	spectator_hud = gi.cvar( "spectator_hud", "0", CVAR_LATCH );
+	spectator_hud = gi.cvar( "spectator_hud", "1", CVAR_LATCH );
 
 	use_mvd2 = gi.cvar( "use_mvd2", "0", 0 );	// JBravo: q2pro MVD2 recording. 0 = off, 1 = on
 
@@ -573,6 +574,25 @@ void InitGame( void )
 	sv_curl_status_api_url = gi.cvar("sv_curl_status_api_url", "disabled", 0);
 	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
 
+	// 2023
+	use_killcounts = gi.cvar("use_killcounts", "0", 0);
+	am = gi.cvar("am", "0", CVAR_SERVERINFO);
+	am_newnames = gi.cvar("am_newnames", "1", 0);
+	am_botcount = gi.cvar("am_botcount", "6", CVAR_SERVERINFO);
+	if (am_botcount->value < 0){
+    	gi.cvar_forceset("am_botcount", "0");
+	}
+	am_delay = gi.cvar("am_delay", "30", 0);
+	am_team = gi.cvar("am_team", "0", 0);
+	zoom_comp = gi.cvar("zoom_comp", "0", 0);
+
+	// new AQtion Extension cvars
+#ifdef AQTION_EXTENSION
+	use_newirvision = gi.cvar("use_newirvision", "1", 0);
+	use_indicators = gi.cvar("use_indicators", "1", 0);
+	use_xerp = gi.cvar("use_xerp", "1", 0);
+#endif
+
 	// Discord SDK integration with Q2Pro
 	cl_discord = gi.cvar("cl_discord", "0", 0);
 	cl_discord_id = gi.cvar("cl_discord_id", "0", 0);
@@ -587,8 +607,9 @@ void InitGame( void )
 	ltk_showpath = gi.cvar( "ltk_showpath", "0", 0 );
 	ltk_chat = gi.cvar( "ltk_chat", "1", 0 );
 	ltk_routing = gi.cvar( "ltk_routing", "0", 0 );
-	ltk_botfile = gi.cvar( "ltk_botfile", "botdata.cfg", 0);
+	ltk_botfile = gi.cvar( "ltk_botfile", "botdata", 0);
 	ltk_loadbots = gi.cvar( "ltk_loadbots", "1", 0);
+	ltk_classic = gi.cvar( "ltk_classic", "1", 0);
 #endif
 
 	// items
@@ -668,6 +689,14 @@ void InitGame( void )
 	gi.cvar_forceset("g_view_predict", "1");
 	gi.cvar_forceset("g_view_high", va("%d", STANDING_VIEWHEIGHT));
 	gi.cvar_forceset("g_view_low", va("%d", CROUCHING_VIEWHEIGHT));
+
+#ifdef AQTION_EXTENSION
+	CvarSync_Set(clcvar_cl_antilag, "cl_antilag", "1");
+	CvarSync_Set(clcvar_cl_indicators, "cl_indicators", "1");
+	CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	CvarSync_Set(clcvar_cl_spectatorhud, "cl_spectatorhud", "1");
+	CvarSync_Set(clcvar_cl_spectatorkillfeed, "cl_spectatorkillfeed", "0");
+#endif
 }
 
 //=========================================================
