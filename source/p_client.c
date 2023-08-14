@@ -3142,9 +3142,9 @@ void ClientDisconnect(edict_t * ent)
 
 	if( use_ghosts->value ) {
 		CreateGhost( ent );
-	} else {
-		LogEndMatchStats(false); // Logs stats only for player leaving
+	} else if (stat_logs->value) {
 		ent->client->resp.recorded = true; // This is so player stats aren't re-recorded
+		LogEndMatchStats(false); // Logs stats only for player leaving
 	}
 
 	// go clear any clients that have this guy as their attacker

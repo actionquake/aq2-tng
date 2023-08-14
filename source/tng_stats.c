@@ -595,7 +595,7 @@ void Write_Stats(const char* msg, ...)
 		fclose(f);
 	}
 	else
-		gi.dprintf("Error writing to %s.stats\n", logfile_name->string);
+		gi.dprintf("Error writing to %s.stats, verify the action/logs directory exists\n", logfile_name->string);
 
 }
 
@@ -608,7 +608,7 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
 {
 	int mod;
 	int loc;
-	int chosenItem;
+	int chosenItem = 0;
 	int gametime = 0;
 	int roundNum;
 	int eventtime;
@@ -695,16 +695,16 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
 				chosenItem = KEV_NUM;
 			} else {
 				// Commando Kit
-				if (attacker->client->pers.chosenItem->typeNum == BAND_NUM &&
-					attacker->client->pers.chosenItem2->typeNum == HELM_NUM ) {
+				if ((attacker->client->pers.chosenItem->typeNum == BAND_NUM) &&
+					(attacker->client->pers.chosenItem2->typeNum == HELM_NUM) ) {
 						chosenItem = C_KIT_NUM;
 				// Stealth Kit
-				} else if (attacker->client->pers.chosenItem->typeNum == SLIP_NUM &&
-						attacker->client->pers.chosenItem2->typeNum == SIL_NUM ) {
+				} else if ((attacker->client->pers.chosenItem->typeNum == SLIP_NUM) &&
+						(attacker->client->pers.chosenItem2->typeNum == SIL_NUM) ) {
 						chosenItem = S_KIT_NUM;
 				// Assassin Kit
-				} else if (attacker->client->pers.chosenItem->typeNum == LASER_NUM &&
-						attacker->client->pers.chosenItem2->typeNum == SIL_NUM ) {
+				} else if ((attacker->client->pers.chosenItem->typeNum == LASER_NUM) &&
+						(attacker->client->pers.chosenItem2->typeNum == SIL_NUM) ) {
 						chosenItem = A_KIT_NUM;	
 				}
 			}
@@ -930,11 +930,11 @@ void LogAward(char* steamid, char* discordid, int award)
 
 /*
 =================
-WriteLogEndMatchStats
+_WriteLogEndMatchStats
 =================
 */
 
-void _WriteLogEndMatchStats(gclient_t *cl, int shots, int accuracy, float fpm, int secs)
+void _WriteLogEndMatchStats(gclient_t *cl, int shots, float accuracy, float fpm, int secs)
 {
 	char msg[1024];
 	Com_sprintf(
@@ -1072,21 +1072,21 @@ void LogEndMatchStats(qboolean allPlayers)
 	} else { // Just write this single ent (loops in all, tries to find resp.recorded)
 		for (i = 1; i <= game.maxclients; i++) {
 			ent = g_edicts + i;
-			if (ent->client->resp.recorded)
-				break;
-			shots = min( ent->client->resp.shotsTotal, 9999 );
-				secs = (level.framenum - ent->client->resp.enterframe) / HZ;
+			if (ent->client->resp.recorded) {
+				shots = min( ent->client->resp.shotsTotal, 9999 );
+					secs = (level.framenum - ent->client->resp.enterframe) / HZ;
 
-				if (shots)
-						accuracy = (double)ent->client->resp.hitsTotal * 100.0 / (double)ent->client->resp.shotsTotal;
-					else
-						accuracy = 0;
-					if (secs > 0)
-						fpm = (double)ent->client->resp.score * 60.0 / (double)secs;
-					else
-						fpm = 0.0;
+					if (shots)
+							accuracy = (double)ent->client->resp.hitsTotal * 100.0 / (double)ent->client->resp.shotsTotal;
+						else
+							accuracy = 0;
+						if (secs > 0)
+							fpm = (double)ent->client->resp.score * 60.0 / (double)secs;
+						else
+							fpm = 0.0;
 
-				_WriteLogEndMatchStats(ent->client, shots, accuracy, fpm, secs);
+					_WriteLogEndMatchStats(ent->client, shots, accuracy, fpm, secs);
+			}
 		}
 			
 	}

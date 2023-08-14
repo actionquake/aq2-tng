@@ -133,7 +133,6 @@ void BeginIntermission(edict_t *targ)
 	// Generates stats for non-CTF, Teamplay or Matchmode
 	else if (stat_logs->value && !matchmode->value) {
 		LogMatch();
-		GetGhostStats();  // Attempt to capture ghost stats for early leavers
 		LogEndMatchStats(true); // Generates end of match logs
 	}
 	#endif

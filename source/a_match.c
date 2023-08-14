@@ -89,7 +89,6 @@ void SendScores(void)
 	// Needed to add this here because Matchmode does not call BeginIntermission, but other teamplay modes do call it
 		if (stat_logs->value) {
 			LogMatch();  // Generates end of game stats
-			GetGhostStats();  // Attempt to capture ghost stats for early leavers
 			LogEndMatchStats(true);  // Generates end of match stats
 		}
 	#endif
