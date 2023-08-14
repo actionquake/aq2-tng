@@ -3053,7 +3053,7 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 		
 		base_x = 160 - ((rowWidth + rowGap) * teamCount) / 2 + rowGap / 2;
 
-		if(ctf->value)
+		if(ctf->value || esp->value)
 		{
 			base_x += 8;
 			tpic[TEAM1][0] = 30;
