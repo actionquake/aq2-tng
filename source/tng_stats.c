@@ -81,6 +81,7 @@ void ResetStats(edict_t *ent)
 
 	ent->client->resp.shotsTotal = 0;
 	ent->client->resp.hitsTotal = 0;
+	ent->client->resp.recorded = false;
 
 	for (i = 0; i<LOC_MAX; i++)
 		ent->client->resp.hitsLocations[i] = 0;
@@ -928,19 +929,119 @@ void LogAward(char* steamid, char* discordid, int award)
 }
 
 /*
-==================
+=================
+WriteLogEndMatchStats
+=================
+*/
+
+void _WriteLogEndMatchStats(gclient_t *cl, int shots, int accuracy, float fpm, int secs)
+{
+	char msg[1024];
+	Com_sprintf(
+		msg, sizeof(msg),
+		"{\"matchstats\":{\"sid\":\"%s\",\"mid\":\"%s\",\"s\":\"%s\",\"sc\":%i,\"sh\":%i,\"a\":%f,\"f\":%f,\"dd\":%i,\"d\":%i,\"k\":%i,\"ctfc\":%i,\"ctfcs\":%i,\"ht\":%i,\"tk\":%i,\"t\":%i,\"hks\":%i,\"hhs\":%i,\"dis\":\"%s\",\"pt\":%i,\"hlh\":%i,\"hlc\":%i,\"hls\":%i,\"hll\":%i,\"hlkh\":%i,\"hlkv\":%i,\"hln\":%i,\"gss1\":%i,\"gss2\":%i,\"gss3\":%i,\"gss4\":%i,\"gss5\":%i,\"gss6\":%i,\"gss7\":%i,\"gss8\":%i,\"gss9\":%i,\"gss13\":%i,\"gss14\":%i,\"gss35\":%i,\"gsh1\":%i,\"gsh2\":%i,\"gsh3\":%i,\"gsh4\":%i,\"gsh5\":%i,\"gsh6\":%i,\"gsh7\":%i,\"gsh8\":%i,\"gsh9\":%i,\"gsh13\":%i,\"gsh14\":%i,\"gsh35\":%i,\"gshs1\":%i,\"gshs2\":%i,\"gshs3\":%i,\"gshs4\":%i,\"gshs5\":%i,\"gshs6\":%i,\"gshs7\":%i,\"gshs8\":%i,\"gshs9\":%i,\"gshs13\":%i,\"gshs14\":%i,\"gshs35\":%i,\"gsk1\":%i,\"gsk2\":%i,\"gsk3\":%i,\"gsk4\":%i,\"gsk5\":%i,\"gsk6\":%i,\"gsk7\":%i,\"gsk8\":%i,\"gsk9\":%i,\"gsk13\":%i,\"gsk14\":%i,\"gsk35\":%i,\"gsd1\":%i,\"gsd2\":%i,\"gsd3\":%i,\"gsd4\":%i,\"gsd5\":%i,\"gsd6\":%i,\"gsd7\":%i,\"gsd8\":%i,\"gsd9\":%i,\"gsd13\":%i,\"gsd14\":%i,\"gsd35\":%i}}\n",
+		server_id->string,
+		game.matchid,
+		cl->pers.steamid,
+		cl->resp.score,
+		shots,
+		accuracy,
+		fpm,
+		cl->resp.damage_dealt,
+		cl->resp.deaths,
+		cl->resp.kills,
+		cl->resp.ctf_caps,
+		cl->resp.ctf_capstreak,
+		cl->resp.hitsTotal,
+		cl->resp.team_kills,
+		cl->resp.team,
+		cl->resp.streakKillsHighest,
+		cl->resp.streakHSHighest,
+		cl->pers.discordid,
+		secs,
+		cl->resp.hitsLocations[LOC_HDAM],
+		cl->resp.hitsLocations[LOC_CDAM],
+		cl->resp.hitsLocations[LOC_SDAM],
+		cl->resp.hitsLocations[LOC_LDAM],
+		cl->resp.hitsLocations[LOC_KVLR_HELMET],
+		cl->resp.hitsLocations[LOC_KVLR_VEST],
+		cl->resp.hitsLocations[LOC_NO],
+		cl->resp.gunstats[MOD_MK23].shots,
+		cl->resp.gunstats[MOD_MP5].shots,
+		cl->resp.gunstats[MOD_M4].shots,
+		cl->resp.gunstats[MOD_M3].shots,
+		cl->resp.gunstats[MOD_HC].shots,
+		cl->resp.gunstats[MOD_SNIPER].shots,
+		cl->resp.gunstats[MOD_DUAL].shots,
+		cl->resp.gunstats[MOD_KNIFE].shots,
+		cl->resp.gunstats[MOD_KNIFE_THROWN].shots,
+		cl->resp.gunstats[MOD_HG_SPLASH].shots,
+		cl->resp.gunstats[MOD_PUNCH].shots,
+		cl->resp.gunstats[MOD_KICK].shots,
+		cl->resp.gunstats[MOD_MK23].hits,
+		cl->resp.gunstats[MOD_MP5].hits,
+		cl->resp.gunstats[MOD_M4].hits,
+		cl->resp.gunstats[MOD_M3].hits,
+		cl->resp.gunstats[MOD_HC].hits,
+		cl->resp.gunstats[MOD_SNIPER].hits,
+		cl->resp.gunstats[MOD_DUAL].hits,
+		cl->resp.gunstats[MOD_KNIFE].hits,
+		cl->resp.gunstats[MOD_KNIFE_THROWN].hits,
+		cl->resp.gunstats[MOD_HG_SPLASH].hits,
+		cl->resp.gunstats[MOD_PUNCH].hits,
+		cl->resp.gunstats[MOD_KICK].hits,
+		cl->resp.gunstats[MOD_MK23].headshots,
+		cl->resp.gunstats[MOD_MP5].headshots,
+		cl->resp.gunstats[MOD_M4].headshots,
+		cl->resp.gunstats[MOD_M3].headshots,
+		cl->resp.gunstats[MOD_HC].headshots,
+		cl->resp.gunstats[MOD_SNIPER].headshots,
+		cl->resp.gunstats[MOD_DUAL].headshots,
+		cl->resp.gunstats[MOD_KNIFE].headshots,
+		cl->resp.gunstats[MOD_KNIFE_THROWN].headshots,
+		cl->resp.gunstats[MOD_HG_SPLASH].headshots,
+		cl->resp.gunstats[MOD_PUNCH].headshots,
+		cl->resp.gunstats[MOD_KICK].headshots,
+		cl->resp.gunstats[MOD_MK23].kills,
+		cl->resp.gunstats[MOD_MP5].kills,
+		cl->resp.gunstats[MOD_M4].kills,
+		cl->resp.gunstats[MOD_M3].kills,
+		cl->resp.gunstats[MOD_HC].kills,
+		cl->resp.gunstats[MOD_SNIPER].kills,
+		cl->resp.gunstats[MOD_DUAL].kills,
+		cl->resp.gunstats[MOD_KNIFE].kills,
+		cl->resp.gunstats[MOD_KNIFE_THROWN].kills,
+		cl->resp.gunstats[MOD_HG_SPLASH].kills,
+		cl->resp.gunstats[MOD_PUNCH].kills,
+		cl->resp.gunstats[MOD_KICK].kills,
+		cl->resp.gunstats[MOD_MK23].damage,
+		cl->resp.gunstats[MOD_MP5].damage,
+		cl->resp.gunstats[MOD_M4].damage,
+		cl->resp.gunstats[MOD_M3].damage,
+		cl->resp.gunstats[MOD_HC].damage,
+		cl->resp.gunstats[MOD_SNIPER].damage,
+		cl->resp.gunstats[MOD_DUAL].damage,
+		cl->resp.gunstats[MOD_KNIFE].damage,
+		cl->resp.gunstats[MOD_KNIFE_THROWN].damage,
+		cl->resp.gunstats[MOD_HG_SPLASH].damage,
+		cl->resp.gunstats[MOD_PUNCH].damage,
+		cl->resp.gunstats[MOD_KICK].damage
+	);
+	Write_Stats(msg);
+}
+
+/*
+=================
 LogEndMatchStats
 =================
 */
-void LogEndMatchStats()
+void LogEndMatchStats(qboolean allPlayers)
 {
 	int i;
-	char msg[1024];
 	gclient_t *sortedClients[MAX_CLIENTS], *cl;
-	int totalClients, secs, shots;
+	edict_t *ent;
+	int totalClients, secs, shots = 0;
 	double accuracy, fpm;
-	char steamid[24];
-	char discordid[24];
 	totalClients = G_SortedClients(sortedClients);
 
 	// Check if there's an AI bot in the game, if so, do nothing
@@ -948,114 +1049,46 @@ void LogEndMatchStats()
 		return;
 	}
 
-	for (i = 0; i < totalClients; i++){
-		cl = sortedClients[i];
-		shots = min( cl->resp.shotsTotal, 9999 );
-		secs = (level.framenum - cl->resp.enterframe) / HZ;
+	// All connected clients that have not already had their stats recorded
+	if (allPlayers) {
+		for (i = 0; i < totalClients; i++){
+			cl = sortedClients[i];
+			if (!cl->resp.recorded){
+				shots = min( cl->resp.shotsTotal, 9999 );
+				secs = (level.framenum - cl->resp.enterframe) / HZ;
 
-		if (shots)
-				accuracy = (double)cl->resp.hitsTotal * 100.0 / (double)cl->resp.shotsTotal;
-			else
-				accuracy = 0;
-			if (secs > 0)
-				fpm = (double)cl->resp.score * 60.0 / (double)secs;
-			else
-				fpm = 0.0;
-				
-		Q_strncpyz(steamid, Info_ValueForKey(cl->pers.userinfo, "steamid"), sizeof(steamid));
-		Q_strncpyz(discordid, Info_ValueForKey(cl->pers.userinfo, "cl_discord_id"), sizeof(discordid));
+				if (shots)
+						accuracy = (double)cl->resp.hitsTotal * 100.0 / (double)cl->resp.shotsTotal;
+					else
+						accuracy = 0;
+					if (secs > 0)
+						fpm = (double)cl->resp.score * 60.0 / (double)secs;
+					else
+						fpm = 0.0;
 
-		Com_sprintf(
-			msg, sizeof(msg),
-			"{\"matchstats\":{\"sid\":\"%s\",\"mid\":\"%s\",\"s\":\"%s\",\"sc\":%i,\"sh\":%i,\"a\":%f,\"f\":%f,\"dd\":%i,\"d\":%i,\"k\":%i,\"ctfc\":%i,\"ctfcs\":%i,\"ht\":%i,\"tk\":%i,\"t\":%i,\"hks\":%i,\"hhs\":%i,\"dis\":\"%s\",\"pt\":%i,\"hlh\":%i,\"hlc\":%i,\"hls\":%i,\"hll\":%i,\"hlkh\":%i,\"hlkv\":%i,\"hln\":%i,\"gss1\":%i,\"gss2\":%i,\"gss3\":%i,\"gss4\":%i,\"gss5\":%i,\"gss6\":%i,\"gss7\":%i,\"gss8\":%i,\"gss9\":%i,\"gss13\":%i,\"gss14\":%i,\"gss35\":%i,\"gsh1\":%i,\"gsh2\":%i,\"gsh3\":%i,\"gsh4\":%i,\"gsh5\":%i,\"gsh6\":%i,\"gsh7\":%i,\"gsh8\":%i,\"gsh9\":%i,\"gsh13\":%i,\"gsh14\":%i,\"gsh35\":%i,\"gshs1\":%i,\"gshs2\":%i,\"gshs3\":%i,\"gshs4\":%i,\"gshs5\":%i,\"gshs6\":%i,\"gshs7\":%i,\"gshs8\":%i,\"gshs9\":%i,\"gshs13\":%i,\"gshs14\":%i,\"gshs35\":%i,\"gsk1\":%i,\"gsk2\":%i,\"gsk3\":%i,\"gsk4\":%i,\"gsk5\":%i,\"gsk6\":%i,\"gsk7\":%i,\"gsk8\":%i,\"gsk9\":%i,\"gsk13\":%i,\"gsk14\":%i,\"gsk35\":%i,\"gsd1\":%i,\"gsd2\":%i,\"gsd3\":%i,\"gsd4\":%i,\"gsd5\":%i,\"gsd6\":%i,\"gsd7\":%i,\"gsd8\":%i,\"gsd9\":%i,\"gsd13\":%i,\"gsd14\":%i,\"gsd35\":%i}}\n",
-			server_id->string,
-			game.matchid,
-			steamid,
-			cl->resp.score,
-			shots,
-			accuracy,
-			fpm,
-			cl->resp.damage_dealt,
-			cl->resp.deaths,
-			cl->resp.kills,
-			cl->resp.ctf_caps,
-			cl->resp.ctf_capstreak,
-			cl->resp.hitsTotal,
-			cl->resp.team_kills,
-			cl->resp.team,
-			cl->resp.streakKillsHighest,
-			cl->resp.streakHSHighest,
-			discordid,
-			secs,
-			cl->resp.hitsLocations[LOC_HDAM],
-			cl->resp.hitsLocations[LOC_CDAM],
-			cl->resp.hitsLocations[LOC_SDAM],
-			cl->resp.hitsLocations[LOC_LDAM],
-			cl->resp.hitsLocations[LOC_KVLR_HELMET],
-			cl->resp.hitsLocations[LOC_KVLR_VEST],
-			cl->resp.hitsLocations[LOC_NO],
-			cl->resp.gunstats[MOD_MK23].shots,
-			cl->resp.gunstats[MOD_MP5].shots,
-			cl->resp.gunstats[MOD_M4].shots,
-			cl->resp.gunstats[MOD_M3].shots,
-			cl->resp.gunstats[MOD_HC].shots,
-			cl->resp.gunstats[MOD_SNIPER].shots,
-			cl->resp.gunstats[MOD_DUAL].shots,
-			cl->resp.gunstats[MOD_KNIFE].shots,
-			cl->resp.gunstats[MOD_KNIFE_THROWN].shots,
-			cl->resp.gunstats[MOD_HG_SPLASH].shots,
-			cl->resp.gunstats[MOD_PUNCH].shots,
-			cl->resp.gunstats[MOD_KICK].shots,
-			cl->resp.gunstats[MOD_MK23].hits,
-			cl->resp.gunstats[MOD_MP5].hits,
-			cl->resp.gunstats[MOD_M4].hits,
-			cl->resp.gunstats[MOD_M3].hits,
-			cl->resp.gunstats[MOD_HC].hits,
-			cl->resp.gunstats[MOD_SNIPER].hits,
-			cl->resp.gunstats[MOD_DUAL].hits,
-			cl->resp.gunstats[MOD_KNIFE].hits,
-			cl->resp.gunstats[MOD_KNIFE_THROWN].hits,
-			cl->resp.gunstats[MOD_HG_SPLASH].hits,
-			cl->resp.gunstats[MOD_PUNCH].hits,
-			cl->resp.gunstats[MOD_KICK].hits,
-			cl->resp.gunstats[MOD_MK23].headshots,
-			cl->resp.gunstats[MOD_MP5].headshots,
-			cl->resp.gunstats[MOD_M4].headshots,
-			cl->resp.gunstats[MOD_M3].headshots,
-			cl->resp.gunstats[MOD_HC].headshots,
-			cl->resp.gunstats[MOD_SNIPER].headshots,
-			cl->resp.gunstats[MOD_DUAL].headshots,
-			cl->resp.gunstats[MOD_KNIFE].headshots,
-			cl->resp.gunstats[MOD_KNIFE_THROWN].headshots,
-			cl->resp.gunstats[MOD_HG_SPLASH].headshots,
-			cl->resp.gunstats[MOD_PUNCH].headshots,
-			cl->resp.gunstats[MOD_KICK].headshots,
-			cl->resp.gunstats[MOD_MK23].kills,
-			cl->resp.gunstats[MOD_MP5].kills,
-			cl->resp.gunstats[MOD_M4].kills,
-			cl->resp.gunstats[MOD_M3].kills,
-			cl->resp.gunstats[MOD_HC].kills,
-			cl->resp.gunstats[MOD_SNIPER].kills,
-			cl->resp.gunstats[MOD_DUAL].kills,
-			cl->resp.gunstats[MOD_KNIFE].kills,
-			cl->resp.gunstats[MOD_KNIFE_THROWN].kills,
-			cl->resp.gunstats[MOD_HG_SPLASH].kills,
-			cl->resp.gunstats[MOD_PUNCH].kills,
-			cl->resp.gunstats[MOD_KICK].kills,
-			cl->resp.gunstats[MOD_MK23].damage,
-			cl->resp.gunstats[MOD_MP5].damage,
-			cl->resp.gunstats[MOD_M4].damage,
-			cl->resp.gunstats[MOD_M3].damage,
-			cl->resp.gunstats[MOD_HC].damage,
-			cl->resp.gunstats[MOD_SNIPER].damage,
-			cl->resp.gunstats[MOD_DUAL].damage,
-			cl->resp.gunstats[MOD_KNIFE].damage,
-			cl->resp.gunstats[MOD_KNIFE_THROWN].damage,
-			cl->resp.gunstats[MOD_HG_SPLASH].damage,
-			cl->resp.gunstats[MOD_PUNCH].damage,
-			cl->resp.gunstats[MOD_KICK].damage
-		);
-		Write_Stats(msg);
+				_WriteLogEndMatchStats(cl, shots, accuracy, fpm, secs);
+			}
+		}
+	} else { // Just write this single ent (loops in all, tries to find resp.recorded)
+		for (i = 1; i <= game.maxclients; i++) {
+			ent = g_edicts + i;
+			if (ent->client->resp.recorded)
+				break;
+			shots = min( ent->client->resp.shotsTotal, 9999 );
+				secs = (level.framenum - ent->client->resp.enterframe) / HZ;
+
+				if (shots)
+						accuracy = (double)ent->client->resp.hitsTotal * 100.0 / (double)ent->client->resp.shotsTotal;
+					else
+						accuracy = 0;
+					if (secs > 0)
+						fpm = (double)ent->client->resp.score * 60.0 / (double)secs;
+					else
+						fpm = 0.0;
+
+				_WriteLogEndMatchStats(ent->client, shots, accuracy, fpm, secs);
+		}
+			
 	}
 }
 #endif

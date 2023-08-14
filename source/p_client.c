@@ -3061,6 +3061,15 @@ qboolean ClientConnect(edict_t * ent, char *userinfo)
 	Q_strncpyz(ent->client->pers.ip, ipaddr_buf, sizeof(ent->client->pers.ip));
 	Q_strncpyz(ent->client->pers.userinfo, userinfo, sizeof(ent->client->pers.userinfo));
 
+	#ifdef USE_AQTION
+	value = Info_ValueForKey(userinfo, "steamid");
+	if (*value)
+		Q_strncpyz(ent->client->pers.steamid, value, sizeof(ent->client->pers.steamid));
+	value = Info_ValueForKey(userinfo, "discordid");
+	if (*value)
+		Q_strncpyz(ent->client->pers.discordid, value, sizeof(ent->client->pers.discordid));
+	#endif	
+
 	if (game.serverfeatures & GMF_MVDSPEC) {
 		value = Info_ValueForKey(userinfo, "mvdspec");
 		if (*value) {
@@ -3131,8 +3140,12 @@ void ClientDisconnect(edict_t * ent)
 		gi.multicast( ent->s.origin, MULTICAST_PVS );
 	}
 
-	if( use_ghosts->value )
+	if( use_ghosts->value ) {
 		CreateGhost( ent );
+	} else {
+		LogEndMatchStats(false); // Logs stats only for player leaving
+		ent->client->resp.recorded = true; // This is so player stats aren't re-recorded
+	}
 
 	// go clear any clients that have this guy as their attacker
 	for (i = 1, etemp = g_edicts + 1; i <= game.maxclients; i++, etemp++) {

@@ -1560,7 +1560,7 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker);
 void LogWorldKill(edict_t *self);
 void LogMatch();
 void LogAward(char* steamid, char* discordid, int award);
-void LogEndMatchStats();
+void LogEndMatchStats(qboolean allPlayers);
 #endif
 
 //============================================================================
@@ -1727,8 +1727,8 @@ typedef struct
   int streakHSHighest;				//Highest headshots in a Row
 
   int hitsLocations[LOC_MAX];		//Number of hits for different locations
-  gunStats_t gunstats[MOD_TOTAL]; //Number of shots/hits for different guns, adjusted to MOD_TOTAL to allow grenade, kick and punch stats
-
+  gunStats_t gunstats[MOD_TOTAL];   //Number of shots/hits for different guns, adjusted to MOD_TOTAL to allow grenade, kick and punch stats
+  qboolean recorded;				//If stats have been recorded for this match already
   //AQ2:TNG - Slicer: Video Checking and further Cheat cheking vars
   char vidref[16];
   char gldriver[16];
@@ -2125,6 +2125,8 @@ struct edict_s
 	qboolean	splatted;
 	int			classnum;
 	int			typeNum;
+
+	qboolean 	is_ghost; 
 
 #ifndef NO_BOTS
 	int old_health;

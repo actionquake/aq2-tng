@@ -1264,7 +1264,7 @@ void Cmd_Ghost_f(edict_t * ent)
 
 
 	if (teamplay->value && ghost->team && ghost->team != ent->client->resp.team)
-			JoinTeam( ent, ghost->team, 1 );
+		JoinTeam( ent, ghost->team, 1 );
 
 	if (gameSettings & GS_WEAPONCHOOSE) {
 		if (ghost->weapon)
@@ -1293,7 +1293,7 @@ void Cmd_Ghost_f(edict_t * ent)
 void GetGhostStats(void)
 {
 	int i = 0;
-	edict_t *ent = NULL;;
+	edict_t *ent = NULL;
 	gghost_t *ghost = NULL;
 
 	if (!use_ghosts->value) {
@@ -1306,8 +1306,11 @@ void GetGhostStats(void)
 		return;
 	}
 
-	for (i = 0, ghost = ghost_players; i < num_ghost_players; i++, ghost++) {
+	// Generate a fake player entity and assign it as a ghost
+	ent = G_Spawn();
+	ent->is_ghost = true;
 
+	for (i = 0, ghost = ghost_players; i < num_ghost_players; i++) {
 		strcpy(ent->client->pers.ip, ghost->ip);
 		strcpy(ent->client->pers.netname, ghost->netname);
 		strcpy(ent->client->pers.steamid, ghost->steamid);

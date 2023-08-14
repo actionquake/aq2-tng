@@ -134,7 +134,7 @@ void BeginIntermission(edict_t *targ)
 	else if (stat_logs->value && !matchmode->value) {
 		LogMatch();
 		GetGhostStats();  // Attempt to capture ghost stats for early leavers
-		LogEndMatchStats(); // Generates end of match logs
+		LogEndMatchStats(true); // Generates end of match logs
 	}
 	#endif
 

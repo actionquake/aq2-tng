@@ -90,7 +90,7 @@ void SendScores(void)
 		if (stat_logs->value) {
 			LogMatch();  // Generates end of game stats
 			GetGhostStats();  // Attempt to capture ghost stats for early leavers
-			LogEndMatchStats();  // Generates end of match stats
+			LogEndMatchStats(true);  // Generates end of match stats
 		}
 	#endif
 	// Stats: Reset roundNum
