@@ -38,9 +38,6 @@ BASE_CFLAGS += -Wextra
 else
 # Temporary fix to hide a few warnings that haven't been fixed yet.
 BASE_CFLAGS += -Wno-unused-result
-ifneq ($(TNG_BUILD_FOR),DARWIN)
-BASE_CFLAGS += -Wno-format-truncation
-endif
 endif
 
 #use these cflags to optimize it
@@ -124,7 +121,7 @@ else # Linux + Mac
 CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
 CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS) 
-SHLIBLIBS=-luuid -lcurl
+SHLIBLIBS=-luuid -lcurl -lpthread
 endif
 endif
 
@@ -163,6 +160,10 @@ GAME_OBJS += acesrc/acebot_ai.o acesrc/acebot_nodes.o acesrc/bot_combat.o \
 	acesrc/bot_ai.o acesrc/bot_movement.o acesrc/bot_weapon.o \
 	acesrc/acebot_items.o acesrc/botchat.o acesrc/botnav.o \
 	acesrc/acebot_movement.o acesrc/bot_collision.o acesrc/botscan.o
+endif
+
+ifdef USE_AQTION
+GAME_OBJS += tng_net.o
 endif
 
 game$(ARCH).$(SHLIBEXT): $(GAME_OBJS)

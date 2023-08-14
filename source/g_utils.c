@@ -719,3 +719,20 @@ qboolean infront( edict_t *self, edict_t *other )
 	return false;
 }
 #endif
+
+/*
+Taken from Quake Legacy courtesy of QwazyWabbit
+
+Removes trailing newlines if you want to do string manipulation
+*/
+
+size_t Q_StrRemoveTrailingNewlines(char* str)
+{
+    char* p = str + strlen(str) - 1;  // grab the tail
+    while (*p == '\n')
+    {
+        *p = '\0';
+        p--;
+    }
+    return strlen(str);
+}

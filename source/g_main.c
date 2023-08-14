@@ -286,6 +286,7 @@ edict_t *g_edicts;
 
 //FIREBLADE
 cvar_t *hostname;
+cvar_t *net_port;
 cvar_t *teamplay;
 cvar_t *radiolog;
 cvar_t *motd_time;
@@ -495,6 +496,9 @@ cvar_t *gm;
 cvar_t *gmf;
 cvar_t *sv_idleremove;
 cvar_t *g_spawn_items;
+cvar_t *sv_curl_enable;
+cvar_t *sv_curl_status_api_url;
+cvar_t *sv_curl_discord_chat_url;
 
 // 2023
 cvar_t *use_killcounts;  // Display kill counts in console to clients on frag
@@ -1111,7 +1115,7 @@ void G_RunFrame (void)
 	qboolean empty = false;
 
 	// IRC poll
-	IRC_poll ();
+	IRC_poll();
 
 	// If the server is empty, don't wait at intermission.
 	empty = ! _numclients();

@@ -376,6 +376,7 @@ void InitGame( void )
 	teamplay = gi.cvar( "teamplay", "0", /*CVAR_SERVERINFO | */  CVAR_LATCH ); //Removed in favor of 'gm' (gamemode)
 	motd_time = gi.cvar( "motd_time", "2", 0 );
 	hostname = gi.cvar( "hostname", "unnamed", CVAR_SERVERINFO );
+	net_port = gi.cvar("net_port", "27910", CVAR_SERVERINFO);
 	strtwpn = gi.cvar( "dmweapon", MK23_NAME, 0 );
 	actionmaps = gi.cvar( "actionmaps", "1", 0 );
 	if (actionmaps->value && num_maps < 1)
@@ -569,6 +570,9 @@ void InitGame( void )
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
   	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
+	sv_curl_enable = gi.cvar("sv_curl_enable", "0", 0);
+	sv_curl_status_api_url = gi.cvar("sv_curl_status_api_url", "disabled", 0);
+	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);

@@ -1,6 +1,7 @@
 Action Quake 2: The Next Generation
-Version 2.82 (May 14th, 2022)
+Version 2.82 (December 6th, 2022)
 http://www.aq2tng.barrysworld.net
+https://www.aq2world.com
 by Igor, JBravo, Slicer, Deathwatch, Freud, Elviz, Rektek
 
 --------------------------------------------------------------------------------------------------------------------

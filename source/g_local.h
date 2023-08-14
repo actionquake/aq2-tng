@@ -290,6 +290,7 @@
 #include	"tng_jump.h"
 #include	"g_grapple.h"
 #include	"p_antilag.h"
+#include	"tng_net.h"
 
 #ifndef NO_BOTS
 #include	"acesrc/botnav.h"
@@ -983,6 +984,7 @@ extern cvar_t *deathmatch;
 extern cvar_t *dmflags;
 extern cvar_t *needpass;
 extern cvar_t *hostname;
+extern cvar_t *net_port;
 extern cvar_t *teamplay;
 extern cvar_t *radiolog;
 extern cvar_t *motd_time;
@@ -1239,6 +1241,22 @@ extern cvar_t *cl_discord_id;
 extern cvar_t *cl_discord_discriminator;
 extern cvar_t *cl_discord_username;
 extern cvar_t *cl_discord_avatar;
+
+// cURL integration
+extern cvar_t *sv_curl_enable;
+extern cvar_t *sv_curl_status_api_url;
+extern cvar_t *sv_curl_discord_chat_url;
+
+#define CURL_STATUS_API					0
+#define CURL_DISCORD_CHAT				1
+#define CURL_AWS_API					2
+#define CURL_ENDPOINTS_MAX				2
+
+void cURL_MultiSend(void);
+void cURL_CallSendMsgThread(int payloadType, const char *payload, ...);
+void cURL_SendMsg(void *threadargs);
+// End cURL integration
+
 
 #define world   (&g_edicts[0])
 
