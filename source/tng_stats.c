@@ -68,6 +68,7 @@
 //-----------------------------------------------------------------------------
 
 #include "g_local.h"
+#include "tng_msg.h"
 #include <time.h>
 
 /* Stats Command */
@@ -573,31 +574,6 @@ void StatBotCheck(void)
 }
 #endif
 
-cvar_t* logfile_name;
-void Write_Stats(const char* msg, ...)
-{
-	va_list	argptr;
-	char	stat_cpy[1024];
-	char	logpath[MAX_QPATH];
-	FILE* 	f;
-
-	va_start(argptr, msg);
-	vsprintf(stat_cpy, msg, argptr);
-	va_end(argptr);
-
-	logfile_name = gi.cvar("logfile_name", "", CVAR_NOSET);
-	sprintf(logpath, "action/logs/%s.stats", logfile_name->string);
-
-	if ((f = fopen(logpath, "a")) != NULL)
-	{
-		fprintf(f, "%s", stat_cpy);
-		fclose(f);
-	}
-	else
-		gi.dprintf("Error writing to %s.stats\n", logfile_name->string);
-
-}
-
 /*
 ==================
 LogKill
@@ -716,7 +692,7 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
 			vloc,
 			kloc
 		);
-		Write_Stats(msg);
+		Write_MsgToLog(STAT_LOG, msg);
 	}
 }
 
@@ -823,7 +799,7 @@ void LogWorldKill(edict_t *self)
 			vloc,
 			vloc
 		);
-		Write_Stats(msg);
+		Write_MsgToLog(STAT_LOG, msg);
 	}
 }
 
@@ -864,7 +840,7 @@ void LogMatch()
 		t2,
 		t3
 	);
-	Write_Stats(msg);
+	Write_MsgToLog(STAT_LOG, msg);
 }
 
 /*
@@ -900,7 +876,7 @@ void LogAward(char* steamid, char* discordid, int award)
 		mod,
 		discordid
 	);
-	Write_Stats(msg);
+	Write_MsgToLog(STAT_LOG, msg);
 }
 
 /*
@@ -1031,7 +1007,7 @@ void LogEndMatchStats()
 			cl->resp.gunstats[MOD_PUNCH].damage,
 			cl->resp.gunstats[MOD_KICK].damage
 		);
-		Write_Stats(msg);
+		Write_MsgToLog(STAT_LOG, msg);
 	}
 }
 #endif

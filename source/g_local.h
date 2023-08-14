@@ -1226,6 +1226,7 @@ extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
 extern cvar_t *sv_idleremove; // Remove idlers
+extern cvar_t *logfile_msgs; // Log chat, announcements to file
 
 #ifdef AQTION_EXTENSION
 extern cvar_t *use_newirvision;		// enable new irvision (only highlight baddies)

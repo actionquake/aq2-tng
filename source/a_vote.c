@@ -61,6 +61,7 @@
 //-----------------------------------------------------------------------------
 
 #include "g_local.h"
+#include "tng_msg.h"
 
 #ifndef MAX_STR_LEN
 #define MAX_STR_LEN 1000
@@ -128,10 +129,16 @@ Kicks the given (client) edict out of the server, reason will be printed before
 */
 static void KickClient(edict_t * target, char *reason)
 {
+	char kickmsg[128];
+
 	if (target && target->client && target->inuse) {
 		gi.bprintf(PRINT_HIGH, "%s has to be KICKED from the server.\n", target->client->pers.netname);
 		gi.bprintf(PRINT_MEDIUM, "Reason: %s\n", reason);
 		Kick_Client(target);
+
+		Com_sprintf(kickmsg, sizeof(kickmsg), "%s was kicked from the server because: %s", target->client->pers.netname, reason);
+
+		Write_MsgToLog(VOTE_LOG, kickmsg);
 	}
 }
 

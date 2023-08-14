@@ -569,6 +569,7 @@ void InitGame( void )
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
   	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
+	logfile_msgs = gi.cvar( "logfile_msgs", "0", 0);
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);

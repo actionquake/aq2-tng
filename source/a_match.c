@@ -55,6 +55,7 @@
 
 #include "g_local.h"
 #include "a_match.h"
+#include "tng_msg.h"
 
 void SendScores(void)
 {
@@ -318,6 +319,7 @@ void Cmd_Teamname_f(edict_t * ent)
 	IRC_printf(IRC_T_GAME, "%n (team %k) is now known as %n", team->name, teamNum, temp);
 	strcpy(team->name, temp);
 	gi.cprintf(ent, PRINT_HIGH, "New team name: %s\n", team->name);
+	Write_MsgToLog(SERVER_LOG, "%s (team %i) is now known as %s", team->name, teamNum, temp);
 
 }
 

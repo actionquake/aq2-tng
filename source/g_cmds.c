@@ -213,6 +213,7 @@
 
 #include "g_local.h"
 #include "m_player.h"
+#include "tng_msg.h"
 
 #ifndef NO_BOTS
 void Cmd_Placenode_f( edict_t *ent );
@@ -1469,6 +1470,9 @@ void Cmd_Say_f (edict_t * ent, qboolean team, qboolean arg0, qboolean partner_ms
 		gi.cprintf (NULL, PRINT_CHAT, "%s", text);
 		if ((!team) && (!partner_msg)) {
 			IRC_printf (IRC_T_TALK, "%s", text);
+			if(logfile_msgs->value) {
+				Write_MsgToLog(CHAT_LOG, text);
+			}
 		}
 	}
 	

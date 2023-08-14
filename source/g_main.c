@@ -270,6 +270,7 @@
 
 #include <time.h>
 #include "g_local.h"
+#include "tng_msg.h"
 
 game_locals_t game;
 level_locals_t level;
@@ -495,6 +496,7 @@ cvar_t *gm;
 cvar_t *gmf;
 cvar_t *sv_idleremove;
 cvar_t *g_spawn_items;
+cvar_t *logfile_msgs;
 
 // 2023
 cvar_t *use_killcounts;  // Display kill counts in console to clients on frag
@@ -551,6 +553,7 @@ void ShutdownGame (void)
 	gi.dprintf ("==== ShutdownGame ====\n");
 	IRC_printf (IRC_T_SERVER, "==== ShutdownGame ====");
 	IRC_exit ();
+	Write_MsgToLog(SERVER_LOG, "Server has gone offline");
 #ifndef NO_BOTS
 	ACECM_Store();
 #endif
@@ -772,6 +775,7 @@ void EndDMLevel (void)
 	(void) strftime (ltm, 64, "%A %d %B %H:%M:%S", now);
 	gi.bprintf (PRINT_HIGH, "Game ending at: %s\n", ltm);
 	IRC_printf (IRC_T_GAME, "Game ending at: %s", ltm);
+	Write_MsgToLog(SERVER_LOG, "Game ending at: %s", ltm);
 
 	// JBravo: Stop q2pro MVD2 recording
 	if (use_mvd2->value)
@@ -921,6 +925,7 @@ void EndDMLevel (void)
 	if (level.nextmap != NULL && !byvote) {
 		gi.bprintf (PRINT_HIGH, "Next map in rotation is %s.\n", level.nextmap);
 		IRC_printf (IRC_T_SERVER, "Next map in rotation is %s.", level.nextmap);
+		Write_MsgToLog(SERVER_LOG, "Next map in rotation is %s", level.nextmap);
 	}
 
 	ReadMOTDFile();
