@@ -396,8 +396,12 @@ void GetChaseTarget( edict_t * ent )
 		if (limchase && ent->client->resp.team != e->client->resp.team)
 			continue;
 		// Slightly convoluted here, do not let player chase enemy leader
-		if (esp->value && ent->client->resp.team != teams[e->client->resp.team].leader->client->resp.team)
-			continue;
+
+		//gi.dprintf("team: %i, enemy team: %i", ent->client->resp.team, teams[e->client->resp.team].leader->client->resp.team);
+		// TODO: Fix this
+		// if (esp->value && ent->client->resp.team != teams[e->client->resp.team].leader->client->resp.team) {
+		// 	continue;
+		// }
 
 		SetChase( ent, e );
 		return;

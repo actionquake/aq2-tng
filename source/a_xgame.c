@@ -544,24 +544,32 @@ void VideoCheckClient(edict_t *ent)
 			return;
 		}
 	}
-	if (darkmatch->value) {
-		if (ent->client->resp.gldynamic != 1) {
+	if (darkmatch->value && ent->client->resp.gldynamic != 1) {
+		ent->client->resp.gldynamic = 1;
+		stuffcmd (ent, "gl_dynamic 1\n");
+		gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_dynamic setting, forcing it to 1\n",
+				ent->client->pers.netname);
+		// Double check
+		if (ent->client->resp.gldynamic != 1){
 			gi.cprintf(ent, PRINT_HIGH,
 				"This server does not allow using that value for gl_dynamic, set it to '1'\n");
-			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_dynamic setting\n",
+			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_dynamic setting, kicking\n",
 				ent->client->pers.netname);
 			Kick_Client(ent);
-			return;
 		}
-		if (ent->client->resp.glbrightness != 0) {
-			stuffcmd (ent, "gl_brightness 0\n");
-		} else {
+	}
+	if (darkmatch->value && ent->client->resp.glbrightness != 0) {
+		ent->client->resp.glbrightness = 0;
+		stuffcmd (ent, "gl_brightness 0\n");
+		gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_brightness setting, forcing it to 0\n",
+				ent->client->pers.netname);
+		// Double check
+		if (ent->client->resp.glbrightness != 0){
 			gi.cprintf(ent, PRINT_HIGH,
 				"This server does not allow using that value for gl_brightness, set it to '0'\n");
-			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_brightness setting\n",
+			gi.bprintf(PRINT_HIGH, "%s was using an illegal gl_brightness setting, kicking\n",
 				ent->client->pers.netname);
 			Kick_Client(ent);
-			return;
 		}
 	}
 	//Starting Modulate checks

@@ -689,7 +689,7 @@ extern itemList_t items[ITEM_MAX_NUM];
 //#define UNIQUE_ITEMS_ALLOWED   1
 #define SPEC_WEAPON_RESPAWN 		1
 #define BANDAGE_TIME    			27	// 10 = 1 second
-#define ESP_LEADER_BANDAGE_TIME		10
+#define ENHANCED_BANDAGE_TIME		10
 #define BLEED_TIME      			10	// 10 = 1 second is time for losing 1 health at slowest bleed rate
 // Igor's back in Time to hard grenades :-)
 #define GRENADE_DAMRAD_CLASSIC  	170
@@ -1188,6 +1188,7 @@ extern cvar_t *medkit_value;
 // BEGIN AQ2 ETE
 extern cvar_t *esp;
 extern cvar_t *esp_mode;
+extern cvar_t *esp_customspawns;
 extern cvar_t *esp_punish;
 extern cvar_t *esp_etv_halftime;
 extern cvar_t *esp_mustvolunteer;
