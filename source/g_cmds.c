@@ -738,7 +738,7 @@ Cmd_Noclip_f
 argv(0) noclip
 ==================
 */
-static void Cmd_Noclip_f (edict_t * ent)
+void Cmd_Noclip_f (edict_t * ent)
 {
 	char *msg;
 
@@ -945,6 +945,12 @@ void Cmd_Inven_f (edict_t * ent)
 	}
 
 	cl->pers.menu_shown = true;
+
+	// PaTMaN's Jmod menu support
+	if (jump->value) {
+		OpenPMItemMenu (ent);
+		return;
+	}
 
 	if (teamplay->value && !ent->client->resp.team) {
 		OpenJoinMenu (ent);
@@ -1931,7 +1937,7 @@ static cmdList_t commandList[] =
 	{ "voteconfig", Cmd_Voteconfig_f, 0 },
 	{ "configlist", Cmd_Configlist_f, 0 },
 	{ "votescramble", Cmd_Votescramble_f, 0 },
-	// JumpMod
+	// JumpMod / jmod -- all commands are prefaced with 'jmod' ex: 'jmod spawnc'
 	{ "jmod", Cmd_Jmod_f, 0 },
 	// Espionage, aliased command so it's easy to remember
 	{ "volunteer", Cmd_Volunteer_f, 0},
@@ -2000,6 +2006,11 @@ void ClientCommand (edict_t * ent)
 	hash = Cmd_HashValue( text ) & (MAX_COMMAND_HASH - 1);
 	for (cmd = commandHash[hash]; cmd; cmd = cmd->hashNext) {
 		if (!Q_stricmp( text, cmd->name )) {
+			// if ((cmd->flags & CMDF_JMOD) && !jump->value) {
+			// 	gi.cprintf(ent, PRINT_HIGH, "You must run the server with '+set jump 1' to enable this command.\n");
+			// 	return;
+			// }
+
 			if ((cmd->flags & CMDF_CHEAT) && !sv_cheats->value) {
 				gi.cprintf(ent, PRINT_HIGH, "You must run the server with '+set cheats 1' to enable this command.\n");
 				return;
@@ -2007,6 +2018,8 @@ void ClientCommand (edict_t * ent)
 
 			if ((cmd->flags & CMDF_PAUSE) && level.pauseFrames)
 				return;
+
+			
 
 			cmd->function( ent );
 			return;

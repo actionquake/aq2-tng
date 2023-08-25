@@ -719,3 +719,33 @@ qboolean infront( edict_t *self, edict_t *other )
 	return false;
 }
 #endif
+
+/*
+=============
+Toggle Cvars
+=============
+*/
+
+void disablecvar(cvar_t *cvar, char *msg)
+{
+	// Cvar is already disabled, do nothing
+	if (!cvar->value)
+		return;
+
+	if (msg)
+		gi.dprintf("%s: disabling %s\n", msg, cvar->name);
+
+	gi.cvar_forceset(cvar->name, "0");
+}
+
+void enablecvar(cvar_t *cvar, char *msg)
+{
+	// Cvar is already enabled, do nothing
+	if (cvar->value)
+		return;
+
+	if (msg)
+		gi.dprintf("%s: enabling %s\n", msg, cvar->name);
+
+	gi.cvar_forceset(cvar->name, "1");
+}

@@ -74,7 +74,8 @@ void antilag_rewind_all(edict_t *ent)
 
 	edict_t *who;
 	antilag_t *state;
-	for (int i = 1; i < game.maxclients; i++)
+	int i;
+	for (i = 1; i < game.maxclients; i++)
 	{
 		who = g_edicts + i;
 		if (!who->inuse)
@@ -117,7 +118,8 @@ void antilag_unmove_all(void)
 
 	edict_t *who;
 	antilag_t *state;
-	for (int i = 1; i < game.maxclients; i++)
+	int i;
+	for (i = 1; i < game.maxclients; i++)
 	{
 		who = g_edicts + i;
 		if (!who->inuse)

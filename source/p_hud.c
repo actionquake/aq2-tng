@@ -183,6 +183,10 @@ void BeginIntermission(edict_t *targ)
 	}
 
 	InitTransparentList();
+	#ifndef NO_BOTS
+	// Clear LTK bot names
+	LTKClearBotNames();
+	#endif
 }
 
 /*
@@ -680,10 +684,11 @@ void HUD_SpectatorSetup(edict_t *clent)
 	clent->client->resp.hud_type = 1;
 
 	int *hud = clent->client->resp.hud_items;
+	int i;
 
 	if (teamplay->value && spectator_hud->value)
 	{
-		for (int i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 		{
 			int x, y;
 			int h_base = h_nameplate_l + (i * 5);
@@ -721,7 +726,7 @@ void HUD_SpectatorSetup(edict_t *clent)
 			Ghud_SetAnchor(clent, hud[h], 0, 0);
 		}
 
-		for (int i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 		{
 			int x, y;
 			int h_base = h_nameplate_r + (i * 5);
@@ -775,13 +780,15 @@ void HUD_SpectatorSetup(edict_t *clent)
 
 void HUD_SpectatorUpdate(edict_t *clent)
 {
+	int i;
+
 	if (teamplay->value && spectator_hud->value)
 	{
 		int *hud = clent->client->resp.hud_items;
 
 		if (!(clent->client->pers.spec_flags & SPECFL_SPECHUD_NEW)) // hide all elements since client doesn't want them
 		{
-			for (int i = 0; i <= h_team_r_num; i++)
+			for (i = 0; i <= h_team_r_num; i++)
 			{
 				Ghud_SetFlags(clent, hud[i], GHF_HIDE);
 			}
@@ -800,7 +807,7 @@ void HUD_SpectatorUpdate(edict_t *clent)
 		team2Clients = 0;
 		totalClients = G_SortedClients(sortedClients);
 
-		for (int i = 0; i < totalClients; i++)
+		for (i = 0; i < totalClients; i++)
 		{
 			gclient_t *cl = sortedClients[i];
 
@@ -836,7 +843,7 @@ void HUD_SpectatorUpdate(edict_t *clent)
 		Ghud_SetFlags(clent, hud[h_team_l_num], 0);
 		Ghud_SetInt(clent, hud[h_team_l_num], teams[TEAM1].score);
 
-		for (int i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 		{
 			int x, y;
 			int h = h_nameplate_l + (i * 5);
@@ -899,8 +906,8 @@ void HUD_SpectatorUpdate(edict_t *clent)
 			Ghud_SetText(clent, hud[h + 2], nm_s);
 			Ghud_SetText(clent, hud[h + 3], kdr_s);
 
-			if (cl->pers.chosenWeapon)
-				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->pers.chosenWeapon->typeNum]);
+			if (cl->curr_weap)
+				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->curr_weap]);
 			else
 				Ghud_SetInt(clent, hud[h + 4], level.pic_items[MK23_NUM]);
 		}
@@ -915,7 +922,7 @@ void HUD_SpectatorUpdate(edict_t *clent)
 		else
 			Ghud_SetSize(clent, hud[h_team_r_num], 1, 0);
 
-		for (int i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 		{
 			int x, y;
 			int h = h_nameplate_r + (i * 5);
@@ -978,8 +985,8 @@ void HUD_SpectatorUpdate(edict_t *clent)
 			Ghud_SetText(clent, hud[h + 2], nm_s);
 			Ghud_SetText(clent, hud[h + 3], kdr_s);
 
-			if (cl->pers.chosenWeapon)
-				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->pers.chosenWeapon->typeNum]);
+			if (cl->curr_weap)
+				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->curr_weap]);
 			else
 				Ghud_SetInt(clent, hud[h + 4], level.pic_items[MK23_NUM]);
 		}

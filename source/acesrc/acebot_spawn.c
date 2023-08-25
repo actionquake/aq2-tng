@@ -58,7 +58,7 @@ void	AllWeapons( edict_t *ent );
 void	EquipClient( edict_t *ent );
 char	*TeamName(int team);
 void	LTKsetBotName( char	*bot_name );
-void	LTKsetBotNameNew(void);
+void	LTKsetBotNameNew(char *bot_name);
 void	ACEAI_Cmd_Choose( edict_t *ent, char *s);
 
 //==========================================
@@ -182,7 +182,6 @@ if (ltk_loadbots->value){
 			strcat(filename, ltk_botfile->string);
 			strcat(filename, ".cfg");
 	#endif
-			gi.dprintf("Botfile: %s\n", filename);
 			// No bot file available, get out of here!
 			if((pIn = fopen(filename, "rb" )) == NULL) {
 				gi.dprintf("WARNING: No file containing bot data was found, no bots loaded.\n");
@@ -284,7 +283,6 @@ edict_t *ACESP_SpawnBotFromConfig( char *inString )
 		// NAME (parameter 1)
 		if(count == 1 && ttype == STRLIT)
 		{
-//			strncpy( name, tokenString, 32 );
 			strcpy( name, tokenString);
 			continue;
 		}
@@ -508,7 +506,10 @@ void ACESP_SetName(edict_t *bot, char *name, char *skin, char *team)
 	if( (!name) || !strlen(name) )
 	{
 		// RiEvEr - new code to get random bot names
-		LTKsetBotName(bot_name);
+		if(!am_newnames->value)
+			LTKsetBotName(bot_name);
+		else
+			LTKsetBotNameNew(bot_name);
 	}
 	else
 		strcpy(bot_name,name);
@@ -619,18 +620,21 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 		team_str = LocalTeamNames[ team ];
 	}
 
-	if((Q_stricmp(am->string, "1") == 0) && am_team->value){
-		team = (int)am_team->value;
-		if ((!use_3teams->value) && (team >= TEAM3)){
-			gi.dprintf("Warning: am_team was %d, but use_3teams is not enabled!  Bots will default to team 1.\n", team);
-			gi.cvar_forceset("am_team", "1");
-			team = 1;
+	if(am->value) {
+		if(am_team->value && !teamplay->value){
+			// am_team set but not teamplay
+			team = 0;
 		}
-	}
+		if(am_team->value){
+			team = (int)am_team->value;
+			if ((!use_3teams->value) && (team >= TEAM3)){
+				gi.dprintf("Warning: am_team was %d, but use_3teams is not enabled!  Bots will default to team 1.\n", team);
+				gi.cvar_forceset("am_team", "1");
+				team = 1;
+			}
+		}
 
-	if((Q_stricmp(am->string, "1") == 0) && (am_team->value) && !teamplay->value){
-		// am_team set but not teamplay
-		team = 0;
+		
 	}
 	
 	ACESP_PutClientInServer( bot, true, team );
@@ -726,6 +730,7 @@ void ACESP_RemoveBot(char *name)
 void attract_mode_bot_check(void)
 {
 	int maxclientsminus2 = (int)(maxclients->value - 2);
+	int adj = 0;
 
 	ACEIT_RebuildPlayerList();
 	// Some sanity checking before we proceed
@@ -748,8 +753,8 @@ void attract_mode_bot_check(void)
 			gi.cvar_forceset("am_botcount", "6");
 		} else {
 			gi.dprintf( "am is 2, am_botcount is %d, maxclients is too low at %d, reducing bot count\n", (int)am_botcount->value, (int)maxclients->value);
-			int adjustment = (maxclientsminus2 / 2);
-			gi.cvar_forceset("am_botcount", va("%d", adjustment));
+			adj = (maxclientsminus2 - 2);
+			gi.cvar_forceset("am_botcount", va("%d", adj));
 		}
     }
 
@@ -810,7 +815,6 @@ void attract_mode_bot_check(void)
 //====================================
 // Stuff to generate pseudo-random names
 //====================================
-#define NUMNAMES	10
 char	*names1[NUMNAMES] = {
 	"Bad", "Death", "L33t", "Fast", "Real", "Lethal", "Hyper", "Hard", "Angel", "Red"};
 
@@ -823,13 +827,10 @@ char	*names3[NUMNAMES] = {
 char	*names4[NUMNAMES] = {
 	"ders", "rog", "born", "dor", "fing", "galad", "bon", "loss", "orch", "riel" };
 
-qboolean	nameused[NUMNAMES][NUMNAMES];
-
 //====================================
 // AQ2World Staff Names -- come shoot at our bots!
 // TODO: Find time to implement this better
 //====================================
-#define AQ2WTEAMSIZE	46
 char	*aq2names[] = {
 	"[BOT]bAron", "[BOT]darksaint", "[BOT]FragBait",
 	"[BOT]matic", "[BOT]JukS", "[BOT]TgT", "[BOT]dmc",
@@ -851,11 +852,31 @@ char	*aq2names[] = {
 	"_NME_Freud", "_NME_slicer", "_NME_JBravo", "_NME_Elviz"
 	};
 
-qboolean	adminnameused[AQ2WTEAMSIZE];
 // END AQ2World Staff Names //
 
-void	LTKsetBotNameNew(void)
+// New AQ2World team bot names (am_newnames 1)
+void LTKsetBotNameNew(char *bot_name)
 {
+	edict_t ltknames;
+	int randomname = 0;
+	// /* TODO: Free up previously used names to be reused.
+	//    This may cause duplicates in-game though.
+	//    Fix this at some point.  Otherwise the game
+	//    runs out of valid values and will softlock
+	//    when generating LTK bots.
+
+	do
+    {
+        randomname = rand() % AQ2WTEAMSIZE;
+        if (!ltknames.newnameused[randomname])
+        {
+            ltknames.newnameused[randomname] = true;
+            break;
+        }
+    } while (ltknames.newnameused[randomname]);
+
+    strcpy(bot_name, aq2names[randomname]);
+
 	return;
 }
 
@@ -865,58 +886,42 @@ void	LTKsetBotNameNew(void)
 void	LTKsetBotName( char	*bot_name )
 {
 	int	part1,part2;
-	int randomnames;
 	part1 = part2 = 0;
+	edict_t ltknames;
 
-	if(!am->value){
-		randomnames = NUMNAMES;
-	} else {
-		// /* TODO: Free up previously used names to be reused.
-		//    This may cause duplicates in-game though.
-		//    Fix this at some point.  Otherwise the game
-		//    runs out of valid values and will softlock
-		//    when generating LTK bots.
-
-		randomnames = AQ2WTEAMSIZE;
-	}
-
-	while(1) {
-			part1 = rand() % randomnames;
-			part2 = rand() % randomnames;
-			if (!am_newnames->value) {
-				if (!nameused[part1][part2]) {
-					break;
-				}
-			} else {
-				if (!adminnameused[part1]) {
-					break;
-				}
-			}
-		}
+	do
+	{
+		part1 = rand()% NUMNAMES;
+		part2 = rand()% NUMNAMES;
+	}while( ltknames.nameused[part1][part2]);
 
 	// Mark that name as used
-	if (!am_newnames->value) {
-		nameused[part1][part2] = true;
-	}
-	// Intentionally not marking new names as used as
-	// we run out of names after a few iterations
-	// Will fix this some day?
+	// TODO: This is causing crashes, figure out another way to mark them as used
+
+	ltknames.nameused[part1][part2] = true;
 	
 	// Now put the name together
-
-	// Old names, for the classic feel
-	if(!am_newnames->value) {
-		if( random() < 0.5 )
-		{
-			strcpy( bot_name, names1[part1]);
-			strcat( bot_name, names2[part2]);
-		}
-		else
-		{
-			strcpy( bot_name, names3[part1]);
-			strcat( bot_name, names4[part2]);
-		}
-	} else { // New AQ2World Team names
-		strcpy( bot_name, aq2names[part1]);
+	if( random() < 0.5 )
+	{
+		strcpy( bot_name, names1[part1]);
+		strcat( bot_name, names2[part2]);
 	}
+	else
+	{
+		strcpy( bot_name, names3[part1]);
+		strcat( bot_name, names4[part2]);
+	}
+}
+
+void LTKClearBotNames() {
+	edict_t ltknames;
+	int i, j;
+    for (i = 0; i < NUMNAMES; i++) {
+        for (j = 0; j < NUMNAMES; j++) {
+            ltknames.nameused[i][j] = false; // Reset all elements to false
+        }
+    }
+	for (i = 0; i < AQ2WTEAMSIZE; i++) {
+			ltknames.newnameused[i] = false; // Reset all elements to false
+    }
 }

@@ -833,6 +833,11 @@ void kick_attack (edict_t *ent)
 		if (tr.ent->health <= 0)
 			return;
 
+		// PaTMaN's jmod kickable toggle
+		if (tr.ent->client && jump->value)
+			if (!(tr.ent->client->resp.toggles & TG_KICKABLE))
+				return;
+
 		if (tr.ent->client)
 		{
 			if (tr.ent->client->uvTime)

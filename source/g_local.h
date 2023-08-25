@@ -974,13 +974,28 @@ extern int sm_meat_index;
 #define GM_TOURNEY 3
 #define GM_DEATHMATCH 4
 #define GM_DOMINATION 5
+#define GM_ESPIONAGE 6
 
 // Game Mode Flags
 #define GMF_NONE 0
 #define GMF_3TEAMS 1
-#define GMF_ESPIONAGE 2       // If new game mode flags are created, use 2 for its value first
+//#define GMF_NEW_MODE 2       // If new game mode flags are created, use 2 for its value first
 #define GMF_DARKMATCH 4
 #define GMF_MATCHMODE 8
+
+// Game Mode Names
+#define GMN_TEAMPLAY "Teamplay"
+#define GMN_TEAMDM "TeamDM"
+#define GMN_CTF "CTF"
+#define GMN_TOURNEY "Tourney"
+#define GMN_DEATHMATCH "Deathmatch"
+#define GMN_DOMINATION "Domination"
+#define GMN_ESPIONAGE "Espionage"
+#define GMN_JUMP "Jump"
+#define GMN_3TEAMS "3 Teams"
+//#define GMN_NEW_MODE 2       // If new game mode flags are created, use 2 for its value first
+#define GMN_DARKMATCH "Darkmatch"
+#define GMN_MATCHMODE "Matchmode"
 
 extern int meansOfDeath;
 // zucc for hitlocation of death
@@ -999,6 +1014,11 @@ extern edict_t *g_edicts;
 #define crandom()       (2.0 * (random() - 0.5))
 
 #define DMFLAGS(x)     (((int)dmflags->value & x) != 0)
+
+#ifndef NO_BOTS
+#define AQ2WTEAMSIZE	46
+#define NUMNAMES		10
+#endif
 
 extern cvar_t *maxentities;
 extern cvar_t *deathmatch;
@@ -1386,6 +1406,7 @@ qboolean visible(edict_t *self, edict_t *other, int mask);
 qboolean ai_visible( edict_t *self, edict_t *other );
 qboolean infront( edict_t *self, edict_t *other );
 #endif
+void disablecvar(cvar_t *cvar, char *msg);
 
 // Re-enabled for bots
 float *tv (float x, float y, float z);
@@ -1579,7 +1600,7 @@ void StatBotCheck(void);
 void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker);
 void LogWorldKill(edict_t *self);
 void LogMatch();
-void LogAward(char* steamid, char* discordid, int award);
+void LogAward(edict_t *ent, int award);
 void LogEndMatchStats();
 #endif
 
@@ -1676,6 +1697,11 @@ typedef struct
 	ignorelist_t ignorelist;
 	gitem_t *chosenItem2;		// Support for item kit mode
 
+	#ifdef USE_AQTION
+	char steamid[24];
+	char discordid[24];
+	#endif
+
 }
 client_persistant_t;
 
@@ -1737,6 +1763,7 @@ typedef struct
   int shotsTotal;					//Total number of shots
   int hitsTotal;					//Total number of hits
   int streakKills;					//Kills in a row
+  int roundStreakKills;				//Kills in a row in that round
   int streakHS;						//Headshots in a Row
   int streakKillsHighest;			//Highest kills in a row
   int streakHSHighest;				//Highest headshots in a Row
@@ -1777,6 +1804,12 @@ typedef struct
   int esp_lasthurtleader;
 
   int medkit_award_time;
+
+  //PaTMaN's jmod
+  int toggle_lca;
+  int toggles;
+
+  //char skin[MAX_SKINLEN];
 }
 client_respawn_t;
 
@@ -2211,7 +2244,9 @@ struct edict_s
 	int bot_speed; 
 	qboolean	bCrawl; 
 	qboolean	bLastJump; 
-	vec3_t	lastPosition; 
+	vec3_t	lastPosition;
+	qboolean	nameused[NUMNAMES][NUMNAMES];
+	qboolean	newnameused[AQ2WTEAMSIZE];
 #endif
 };
 
@@ -2260,6 +2295,7 @@ void Cmd_TKOk (edict_t * ent);	// AQ:TNG - JBravo adding tkok
 void Cmd_FF_f( edict_t *ent );
 void Cmd_Time (edict_t * ent);	// AQ:TNG - JBravo adding time
 void Cmd_Roundtimeleft_f(edict_t *ent); // AQ:TNG - DW added roundtimeleft
+void Cmd_Noclip_f(edict_t *ent);
 void DropSpecialWeapon (edict_t * ent);
 void ReadySpecialWeapon (edict_t * ent);
 void DropSpecialItem (edict_t * ent);

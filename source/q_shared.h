@@ -1289,6 +1289,19 @@ temp_event_t;
 
 #define DF_WEAPON_RESPAWN       0x00010000
 
+// PaTMaN - Flags for ToGgle
+#define	TG_LASER			          0x00000001
+#define	TG_SLIPPERS			        0x00000002
+#define	TG_SILENCER			        0x00000004
+#define	TG_VEST				          0x00000008
+#define	TG_KICKABLE			        0x00000010
+#define TG_HELMET               0x00000020
+
+#define	TG_HUD_RANGE		        0x00000080
+
+#define	TG_IR				            0x00002000
+
+
 // FROM 3.20 -FB
 // RAFAEL
 /*#define DF_QUADFIRE_DROP        0x00010000	// 65536
