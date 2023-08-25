@@ -801,6 +801,8 @@ void SelectRandomItem(edict_t *ent, pmenu_t *p)
 
 void SelectRandomWeaponAndItem(edict_t *ent, pmenu_t *p)
 {
+	int i;
+	int rand = newrand(7);
 	// WEAPON
 	menu_list_weapon weapon_list[7] = {
 		{ .num = MP5_NUM, .sound = "weapons/mp5slide.wav", .name = MP5_NAME },
@@ -812,7 +814,6 @@ void SelectRandomWeaponAndItem(edict_t *ent, pmenu_t *p)
 		{ .num = DUAL_NUM, .sound = "weapons/mk23slide.wav", .name = DUAL_NAME }
 	};
 
-	int rand = newrand(7);
 	menu_list_weapon selected_weapon = weapon_list[rand];
 	// prevent picking current weapon
 	if (ent->client->pers.chosenWeapon) {
@@ -867,7 +868,7 @@ void SelectRandomWeaponAndItem(edict_t *ent, pmenu_t *p)
 		}
 	}
 
-	for (int i = 0; i < listCount; i++) {
+	for (i = 0; i < listCount; i++) {
 		gi.cprintf(ent, PRINT_HIGH, "%i %s\n", item_list[i].num, item_list[i].name);
 	}
 
@@ -1044,6 +1045,41 @@ pmenu_t randmenu[] = {
   {NULL, PMENU_ALIGN_LEFT, NULL, NULL},
   {"v" VERSION, PMENU_ALIGN_RIGHT, NULL, NULL},
 };
+
+/*
+PaTMaN's JMOD
+*/
+void ToggleLaser(edict_t *ent, pmenu_t *p)
+{
+	Cmd_Toggle_f(ent, "laser");
+}
+
+void ToggleSlippers(edict_t *ent, pmenu_t *p)
+{
+	//strcpy(gi.args(),"togglecode slippers");
+	Cmd_Toggle_f(ent, "slippers");
+}
+
+
+//PaTMaN - Item Menu
+pmenu_t pmitemmenu[] = {
+  {"*Item Menu                  (command binds)",		PMENU_ALIGN_LEFT,	NULL, NULL					},
+  { "-----------------------------------------------",	PMENU_ALIGN_LEFT,	NULL, NULL					},
+  { "Laser Sight                (jmod laser)",			PMENU_ALIGN_LEFT,	NULL, ToggleLaser			},
+  { "Slippers                   (jmod slippers)",		PMENU_ALIGN_LEFT,	NULL, ToggleSlippers		},
+  { NULL,												PMENU_ALIGN_LEFT,	NULL, NULL					},
+  { "Respawn to Closest Spawn   (jmod spawnc)",			PMENU_ALIGN_LEFT,	NULL, Cmd_GotoPC_f   		},
+  { "Respawn to Random Spawn    (jmod spawnp)",			PMENU_ALIGN_LEFT,	NULL, Cmd_GotoP_f   		},
+
+};
+
+
+void OpenPMItemMenu(edict_t *ent)
+{
+	PMenu_Open(ent, pmitemmenu, 2, sizeof(pmitemmenu) / sizeof(pmenu_t));
+}
+
+//End PaTMaN's jmod add
 
 //AQ2:TNG - slicer
 void VotingMenu (edict_t * ent, pmenu_t * p)
@@ -1841,6 +1877,7 @@ void ResetScores (qboolean playerScores)
 		ent->client->resp.damage_dealt = 0;
 		ent->client->resp.streakHS = 0;
 		ent->client->resp.streakKills = 0;
+		ent->client->resp.roundStreakKills = 0;
 		ent->client->resp.ctf_caps = 0;
 		ent->client->resp.ctf_capstreak = 0;
 		ent->client->resp.esp_capstreak = 0;
@@ -2513,7 +2550,7 @@ int WonGame (int winner)
 	if (use_killcounts->value){
 		for (i = 0; i < game.maxclients; i++) {
 			cl_ent = g_edicts + 1 + i;
-			cl_ent->client->resp.streakKills = 0;
+			cl_ent->client->resp.roundStreakKills = 0;
 		}
 	}
 

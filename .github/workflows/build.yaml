@@ -7,10 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  LIN64_DIST_DIR: "linux-x64-tng"
-  LINARM64_DIST_DIR: "linux-arm64-tng"
-  WIN64_DIST_DIR: "windows-x64-tng"
-  WIN32_DIST_DIR: "windows-i386-tng"
   GITHUB_TOKEN: ${{ github.token }}
 
 jobs:
@@ -31,22 +27,6 @@ jobs:
           ref: ${{ github.ref }}
           path: build
 
-      - uses: actions/checkout@v3
-        with:
-          repository: actionquake/distrib
-          path: config
-
-      - name: Get version info for tng
-        id: version
-        run: |
-          cp config/build/getversion.sh build/
-          cd build && bash -x getversion.sh tng >> versions
-
-      - name: Set shortversion
-        id: shortversion
-        working-directory: build
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-
       - name: Download mingw package
         working-directory: build
         run: |
@@ -66,7 +46,6 @@ jobs:
           name: tng-win-64
           path: |
             build/gamex86_64.dll
-            build/versions
 
       - name: Build TNG (Win 32-bit)
         working-directory: build/source
@@ -81,7 +60,6 @@ jobs:
           name: tng-win-32
           path: |
             build/gamex86.dll
-            build/versions
 
       - name: Build TNG (Linux 64-bit)
         working-directory: build/source
@@ -96,7 +74,37 @@ jobs:
           name: tng-lin-x86_64
           path: |
             build/gamex86_64.so
-            build/versions
+
+  x86_lin_compat_build_tng:
+    runs-on: [self-hosted, X64, compat]
+    steps:
+      - name: 'Cleanup build folder'
+        run: |
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          ls -la ./
+
+      - uses: actions/checkout@v3
+        with:
+          # repository: aq2-tng/aq2-tng  ## Official repository
+          repository: actionquake/aq2-tng
+          ref: ${{ github.ref }}
+          path: build
+
+      - name: Build TNG (Linux 64-bit)
+        working-directory: build/source
+        run: make -j2 V=1 && mv gamex86_64.so ../gamex86_64.so
+        env:
+          CC: "gcc"
+          USE_AQTION: "TRUE"
+
+      - name: Generate Linux compat x86 archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: tng-lin-x86_64-compat
+          path: |
+            build/gamex86_64.so
 
   arm64_build_tng:
     runs-on: [self-hosted, ARM64]
@@ -106,17 +114,6 @@ jobs:
           repository: actionquake/aq2-tng
           ref: ${{ github.ref }}
           path: build
-
-      - uses: actions/checkout@v3
-        with:
-          repository: actionquake/distrib
-          path: config
-
-      - name: Get version info for tng
-        id: version
-        run: |
-          cp config/build/getversion.sh build/
-          cd build && bash -x getversion.sh tng >> versions
 
       - name: Build TNG (Linux ARM64)
         working-directory: build/source
@@ -131,7 +128,6 @@ jobs:
           name: tng-lin-arm64
           path: |
             build/gameaarch64.so
-            build/versions
 
   darwin_build_tng:
     runs-on: macos-latest
@@ -141,17 +137,6 @@ jobs:
           repository: actionquake/aq2-tng
           ref: ${{ github.ref }}
           path: build
-
-      - uses: actions/checkout@v3
-        with:
-          repository: actionquake/distrib
-          path: config
-
-      - name: Get version info for tng
-        id: version
-        run: |
-          cp config/build/getversion.sh build/
-          cd build && bash -x getversion.sh tng >> versions
 
       - name: Install dependencies
         run: |
@@ -171,7 +156,6 @@ jobs:
           name: tng-darwin-x86_64
           path: |
             build/gamex86_64.dylib
-            build/versions
 
       - name: Build TNG (Darwin ARM64)
         working-directory: build/source
@@ -186,4 +170,3 @@ jobs:
           name: tng-darwin-arm64
           path: |
             build/gamearm64.dylib
-            build/versions
