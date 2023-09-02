@@ -832,6 +832,8 @@ int Gamemode(void) // These are distinct game modes; you cannot have a teamdm to
 		gamemode = GM_TEAMPLAY;
 	} else if (dom->value) {
 		gamemode = GM_DOMINATION;
+	} else if (esp->value) {
+		gamemode = GM_ESPIONAGE;
 	} else if (deathmatch->value) {
 		gamemode = GM_DEATHMATCH;
 	}
@@ -847,9 +849,6 @@ int Gamemodeflag(void)
 
 	if (use_3teams->value) {
 		gamemodeflag += GMF_3TEAMS;
-	}
-	if (esp->value) {
-		gamemodeflag += GMF_ESPIONAGE;
 	}
 	if (darkmatch->value) {
 		gamemodeflag += GMF_DARKMATCH;
@@ -904,7 +903,20 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	if (jump->value)
 	{
 	gi.cvar_forceset(gm->name, "jump");
-	gi.cvar_forceset(stat_logs->name, "0"); // Turn off stat logs for jump mode
+
+	// Force disable settings for jump mode
+	disablecvar(stat_logs, GMN_JUMP);
+	disablecvar(dm_choose, GMN_JUMP);
+	disablecvar(uvtime, GMN_JUMP);
+	disablecvar(am, GMN_JUMP);
+	disablecvar(ltk_loadbots, GMN_JUMP);
+	// gi.cvar_forceset(stat_logs->name, "0"); // Turn off stat logs for jump mode
+	// gi.cvar_forceset(dm_choose->name, "0"); // Turn off dm_choose for jump mode
+	// gi.cvar_forceset(uvtime->name, "0"); // Turn off uvtime in jump mode
+	gi.cvar_forceset(unique_items->name, "6"); // Enables holding all items at once, if toggled
+	// gi.cvar_forceset(am->name, "0"); // Turns off attract mode
+	// gi.cvar_forceset(ltk_loadbots->name, "0"); // Turns off bots
+	//
 		if (teamplay->value)
 		{
 			gi.dprintf ("Jump Enabled - Forcing teamplay ff\n");

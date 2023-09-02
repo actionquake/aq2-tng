@@ -413,8 +413,7 @@ void VerifyHeadShot(vec3_t point, vec3_t dir, float height, vec3_t newpoint)
 
 #define HEAD_HEIGHT 12.0f
 
-void
-T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
+void T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 	  vec3_t point, vec3_t normal, int damage, int knockback, int dflags,
 	  int mod)
 {
@@ -444,8 +443,9 @@ T_Damage (edict_t * targ, edict_t * inflictor, edict_t * attacker, vec3_t dir,
 	//FIREBLADE
 	if (mod != MOD_TELEFRAG)
 	{
-		if (lights_camera_action)
+		if (lights_camera_action) {
 			return;
+		}
 
 		if (client)
 		{
