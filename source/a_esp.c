@@ -125,22 +125,37 @@ void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *
 		flag->owner = player;
 }
 
-void EspResetFlag(void)
+// Destroy and recreate every time a new round starts.
+void EspResetCapturePoint( void )
 {
-	edict_t *ent = NULL;
-	gitem_t *teamFlag = team_flag[TEAM1];
+	edict_t *flag = NULL;
 
-	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
-		if (ent->spawnflags & DROPPED_ITEM)
-			G_FreeEdict(ent);
-		else {
-			ent->svflags &= ~SVF_NOCLIENT;
-			ent->solid = SOLID_TRIGGER;
-			gi.linkentity(ent);
-			ent->s.event = EV_ITEM_RESPAWN;
-		}
-	}
+	// Destroy the old flag.
+	while( (flag = G_Find( flag, FOFS(classname), "item_flag" )) != NULL )
+		G_FreeEdict( flag );
+
+	// Create a new flag.
+	flag = G_Spawn();
+	EspMakeFlag( flag );
 }
+
+
+// void EspResetFlag(void)
+// {
+// 	edict_t *ent = NULL;
+// 	gitem_t *teamFlag = team_flag[TEAM1];
+
+// 	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
+// 		if (ent->spawnflags & DROPPED_ITEM)
+// 			G_FreeEdict(ent);
+// 		else {
+// 			ent->svflags &= ~SVF_NOCLIENT;
+// 			ent->solid = SOLID_TRIGGER;
+// 			gi.linkentity(ent);
+// 			ent->s.event = EV_ITEM_RESPAWN;
+// 		}
+// 	}
+// }
 
 void EspMakeFlag( edict_t *flag)
 {

@@ -94,7 +94,8 @@ void EspRespawnPlayer(edict_t *ent);
 
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);
-void EspResetFlag(void);
+//void EspResetFlag(void);
+void EspResetCapturePoint( void );
 void GenerateMedKit(qboolean instant);
 
 void EspTouchFlag( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
