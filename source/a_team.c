@@ -2694,18 +2694,19 @@ int CheckTeamRules (void)
 	{
 		RunWarmup();
 
-		if (!AllTeamsHaveLeaders())
-			return 1;
+		if (esp->value) {
+			if (!AllTeamsHaveLeaders())
+				return 1;
+
+			if (EspCheckRules()){
+				EndDMLevel();
+				team_round_going = team_round_countdown = team_game_going = 0;
+				return 1;
+			}
+		}
 
 		if (CheckTimelimit())
 			return 1;
-
-		if (esp->value && EspCheckRules())
-		{
-			EndDMLevel();
-			team_round_going = team_round_countdown = team_game_going = 0;
-			return 1;
-		}
 
 		if (vCheckVote()) {
 			EndDMLevel ();
