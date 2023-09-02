@@ -2511,6 +2511,7 @@ int WonGame (int winner)
 					gi.dprintf("Resetting team %d leader status to false\n", i);
 					espsettings.escortcap = 0;
 					teams[i].leader_dead = false;
+					EspResetCapturePoint();
 				}
 			}
 
