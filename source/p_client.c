@@ -2402,10 +2402,7 @@ void PutClientInServer(edict_t * ent)
 	// find a spawn point
 	// do it before setting health back up, so farthest
 	// ranging doesn't count this client
-	if (esp->value)
-		SelectEspSpawnPoint(ent);
-	else
-		SelectSpawnPoint(ent, spawn_origin, spawn_angles);
+	SelectSpawnPoint(ent, spawn_origin, spawn_angles);
 
 	index = ent - g_edicts - 1;
 	client = ent->client;

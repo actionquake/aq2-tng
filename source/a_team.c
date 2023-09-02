@@ -2085,6 +2085,9 @@ static void SpawnPlayers(void)
 	int i;
 	edict_t *ent;
 
+	if (esp->value)
+		NS_SetupTeamSpawnPoints ();
+
 	if (gameSettings & GS_ROUNDBASED)
 	{
 		if (!use_oldspawns->value)
@@ -2285,7 +2288,7 @@ void MakeAllLivePlayersObservers (void)
 
 	// Reset Espionage flag
 	if (esp->value && espsettings.mode == ESPMODE_ETV)
-		EspResetFlag();
+		EspResetCapturePoint();
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -2511,8 +2514,8 @@ int WonGame (int winner)
 					gi.dprintf("Resetting team %d leader status to false\n", i);
 					espsettings.escortcap = 0;
 					teams[i].leader_dead = false;
-					EspResetCapturePoint();
 				}
+				EspResetCapturePoint();
 			}
 
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
@@ -3612,13 +3615,17 @@ void TallyEndOfLevelTeamScores (void)
 	// Stats end
 }
 
-
 /*
  * Teamplay spawning functions...
  */
 
 edict_t *SelectTeamplaySpawnPoint (edict_t * ent)
 {
+	// Print all of the teamplay_spawns
+	int i;
+	for (i = 0; i < num_potential_spawns; i++)
+		gi.dprintf ("teamplay_spawn %d: %s\n", i, potential_spawns[i]->classname);
+
   return teamplay_spawns[ent->client->resp.team - 1];
 }
 

@@ -230,6 +230,8 @@ void CTFSetTeamSpawns(int team, char *str)
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
 
+
+
 	/* find and remove all team spawns for this team */
 	while ((spawn = G_Find(spawn, FOFS(classname), team_spawn_name)) != NULL) {
 		G_FreeEdict (spawn);
