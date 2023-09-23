@@ -261,6 +261,7 @@
 //
 //-----------------------------------------------------------------------------
 
+
 #include <ctype.h>
 
 #include "q_shared.h"
@@ -1210,6 +1211,9 @@ extern cvar_t *am_delay;
 extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
+
+extern cvar_t *mm_spectatormsg_title;
+extern cvar_t *mm_spectatormsg_subtitle;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -2374,6 +2378,8 @@ typedef enum {
 	h_team_l_num,
 	h_team_r,
 	h_team_r_num,
+	h_spectatormsg_title,
+	h_spectatormsg_subtitle
 } huditem_t;
 
 void HUD_SetType(edict_t *clent, int type);

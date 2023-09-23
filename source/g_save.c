@@ -582,6 +582,8 @@ void InitGame( void )
 	am_team = gi.cvar("am_team", "0", 0);
 	zoom_comp = gi.cvar("zoom_comp", "0", 0);
 	item_kit_mode = gi.cvar("item_kit_mode", "0", CVAR_LATCH);
+	mm_spectatormsg_title = gi.cvar("mm_spectatormsg_title", "", 0);
+	mm_spectatormsg_subtitle = gi.cvar("mm_spectatormsg_subtitle", "", 0);
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION

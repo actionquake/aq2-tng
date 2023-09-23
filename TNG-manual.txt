@@ -152,6 +152,8 @@ Features
   lock - allows a captain to lock his team. When a team is locked, noone can join it. Locks are removed on a 
   new map. (client side)
   unlock - allows a captain to unlock his team. (client side)
+  mm_spectatormsg_title - First line of spectator message during matchmode, only enabled for AQtion clients.
+  mm_spectatormsg_subtitle - Second line of spectator message during matchmode, only enabled for AQtion clients.
 
 * Voice Command
   The voice command allows clients to play taunts for other players to hear. (as long as they have the sound file)

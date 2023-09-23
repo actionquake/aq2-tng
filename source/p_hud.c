@@ -647,6 +647,17 @@ void G_SetStats (edict_t * ent)
 
 #ifdef AQTION_EXTENSION
 
+static void HUD_SetupSpectatorMessage(edict_t* clent,int* hud) {
+	hud[h_spectatormsg_title] = Ghud_AddText(clent, 0, -216, mm_spectatormsg_title->string);
+	Ghud_SetAnchor(clent, hud[h_spectatormsg_title], 0.5, 0.5);
+	Ghud_SetTextFlags(clent, hud[h_spectatormsg_title], UI_CENTER);
+	Ghud_SetColor(clent, hud[h_spectatormsg_title], 255, 255, 255, 255);
+	hud[h_spectatormsg_subtitle] = Ghud_AddText(clent, 0, -204, mm_spectatormsg_subtitle->string);
+	Ghud_SetAnchor(clent, hud[h_spectatormsg_subtitle], 0.5, 0.5);
+	Ghud_SetTextFlags(clent, hud[h_spectatormsg_subtitle], UI_CENTER);
+	Ghud_SetColor(clent, hud[h_spectatormsg_subtitle], 50, 200, 255, 255);
+}
+
 void HUD_SetType(edict_t *clent, int type)
 {
 	if (clent->client->resp.hud_type == type)
@@ -667,12 +678,19 @@ void HUD_ClientSetup(edict_t *clent)
 {
 	Ghud_ClearForClient(clent);
 	clent->client->resp.hud_type = -1;
-
+	HUD_SetupSpectatorMessage(clent, clent->client->resp.hud_items);
 }
 
 void HUD_ClientUpdate(edict_t *clent)
 {
-
+	int* hud = clent->client->resp.hud_items;
+	if (matchmode->value && BothTeamsHavePlayers()) {
+		Ghud_SetFlags(clent,hud[h_spectatormsg_title], GHF_HIDE);
+		Ghud_SetFlags(clent,hud[h_spectatormsg_subtitle], GHF_HIDE);
+	} else {
+		Ghud_SetFlags(clent,hud[h_spectatormsg_title], 0);
+		Ghud_SetFlags(clent,hud[h_spectatormsg_subtitle], 0);
+	}
 }
 
 
@@ -773,6 +791,9 @@ void HUD_SpectatorSetup(edict_t *clent)
 		hud[h_team_r_num] = Ghud_AddNumber(clent, -128, 2, 0);
 		Ghud_SetSize(clent, hud[h_team_r_num], 1, 0);
 		Ghud_SetAnchor(clent, hud[h_team_r_num], 1, 0);
+	}
+	if (matchmode->value) {
+		HUD_SetupSpectatorMessage(clent, hud);
 	}
 }
 

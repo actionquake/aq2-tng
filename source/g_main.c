@@ -506,6 +506,9 @@ cvar_t *am_team;  // Attract mode team, which team do you want the bots to join
 cvar_t *zoom_comp; // Compensates zoom-in frames with ping (high ping = fewer frames)
 cvar_t *item_kit_mode;  // Toggles item kit mode
 
+cvar_t *mm_spectatormsg_title;
+cvar_t *mm_spectatormsg_subtitle;
+
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;
 cvar_t *use_indicators;
