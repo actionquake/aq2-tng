@@ -620,8 +620,7 @@ Use_Weapon(edict_t* ent, gitem_t* item)
 
 
 
-edict_t*
-FindSpecWeapSpawn(edict_t* ent)
+edict_t *FindSpecWeapSpawn(edict_t* ent)
 {
 	edict_t* spot = NULL;
 
@@ -643,8 +642,7 @@ FindSpecWeapSpawn(edict_t* ent)
 	return spot;
 }
 
-static void
-SpawnSpecWeap(gitem_t* item, edict_t* spot)
+static void SpawnSpecWeap(gitem_t* item, edict_t* spot)
 {
 	/*        edict_t *ent;
 			vec3_t  forward, right;
@@ -716,8 +714,7 @@ void temp_think_specweap(edict_t* ent)
 
 
 // zucc make dropped weapons respawn elsewhere
-void
-ThinkSpecWeap(edict_t* ent)
+void ThinkSpecWeap(edict_t* ent)
 {
 	edict_t* spot;
 
