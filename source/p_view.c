@@ -638,6 +638,10 @@ void P_FallingDamage (edict_t * ent)
 		delta = ent->velocity[2] - oldvelocity[2];
 		ent->client->jumping = 0;
 	}
+
+	if (delta > 0)
+		gi.dprintf("Impact Delta: %f\n", delta);
+
 	delta = delta * delta * 0.0001;
 
 	// never take damage if just release grapple or on grapple
@@ -723,6 +727,10 @@ void P_FallingDamage (edict_t * ent)
 		T_Damage (ent, world, world, dir, ent->s.origin, vec3_origin,
 			damage, 0, 0, MOD_FALLING);
 		}
+	}
+	if (delta > 0) {
+		gi.dprintf("Delta: %f\n", delta);
+		gi.dprintf("Fall Damage: %d\n", damage);
 	}
 }
 
