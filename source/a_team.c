@@ -1824,9 +1824,6 @@ void CleanLevel ()
 	CleanBodies();
 	// fix glass
 	CGF_SFX_RebuildAllBrokenGlass ();
-	// Reset Espionage flag
-	if (esp->value && espsettings.mode == ESPMODE_ETV)
-		EspResetFlag();
 }
 
 void MakeAllLivePlayersObservers(void);
@@ -2088,6 +2085,9 @@ static void SpawnPlayers(void)
 	int i;
 	edict_t *ent;
 
+	if (esp->value)
+		NS_SetupTeamSpawnPoints ();
+
 	if (gameSettings & GS_ROUNDBASED)
 	{
 		if (!use_oldspawns->value)
@@ -2285,6 +2285,10 @@ void MakeAllLivePlayersObservers (void)
 	/* if someone is carrying a flag it will disappear */
 	if(ctf->value)
 		CTFResetFlags();
+
+	// Reset Espionage flag
+	if (esp->value && espsettings.mode == ESPMODE_ETV)
+		EspResetCapturePoint();
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -2510,8 +2514,8 @@ int WonGame (int winner)
 					gi.dprintf("Resetting team %d leader status to false\n", i);
 					espsettings.escortcap = 0;
 					teams[i].leader_dead = false;
-					EspResetCapturePoint();
 				}
+				EspResetCapturePoint();
 			}
 
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
@@ -2690,18 +2694,19 @@ int CheckTeamRules (void)
 	{
 		RunWarmup();
 
-		if (!AllTeamsHaveLeaders())
-			return 1;
+		if (esp->value) {
+			if (!AllTeamsHaveLeaders())
+				return 1;
+
+			if (EspCheckRules()){
+				EndDMLevel();
+				team_round_going = team_round_countdown = team_game_going = 0;
+				return 1;
+			}
+		}
 
 		if (CheckTimelimit())
 			return 1;
-
-		if (esp->value && EspCheckRules())
-		{
-			EndDMLevel();
-			team_round_going = team_round_countdown = team_game_going = 0;
-			return 1;
-		}
 
 		if (vCheckVote()) {
 			EndDMLevel ();
@@ -3611,13 +3616,17 @@ void TallyEndOfLevelTeamScores (void)
 	// Stats end
 }
 
-
 /*
  * Teamplay spawning functions...
  */
 
 edict_t *SelectTeamplaySpawnPoint (edict_t * ent)
 {
+	// Print all of the teamplay_spawns
+	int i;
+	for (i = 0; i < num_potential_spawns; i++)
+		gi.dprintf ("teamplay_spawn %d: %s\n", i, potential_spawns[i]->classname);
+
   return teamplay_spawns[ent->client->resp.team - 1];
 }
 

@@ -30,19 +30,14 @@ int esp_pics[ TEAM_TOP ] = {0};
 int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
-// char *red_skin_name, *blue_skin_name, *green_skin_name;
-// char *red_team_name, *blue_team_name, *green_team_name;
-// char *red_leader_skin, *blue_leader_skin, *green_leader_skin;
-// char *red_leader_name, *blue_leader_name, *green_leader_name;
-
-int EspFlagOwner( edict_t *flag )
+int EspCapturePointOwner( edict_t *flag )
 {
 	if( flag->s.effects == esp_team_effect[ TEAM1 ] )
 		return TEAM1;
 	return NOTEAM;
 }
 
-void EspFlagThink( edict_t *flag )
+void EspCapturePointThink( edict_t *flag )
 {
 	// If the flag was touched this frame, make it owned by that team.
 	if( flag->owner && flag->owner->client && flag->owner->client->resp.team ) {
@@ -50,7 +45,7 @@ void EspFlagThink( edict_t *flag )
 		if( flag->s.effects != effect )
 		{
 			edict_t *ent = NULL;
-			int prev_owner = EspFlagOwner( flag );
+			int prev_owner = EspCapturePointOwner( flag );
 
 			gi.dprintf("prev flag owner team is %d\n", prev_owner);
 
@@ -100,11 +95,12 @@ void EspFlagThink( edict_t *flag )
 			}
 		}
 	}
+	flag->owner = NULL;
 
 	flag->nextthink = level.framenum + FRAMEDIV;
 }
 
-void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *surf )
+void EspTouchCapturePoint( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *surf )
 {
 	if( ! player->client )
 		return;
@@ -125,39 +121,7 @@ void EspTouchFlag( edict_t *flag, edict_t *player, cplane_t *plane, csurface_t *
 		flag->owner = player;
 }
 
-// Destroy and recreate every time a new round starts.
-void EspResetCapturePoint( void )
-{
-	edict_t *flag = NULL;
-
-	// Destroy the old flag.
-	while( (flag = G_Find( flag, FOFS(classname), "item_flag" )) != NULL )
-		G_FreeEdict( flag );
-
-	// Create a new flag.
-	flag = G_Spawn();
-	EspMakeFlag( flag );
-}
-
-
-// void EspResetFlag(void)
-// {
-// 	edict_t *ent = NULL;
-// 	gitem_t *teamFlag = team_flag[TEAM1];
-
-// 	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
-// 		if (ent->spawnflags & DROPPED_ITEM)
-// 			G_FreeEdict(ent);
-// 		else {
-// 			ent->svflags &= ~SVF_NOCLIENT;
-// 			ent->solid = SOLID_TRIGGER;
-// 			gi.linkentity(ent);
-// 			ent->s.event = EV_ITEM_RESPAWN;
-// 		}
-// 	}
-// }
-
-void EspMakeFlag( edict_t *flag)
+void EspMakeCapturePoint( edict_t *flag)
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
@@ -181,8 +145,8 @@ void EspMakeFlag( edict_t *flag)
 	flag->s.effects = esp_team_effect[ NOTEAM ];
 	flag->s.renderfx = esp_team_fx[ NOTEAM ];
 	flag->owner = NULL;
-	flag->touch = EspTouchFlag;
-	NEXT_KEYFRAME( flag, EspFlagThink );
+	flag->touch = EspTouchCapturePoint;
+	NEXT_KEYFRAME( flag, EspCapturePointThink );
 	flag->classname = "item_flag";
 	flag->svflags &= ~SVF_NOCLIENT;
 	gi.linkentity( flag );
@@ -190,34 +154,42 @@ void EspMakeFlag( edict_t *flag)
 	esp_flag_count ++;
 }
 
-// void EspSetFlag(int team, char *str)
-// {
-// 	char *flag_name;
-// 	edict_t *ent = NULL;
-// 	vec3_t position;
+// Function to find the sole capturepoint, remove it and recreate it exactly as it was
+// This is used to reset the capturepoint after a round resets
+void EspResetCapturePoint()
+{
+	edict_t *ent = NULL;
+	edict_t *flag = NULL;
+	vec3_t origin;
+	vec3_t angles;
+	int i = 0;
 
-// 	flag_name = "item_flag_team1";
+	// Find the flag
+	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
+		flag = ent;
+		i++;
+	}
 
-// 	if (sscanf(str, "<%f %f %f>", &position[0], &position[1], &position[2]) != 3)
-// 		return;
+	if (flag == NULL){
+		gi.dprintf("Warning: No flag found, aborting reset\n");
+		return;
+	}
 
-// 	/* find and remove existing flags(s) if any */
-// 	while ((ent = G_Find(ent, FOFS(classname), flag_name)) != NULL) {
-// 		G_FreeEdict (ent);
-// 	}
+	// Save the flag's origin and angles
+	VectorCopy(flag->s.origin, origin);
+	VectorCopy(flag->s.angles, angles);
 
-// 	ent = G_Spawn ();
+	// Remove the flag
+	G_FreeEdict(flag);
 
-// 	ent->classname = ED_NewString (flag_name);
-// 	ent->spawnflags &=
-// 		~(SPAWNFLAG_NOT_EASY | SPAWNFLAG_NOT_MEDIUM | SPAWNFLAG_NOT_HARD |
-// 		SPAWNFLAG_NOT_COOP | SPAWNFLAG_NOT_DEATHMATCH);
+	// Create a new flag
+	flag = G_Spawn();
+	EspMakeCapturePoint(flag);
 
-// 	VectorCopy(position, ent->s.origin);
-// 	VectorCopy(position, ent->old_origin);
-
-// 	ED_CallSpawn (ent);
-// }
+	// Restore the flag's origin and angles
+	VectorCopy(origin, flag->s.origin);
+	VectorCopy(angles, flag->s.angles);
+}
 
 void EspSetTeamSpawns(int team, char *str)
 {
@@ -317,6 +289,7 @@ qboolean EspLoadConfig(const char *mapname)
 	char *ptr;
 	qboolean no_file = false;
 	FILE *fh;
+	espsettings.custom_spawns = true; // Assuming true until proven otherwise
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
@@ -463,7 +436,7 @@ qboolean EspLoadConfig(const char *mapname)
 						}
 					}
 
-					EspMakeFlag( flag );
+					EspMakeCapturePoint( flag );
 					ptr = strchr( (end ? end : ptr) + 1, '<' );
 				}
 
@@ -491,29 +464,34 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
+		gi.dprintf("\n HEY HEY HEY \n \n");
 
-		if (esp_customspawns->value){
-			ptr = INI_Find(fh, "spawns", "red");
-			if(ptr) {
-				EspSetTeamSpawns(TEAM1, ptr);
-				espsettings.custom_spawns = true;
-			}
-			ptr = INI_Find(fh, "spawns", "blue");
-			if(ptr) {
-				EspSetTeamSpawns(TEAM2, ptr);
-				espsettings.custom_spawns = true;
-			}
-			if (teamCount == 3){
-				ptr = INI_Find(fh, "spawns", "green");
-				if(ptr) {
-					EspSetTeamSpawns(TEAM3, ptr);
-					espsettings.custom_spawns = true;
-				}
-			}
-		} else {
-			gi.dprintf("Enforcing normal spawnpoints\n");
-			espsettings.custom_spawns = false;
+		//if (espsettings.custom_spawns){
+		ptr = INI_Find(fh, "spawns", "red");
+		if(ptr) {
+			gi.dprintf("Team 1 spawns: %s\n", ptr);
+			EspSetTeamSpawns(TEAM1, ptr);
+			espsettings.custom_spawns = true;
 		}
+		ptr = INI_Find(fh, "spawns", "blue");
+		if(ptr) {
+			gi.dprintf("Team 2 spawns: %s\n", ptr);
+			EspSetTeamSpawns(TEAM2, ptr);
+			espsettings.custom_spawns = true;
+		}
+		if (teamCount == 3){
+			ptr = INI_Find(fh, "spawns", "green");
+			if(ptr) {
+				gi.dprintf("Team 3 spawns: %s\n", ptr);
+				EspSetTeamSpawns(TEAM3, ptr);
+				espsettings.custom_spawns = true;
+			}
+		}
+			//}
+		// } else {
+		// 	gi.dprintf("Enforcing normal spawnpoints\n");
+		// 	espsettings.custom_spawns = false;
+		// }
 
 		gi.dprintf("- Teams\n");
 
@@ -762,6 +740,7 @@ void EspAssignTeam(gclient_t * who)
 	teams_changed = true;
 }
 
+
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
 	edict_t 	*spot, *spot1, *spot2;
@@ -823,6 +802,8 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 				spot2 = spot;
 			}
 		}
+
+		//gi.dprintf("*********Found %i spawn points\n", count);
 
 		if (!count)
 			return SelectRandomDeathmatchSpawnPoint();

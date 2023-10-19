@@ -30,7 +30,7 @@ extern cvar_t *esp;
 #define ESP_BLUE_LEADER_NAME		"Frank the Cop"
 #define ESP_GREEN_LEADER_NAME		"The Incredible Chulk"
 
-int EspFlagOwner( edict_t *flag );
+int EspCapturePointOwner( edict_t *flag );
 void EspRemember( const edict_t *ent, const gitem_t *item );
 qboolean EspLoadConfig( const char *mapname );
 void EspSetupStatusbar( void );
@@ -98,7 +98,7 @@ int EspReportLeaderDeath(edict_t *ent);
 void EspResetCapturePoint( void );
 void GenerateMedKit(qboolean instant);
 
-void EspTouchFlag( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
+void EspTouchCapturePoint( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
 void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker);
 void EspCheckHurtLeader (edict_t * targ, edict_t * attacker);
 
