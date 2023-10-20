@@ -818,8 +818,10 @@ void G_LoadLocations( void )
 }
 
 
-
-int Gamemode(void) // These are distinct game modes; you cannot have a teamdm tourney mode, for example
+/*
+These are distinct game modes; you cannot have a teamdm tourney mode, for example
+*/
+int Gamemode(void)
 {
 	int gamemode = 0;
 	if (teamdm->value) {
@@ -844,9 +846,12 @@ int Gamemode(void) // These are distinct game modes; you cannot have a teamdm to
 	return gamemode;
 }
 
+/*
+These are gamemode flags that change the rules of gamemodes.
+For example, you can have a darkmatch matchmode 3team teamplay server
+*/
 int Gamemodeflag(void)
-// These are gamemode flags that change the rules of gamemodes.
-// For example, you can have a darkmatch matchmode 3team teamplay server
+
 {
 	int gamemodeflag = 0;
 	char gmfstr[16];

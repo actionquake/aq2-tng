@@ -554,7 +554,7 @@ void InitGame( void )
 	if (esp->value) {
 		atl = gi.cvar( "atl", "1", CVAR_LATCH );
 		etv = gi.cvar( "etv", "0", CVAR_LATCH );
-	}
+	};
 	esp_customspawns = gi.cvar( "esp_customspawns", "0", 0 );
 	esp_punish = gi.cvar( "esp_punish", "0", 0 );
 	esp_etv_halftime = gi.cvar( "esp_etv_halftime", "0", 0 );
