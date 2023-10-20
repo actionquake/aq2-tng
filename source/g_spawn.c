@@ -837,9 +837,9 @@ int Gamemode(void) // These are distinct game modes; you cannot have a teamdm to
 	} else if (deathmatch->value) {
 		gamemode = GM_DEATHMATCH;
 	} else if (esp->value && atl->value) {
-		gamemode = GM_ASSASSINATE_THE_LEADER
+		gamemode = GM_ASSASSINATE_THE_LEADER;
 	} else if (esp->value && etv->value) {
-		gamemode = GM_ESCORT_THE_VIP
+		gamemode = GM_ESCORT_THE_VIP;
 	}
 	return gamemode;
 }
