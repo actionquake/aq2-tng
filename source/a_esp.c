@@ -1077,13 +1077,14 @@ qboolean EspCheckRules(void)
 qboolean AllTeamsHaveLeaders(void)
 {
 	int teamsWithLeaders = 0;
+	int i = 0;
 
 	//AQ2:TNG Slicer Matchmode
 	if (matchmode->value && !TeamsReady())
 		return false;
 	//AQ2:TNG END
 
-	for (int i = TEAM1; i <= teamCount; i++)
+	for (i = TEAM1; i <= teamCount; i++)
 	{
 		if (HAVE_LEADER(i)) {
 			teamsWithLeaders++;
@@ -1271,8 +1272,9 @@ void KillEveryone(int teamNum)
 void MakeTeamInvulnerable(int winner, int uvtime)
 {
 	edict_t *ent;
+	int i = 0;
 
-	for (int i = 0; i < game.maxclients; i++){
+	for (i = 0; i < game.maxclients; i++){
 		ent = &g_edicts[1 + i];
 		// Make alive clients invulnerable
 		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){
