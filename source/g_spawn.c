@@ -836,6 +836,10 @@ int Gamemode(void) // These are distinct game modes; you cannot have a teamdm to
 		gamemode = GM_ESPIONAGE;
 	} else if (deathmatch->value) {
 		gamemode = GM_DEATHMATCH;
+	} else if (esp->value && atl->value) {
+		gamemode = GM_ASSASSINATE_THE_LEADER
+	} else if (esp->value && etv->value) {
+		gamemode = GM_ESCORT_THE_VIP
 	}
 	return gamemode;
 }
@@ -1017,12 +1021,9 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.cvar_forceset(teamplay->name, "1");
 		}
 		// ETV mode doesn't support 3 teams, but ATL does
-		if(espsettings.mode == 1) {
-			if (use_3teams->value)
-			{
-				gi.dprintf ("Espionage ETV Enabled - Incompatible with 3 Teams, reverting to ATL mode\n");
-				espsettings.mode = 0;
-			}
+		if ((etv->value) && (use_3teams->value)) {
+			gi.dprintf ("Espionage ETV Enabled - Incompatible with 3 Teams, reverting to ATL mode\n");
+			EspForceEspionage(ESPMODE_ATL);
 		}
 		if(teamdm->value)
 		{
@@ -1689,7 +1690,7 @@ void SP_worldspawn (edict_t * ent)
 		}
 
 		if (esp->value) {
-			if (espsettings.mode == ESPMODE_ATL) {
+			if (atl->value) {
 				level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
 				level.pic_esp_teamtag[TEAM2] = gi.imageindex("ctfsb2");
 				level.pic_esp_teamtag[TEAM3] = gi.imageindex("ctfsb3");

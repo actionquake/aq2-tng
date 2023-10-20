@@ -942,8 +942,6 @@ void LogEndMatchStats()
 	gclient_t *sortedClients[MAX_CLIENTS], *cl;
 	int totalClients, secs, shots;
 	double accuracy, fpm;
-	char steamid[24];
-	char discordid[24];
 	totalClients = G_SortedClients(sortedClients);
 
 	// Check if there's an AI bot in the game, if so, do nothing
