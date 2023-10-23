@@ -551,7 +551,10 @@ void InitGame( void )
 
 	// BEGIN AQ2 ETE
 	esp = gi.cvar( "esp", "0", /*CVAR_SERVERINFO | */ CVAR_LATCH );  //Removed in favor of 'gm' (gamemode)
-	esp_mode = gi.cvar( "esp_mode", "0", 0 );
+	if (esp->value) {
+		atl = gi.cvar( "atl", "1", CVAR_LATCH );
+		etv = gi.cvar( "etv", "0", CVAR_LATCH );
+	};
 	esp_customspawns = gi.cvar( "esp_customspawns", "0", 0 );
 	esp_punish = gi.cvar( "esp_punish", "0", 0 );
 	esp_etv_halftime = gi.cvar( "esp_etv_halftime", "0", 0 );

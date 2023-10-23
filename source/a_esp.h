@@ -1,4 +1,9 @@
+// This is set to 1 if either atl or etv are 1
 extern cvar_t *esp;
+
+// Discrete game modes
+extern cvar_t *atl;
+extern cvar_t *etv;
 
 #define IS_LEADER(ent) (teams[(ent)->client->resp.team].leader == (ent))
 #define	HAVE_LEADER(teamNum) (teams[(teamNum)].leader)
@@ -45,14 +50,13 @@ espstate_t;
 
 typedef struct espsettings_s
 {
-	int mode;
 	char author[MAX_ESP_STRLEN*3];
 	char name[MAX_ESP_STRLEN];
 	qboolean custom_spawns;
 	qboolean custom_skins;
 	int halftime;
 	int capturestreak;
-	int escortcap;
+	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
 } espsettings_t;
 
@@ -82,6 +86,7 @@ extern gitem_t *team_flag[TEAM_TOP];
 #define ESP_LEADER_HARASS_TIMEOUT       	8
 #define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
 
+void EspForceEspionage(int espmode);
 void EspSetTeamSpawns(int, char *);
 int EspGetRespawnTime(edict_t *ent);
 

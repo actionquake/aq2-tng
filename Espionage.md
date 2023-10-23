@@ -31,7 +31,7 @@ The first sub-mode that we're looking at porting is Assassinate the Leader.  Thi
 1. Consistent respawning to keep everyone in the action.  Respawn timers are configurable.
 1. In Matchmode, the Captain is also the Leader.
 
-Teams only gain points and rounds end when a leader gets fragged.  Getting fragged in the defense of your leader is an honorable act and is awarded with extra points and recognition, as well is assaulting the opposint team's leader.
+Teams only gain points and rounds end when a leader gets fragged.  Getting fragged in the defense of your leader is an honorable act and is awarded with extra points and recognition, as well is assaulting the opposing team's leader.
 
 ### Sounds great, how do I enable Espionage mode on my servers?
 There are some settings you need to setup to enable it:

@@ -30,6 +30,21 @@ int esp_pics[ TEAM_TOP ] = {0};
 int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
+/*
+Toggles between the two game modes
+*/
+void EspForceEspionage(int espmode)
+{
+	gi.cvar_forceset("esp", "1");
+	if ((espmode = 0)) {
+		gi.cvar_forceset("atl", "1");
+		gi.cvar_forceset("etv", "0");
+	} else if ((espmode = 1)) {
+		gi.cvar_forceset("etv", "1");
+		gi.cvar_forceset("atl", "0");
+	}
+}
+
 int EspCapturePointOwner( edict_t *flag )
 {
 	if( flag->s.effects == esp_team_effect[ TEAM1 ] )
@@ -75,6 +90,9 @@ void EspCapturePointThink( edict_t *flag )
 				teams[ flag->owner->client->resp.team ].name );
 
 				espsettings.capturestreak++;
+
+				// This is the game state, where the leader made it to the capture point
+				espsettings.escortcap = true;
 
 			// Escort point captured, end round and start again
 			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_win.wav"), 1.0, ATTN_NONE, 0.0 );
@@ -236,7 +254,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	//gi.dprintf("I was called to set the default for %s\n", defaulttype);
 
 	if(default_author) {
-		espsettings.mode = ESPMODE_ATL;
+		EspForceEspionage(ESPMODE_ATL);
 		Q_strncpyz(espsettings.author, "AQ2World Team", sizeof(espsettings.author));
 		Q_strncpyz(espsettings.name, "Time for Action!", sizeof(espsettings.name));
 
@@ -302,7 +320,7 @@ qboolean EspLoadConfig(const char *mapname)
 	if (!fh) {
 		//Default to ATL mode in this case
 		gi.dprintf ("Warning: Espionage configuration file \" %s \" was not found.\n", buf);
-		espsettings.mode = 0;
+		EspForceEspionage(ESPMODE_ATL);
 		sprintf (buf, "%s/tng/default.esp", GAMEVERSION);
 		fh = fopen (buf, "r");
 		if (!fh){
@@ -316,7 +334,7 @@ qboolean EspLoadConfig(const char *mapname)
 
 	// Hard-coded scenario settings so things don't break
 	if(no_file){
-		espsettings.mode = 0;
+		EspForceEspionage(ESPMODE_ATL);
 		// TODO: A better GHUD method to display this?
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Hard-coded Espionage configuration loaded\n");
@@ -349,31 +367,30 @@ qboolean EspLoadConfig(const char *mapname)
 		if(!strcmp(ptr, ESPMODE_ATL_SNAME) && !strcmp(ptr, ESPMODE_ETV_SNAME)){
 			gi.dprintf("Warning: Value for '[esp] type is not 'etv' or 'atl', forcing ATL mode\n");
 		    gi.dprintf("- Game type : %s\n", ESPMODE_ATL_NAME);
-		} else if (!esp_mode->value) {
-			espsettings.mode = ESPMODE_ATL;
+			EspForceEspionage(ESPMODE_ATL);
 			gametypename = ESPMODE_ATL_NAME;
 		} else {
 			if(ptr) {
 				if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
-					espsettings.mode = ESPMODE_ETV;
+					EspForceEspionage(ESPMODE_ETV);
 					gametypename = ESPMODE_ETV_NAME;
 				}
 				if(strcmp(ptr, ESPMODE_ATL_SNAME) == 0){
-					espsettings.mode = ESPMODE_ATL;
+					EspForceEspionage(ESPMODE_ATL);
 					gametypename = ESPMODE_ATL_NAME;
 				}
 			}
 			if (use_3teams->value) {
 				// Only ATL available in 3 team mode
-				espsettings.mode = ESPMODE_ATL;
+				EspForceEspionage(ESPMODE_ATL);
 				gametypename = ESPMODE_ATL_NAME;
 			}
 			gi.dprintf("- Game type : %s\n", gametypename);
 		}
 		// Force ATL mode trying to get ETV mode going with 3teams
-		if (espsettings.mode == ESPMODE_ETV && use_3teams->value){
+		if (etv->value && use_3teams->value){
 			gi.dprintf("%s and use_3team are incompatible, defaulting to %s", ESPMODE_ETV_NAME, ESPMODE_ATL_NAME);
-			espsettings.mode = ESPMODE_ATL;
+			EspForceEspionage(ESPMODE_ATL);
 		}
 
 		gi.dprintf("- Respawn times\n");
@@ -408,7 +425,7 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		// Only set the flag if the scenario is ETV
-		if(espsettings.mode == ESPMODE_ETV) {
+		if(etv->value) {
 			gi.dprintf("- Target\n");
 			ptr = INI_Find(fh, "target", "escort");
 			if(ptr) {
@@ -444,7 +461,7 @@ qboolean EspLoadConfig(const char *mapname)
 					gi.dprintf( "Espionage ETV mode: %i target generated.\n", esp_flag_count );
 				else {
 					gi.dprintf( "Warning: Espionage needs escort target in: tng/%s.esp\n", mapname );
-					espsettings.mode = 0;
+					EspForceEspionage(ESPMODE_ATL);
 				}
 
 				ptr = INI_Find(fh, "target", "name");
@@ -460,7 +477,7 @@ qboolean EspLoadConfig(const char *mapname)
 				}
 			} else {
 				gi.dprintf( "Warning: Escort target coordinates not found in tng/%s.esp, setting to ATL mode\n", mapname );
-				espsettings.mode = 0;
+				EspForceEspionage(ESPMODE_ATL);
 			}
 		}
 
@@ -580,14 +597,9 @@ qboolean EspLoadConfig(const char *mapname)
 	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "players/%s_i", teams[TEAM2].skin);
 	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "players/%s_i", teams[TEAM3].skin);
 
-
-	// gi.dprintf("Debugging:\n");
-	// gi.dprintf("Espionage mode: %d\n", espsettings.mode);
-	// gi.dprintf("Skin index: %s\n", teams[TEAM1].skin_index);
-
-	if((espsettings.mode == ESPMODE_ETV) && teamCount == 3){
+	if((etv->value) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
-		espsettings.mode = ESPMODE_ATL;
+		EspForceEspionage(ESPMODE_ATL);
 	}
 
 	return true;
@@ -633,51 +645,51 @@ int EspGetRespawnTime(edict_t *ent)
 // }
 
 
-static void SelectEspRespawnPoint(edict_t *ent)
-{
-	vec3_t		respawn_coords, angles;
-	edict_t 	*spot = NULL;
-	int i;
+// static void SelectEspRespawnPoint(edict_t *ent)
+// {
+// 	vec3_t		respawn_coords, angles;
+// 	edict_t 	*spot = NULL;
+// 	int i;
 
-	// Gets the leader entity
-	spot = teams[ent->client->resp.team].leader;
+// 	// Gets the leader entity
+// 	spot = teams[ent->client->resp.team].leader->old_origin;
 
-	// Copies the entity's coordinates
-	VectorCopy (spot->s.origin, respawn_coords);
-	respawn_coords[2] += 9;
-	VectorCopy (spot->s.angles, angles);
-	ent->client->jumping = 0;
-	ent->movetype = MOVETYPE_NOCLIP;
-	gi.unlinkentity (ent);
+// 	// Copies the entity's coordinates
+// 	VectorCopy (spot->s.origin, respawn_coords);
+// 	respawn_coords[2] += 9;
+// 	VectorCopy (spot->s.angles, angles);
+// 	ent->client->jumping = 0;
+// 	ent->movetype = MOVETYPE_NOCLIP;
+// 	gi.unlinkentity (ent);
 
-	VectorCopy (respawn_coords, ent->s.origin);
-	VectorCopy (respawn_coords, ent->s.old_origin);
+// 	VectorCopy (respawn_coords, ent->s.origin);
+// 	VectorCopy (respawn_coords, ent->s.old_origin);
 
-	// clear the velocity and hold them in place briefly
-	VectorClear (ent->velocity);
+// 	// clear the velocity and hold them in place briefly
+// 	VectorClear (ent->velocity);
 
-	ent->client->ps.pmove.pm_time = 160>>3;		// hold time
-	//ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
+// 	ent->client->ps.pmove.pm_time = 160>>3;		// hold time
+// 	//ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
 	
-	VectorClear (ent->s.angles);
-	VectorClear (ent->client->ps.viewangles);
-	VectorClear (ent->client->v_angle);
+// 	VectorClear (ent->s.angles);
+// 	VectorClear (ent->client->ps.viewangles);
+// 	VectorClear (ent->client->v_angle);
 
-	VectorCopy(angles,ent->s.angles);
-	VectorCopy(ent->s.angles,ent->client->v_angle);
+// 	VectorCopy(angles,ent->s.angles);
+// 	VectorCopy(ent->s.angles,ent->client->v_angle);
 
-	for (i=0;i<2;i++)
-		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(ent->client->v_angle[i] - ent->client->resp.cmd_angles[i]);
+// 	for (i=0;i<2;i++)
+// 		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(ent->client->v_angle[i] - ent->client->resp.cmd_angles[i]);
 	
-	if (ent->client->pers.spectator)
-		ent->solid = SOLID_BBOX;
-	else
-		ent->solid = SOLID_TRIGGER;
+// 	if (ent->client->pers.spectator)
+// 		ent->solid = SOLID_BBOX;
+// 	else
+// 		ent->solid = SOLID_TRIGGER;
 	
-	ent->deadflag = DEAD_NO;
-	gi.linkentity (ent);
-	ent->movetype = MOVETYPE_WALK;
-}
+// 	ent->deadflag = DEAD_NO;
+// 	gi.linkentity (ent);
+// 	ent->movetype = MOVETYPE_WALK;
+// }
 
 void EspRespawnPlayer(edict_t *ent)
 {
@@ -689,11 +701,11 @@ void EspRespawnPlayer(edict_t *ent)
 	if (level.framenum > ent->client->respawn_framenum) {
 		//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 		// If your leader is alive, you can respawn
-		if (espsettings.mode == ESPMODE_ATL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+		if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 			respawn(ent);
 
 		// If TEAM1's leader is alive, you can respawn
-		} else if (espsettings.mode == ESPMODE_ETV && IS_ALIVE(teams[TEAM1].leader)) {
+		} else if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
 			respawn(ent);
 		}
 	}
@@ -743,7 +755,7 @@ void EspAssignTeam(gclient_t * who)
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
-	edict_t 	*spot, *spot1, *spot2;
+	edict_t 	*spot, *spot1, *spot2, *teamLeader;
 	int 		count = 0;
 	int 		selection;
 	float 		range, range1, range2;
@@ -766,18 +778,22 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		/* FIXME: might return NULL when dm spawns are converted to team ones */
 		return SelectRandomDeathmatchSpawnPoint();
 	}
-
 	spot = NULL;
 	range1 = range2 = 99999;
 	spot1 = spot2 = NULL;
 
 	// This is a respawn, not a regular spawn!
-	if (team_round_going) {
-		// Gets the leader entity
-		spot = teams[ent->client->resp.team].leader;
+	if (team_round_going &&
+    ((etv->value && ent->client->resp.team == TEAM1) ||
+     (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)))) {
+		// Get the leader's coordinates
+		teamLeader = teams[ent->client->resp.team].leader;
+		VectorCopy(teamLeader->s.origin, respawn_coords);
+
+		gi.dprintf("Coordinates are %i %i %i\n", respawn_coords[0], respawn_coords[1], respawn_coords[2]);
 
 		// Copies the entity's coordinates
-		VectorCopy (spot->s.origin, respawn_coords);
+		VectorCopy (spot->s.origin, teamLeader->s.origin);
 		respawn_coords[2] += 9;
 		VectorCopy (spot->s.angles, angles);
 
@@ -788,6 +804,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	} else {
 
 		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+			gi.dprintf("Coordinates are: %i %i %i\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2]);
 			count++;
 			range = PlayersRangeFromSpot(spot);
 			if (range < range1) {
@@ -988,22 +1005,26 @@ void SetEspStats( edict_t *ent )
 		SetIDView(ent);
 }
 
-int EspOtherTeam(int team)
-{
-	// This is only used when there are 2 teams
-	if(teamCount == 3)
-		return -1;
+/*
+This is only used when there are 2 teams
 
-	switch (team) {
-	case TEAM1:
-		return TEAM2;
-	case TEAM2:
-		return TEAM1;
-	case NOTEAM:
-		return NOTEAM; /* there is no other team for NOTEAM, but I want it back! */
-	}
-	return -1;		// invalid value
-}
+Commenting out for now in favor of using OtherTeam()
+*/
+// int EspOtherTeam(int team)
+// {
+// 	if(teamCount == 3)
+// 		return -1;
+
+// 	switch (team) {
+// 	case TEAM1:
+// 		return TEAM2;
+// 	case TEAM2:
+// 		return TEAM1;
+// 	case NOTEAM:
+// 		return NOTEAM; /* there is no other team for NOTEAM, but I want it back! */
+// 	}
+// 	return -1;		// invalid value
+// }
 
 void EspSwapTeams()
 {
@@ -1013,7 +1034,7 @@ void EspSwapTeams()
 	for (i = 0; i < game.maxclients; i++) {
 		ent = &g_edicts[1 + i];
 		if (ent->inuse && ent->client->resp.team) {
-			ent->client->resp.team = EspOtherTeam(ent->client->resp.team);
+			ent->client->resp.team = OtherTeam(ent->client->resp.team);
 			AssignSkin(ent, teams[ent->client->resp.team].skin, false);
 		}
 	}
@@ -1034,7 +1055,7 @@ void EspSwapTeams()
 qboolean EspCheckRules(void)
 {
 	// Espionage ETV uses the same capturelimit cvars as CTF
-	if(espsettings.mode == ESPMODE_ETV) {
+	if(etv->value) {
 		if( capturelimit->value && (teams[TEAM1].score >= capturelimit->value || teams[TEAM2].score >= capturelimit->value) )
 		{
 			gi.bprintf(PRINT_HIGH, "Capturelimit hit.\n");
@@ -1043,7 +1064,7 @@ qboolean EspCheckRules(void)
 		}
 	}
 
-	if( timelimit->value > 0 && espsettings.mode > 0 )
+	if( timelimit->value > 0 && etv->value )
 	{
 		if( espsettings.halftime == 0 && level.matchTime >= (timelimit->value * 60) / 2 - 60 )
 		{
@@ -1060,7 +1081,7 @@ qboolean EspCheckRules(void)
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
 			espsettings.halftime = 2;
 		}
-		else if( espsettings.halftime < 3 && level.matchTime >= (timelimit->value * 60) / 2 + 1 && esp_etv_halftime->value && esp_mode->value == 1)
+		else if( espsettings.halftime < 3 && level.matchTime >= (timelimit->value * 60) / 2 + 1 && esp_etv_halftime->value && etv->value == 1)
 		{
 			team_round_going = team_round_countdown = team_game_going = 0;
 			MakeAllLivePlayersObservers ();
@@ -1074,16 +1095,21 @@ qboolean EspCheckRules(void)
 	return false;
 }
 
+/*
+This check is similiar to checking that all teams have
+Captains in matchmode
+*/
 qboolean AllTeamsHaveLeaders(void)
 {
 	int teamsWithLeaders = 0;
+	int i = 0;
 
 	//AQ2:TNG Slicer Matchmode
 	if (matchmode->value && !TeamsReady())
 		return false;
 	//AQ2:TNG END
 
-	for (int i = TEAM1; i <= teamCount; i++)
+	for (i = TEAM1; i <= teamCount; i++)
 	{
 		if (HAVE_LEADER(i)) {
 			teamsWithLeaders++;
@@ -1091,7 +1117,7 @@ qboolean AllTeamsHaveLeaders(void)
 	}
 
 	// Only Team 1 needs a leader in ETV mode
-	if((espsettings.mode == ESPMODE_ETV) && HAVE_LEADER(TEAM1))
+	if((etv->value) && HAVE_LEADER(TEAM1))
 		return true;
 
 	if(teamsWithLeaders == teamCount){
@@ -1112,7 +1138,7 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	if (teamNum == NOTEAM)
 		ent = NULL;
 
-	if (espsettings.mode == ESPMODE_ETV && teamNum != TEAM1) {
+	if (etv->value && teamNum != TEAM1) {
 		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
 		return;
 	}
@@ -1147,11 +1173,12 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	}
 }
 
+/*
+Call this if esp_mustvolunteer is 0
+or if a the leader of a team disconnects/leaves
+*/
 void ChooseRandomLeader(int teamNum)
 {
-	// Call this if esp_mustvolunteer is 0
-	// or if a the leader of a team disconnects/leaves
-
 	int players[TEAM_TOP] = { 0 }, i;
 	edict_t *ent;
 
@@ -1198,34 +1225,34 @@ void EspLeaderLeftTeam( edict_t *ent )
 	}
 }
 
+/*
+This is called from player_die, and only called
+if the player was a leader
+*/
 int EspReportLeaderDeath(edict_t *ent)
 {
 	// Get the team the leader was on
-	int dead_leader_team = 0;
+	int dead_leader_team = ent->client->resp.team;
 	int winner = 0;
-
-	dead_leader_team = ent->client->resp.team;
 
 	// Set the dead leader val
 	teams[dead_leader_team].leader_dead = true;
 
-	// This is called from player_die, and only called
-	// if the player was a leader
-
 	// This checks if leader was on TEAM 1 in ETV mode
-	if (espsettings.mode == ESPMODE_ETV) {
+	if (etv->value) {
 		if (dead_leader_team == TEAM1) {
 			winner = TEAM2;
 		}
 	}
 
-	// ATL mode checks
-	if (espsettings.mode == ESPMODE_ATL) {
+	// ATL mode - 2 team winner checks
+	if (atl->value) {
 		if (teamCount == 2) {
 			if (dead_leader_team == TEAM1)
 				winner = TEAM2;
 			else if (dead_leader_team == TEAM2)
 				winner = TEAM1;
+		// 3 team winner checks
 		} else {
 			if (dead_leader_team == TEAM1) {
 				if (IS_ALIVE(teams[TEAM2].leader) && !IS_ALIVE(teams[TEAM3].leader))
@@ -1271,8 +1298,9 @@ void KillEveryone(int teamNum)
 void MakeTeamInvulnerable(int winner, int uvtime)
 {
 	edict_t *ent;
+	int i = 0;
 
-	for (int i = 0; i < game.maxclients; i++){
+	for (i = 0; i < game.maxclients; i++){
 		ent = &g_edicts[1 + i];
 		// Make alive clients invulnerable
 		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){

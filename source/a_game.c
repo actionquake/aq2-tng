@@ -266,7 +266,7 @@ void PrintMOTD(edict_t * ent)
 			{
 				if (teamCount == 3)
 					server_type = "3 Team Espionage: Assassinate the Leader";
-				else if (teamCount == 2 && espsettings.mode == 1)
+				else if (teamCount == 2 && etv->value)
 					server_type = "Espionage: Escort the VIP";
 				else
 					server_type = "Espionage: Assassinate the Leader";
@@ -359,9 +359,9 @@ void PrintMOTD(edict_t * ent)
 			strcat(msg_buf, "\n");
 			lines++;
 
-			if(espsettings.mode == 0)
+			if(atl->value)
 				sprintf(msg_buf + strlen(msg_buf), "Espionage Mode: Assassinate the Leader\n");
-			else if(espsettings.mode == 1)
+			else if(etv->value)
 				sprintf(msg_buf + strlen(msg_buf), "Espionage Mode: Escort the VIP\n");
 			else
 				strcat(msg_buf, "\n");
@@ -448,7 +448,7 @@ void PrintMOTD(edict_t * ent)
 					strcat(msg_buf, "  Roundtimelimit: none\n");
 			}
 
-			if (esp->value && espsettings.mode == 1) {
+			if (esp->value && etv->value) {
 				if ((int) capturelimit->value) // What is the capturelimit?
 					sprintf(msg_buf + strlen(msg_buf), "  Capturelimit: %d\n", (int) capturelimit->value);
 				else

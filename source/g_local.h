@@ -975,6 +975,8 @@ extern int sm_meat_index;
 #define GM_DEATHMATCH 4
 #define GM_DOMINATION 5
 #define GM_ESPIONAGE 6
+#define GM_ASSASSINATE_THE_LEADER 7
+#define GM_ESCORT_THE_VIP 8
 
 // Game Mode Flags
 #define GMF_NONE 0
@@ -1207,7 +1209,8 @@ extern cvar_t *medkit_value;
 
 // BEGIN AQ2 ETE
 extern cvar_t *esp;
-extern cvar_t *esp_mode;
+extern cvar_t *atl;
+extern cvar_t *etv;
 extern cvar_t *esp_customspawns;
 extern cvar_t *esp_punish;
 extern cvar_t *esp_etv_halftime;

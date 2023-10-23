@@ -483,7 +483,8 @@ cvar_t *jump;			// jumping mod
 
 // BEGIN AQ2 ETE
 cvar_t *esp;
-cvar_t *esp_mode;
+cvar_t *atl;
+cvar_t *etv;
 cvar_t *esp_customspawns;
 cvar_t *esp_punish;
 cvar_t *esp_etv_halftime;

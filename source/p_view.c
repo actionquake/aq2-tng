@@ -638,6 +638,7 @@ void P_FallingDamage (edict_t * ent)
 		delta = ent->velocity[2] - oldvelocity[2];
 		ent->client->jumping = 0;
 	}
+
 	delta = delta * delta * 0.0001;
 
 	// never take damage if just release grapple or on grapple
