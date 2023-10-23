@@ -91,6 +91,9 @@ void EspCapturePointThink( edict_t *flag )
 
 				espsettings.capturestreak++;
 
+				// This is the game state, where the leader made it to the capture point
+				espsettings.escortcap = true;
+
 			// Escort point captured, end round and start again
 			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_win.wav"), 1.0, ATTN_NONE, 0.0 );
 			espsettings.escortcap = flag->owner->client->resp.team;
@@ -642,51 +645,51 @@ int EspGetRespawnTime(edict_t *ent)
 // }
 
 
-static void SelectEspRespawnPoint(edict_t *ent)
-{
-	vec3_t		respawn_coords, angles;
-	edict_t 	*spot = NULL;
-	int i;
+// static void SelectEspRespawnPoint(edict_t *ent)
+// {
+// 	vec3_t		respawn_coords, angles;
+// 	edict_t 	*spot = NULL;
+// 	int i;
 
-	// Gets the leader entity
-	spot = teams[ent->client->resp.team].leader;
+// 	// Gets the leader entity
+// 	spot = teams[ent->client->resp.team].leader->old_origin;
 
-	// Copies the entity's coordinates
-	VectorCopy (spot->s.origin, respawn_coords);
-	respawn_coords[2] += 9;
-	VectorCopy (spot->s.angles, angles);
-	ent->client->jumping = 0;
-	ent->movetype = MOVETYPE_NOCLIP;
-	gi.unlinkentity (ent);
+// 	// Copies the entity's coordinates
+// 	VectorCopy (spot->s.origin, respawn_coords);
+// 	respawn_coords[2] += 9;
+// 	VectorCopy (spot->s.angles, angles);
+// 	ent->client->jumping = 0;
+// 	ent->movetype = MOVETYPE_NOCLIP;
+// 	gi.unlinkentity (ent);
 
-	VectorCopy (respawn_coords, ent->s.origin);
-	VectorCopy (respawn_coords, ent->s.old_origin);
+// 	VectorCopy (respawn_coords, ent->s.origin);
+// 	VectorCopy (respawn_coords, ent->s.old_origin);
 
-	// clear the velocity and hold them in place briefly
-	VectorClear (ent->velocity);
+// 	// clear the velocity and hold them in place briefly
+// 	VectorClear (ent->velocity);
 
-	ent->client->ps.pmove.pm_time = 160>>3;		// hold time
-	//ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
+// 	ent->client->ps.pmove.pm_time = 160>>3;		// hold time
+// 	//ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
 	
-	VectorClear (ent->s.angles);
-	VectorClear (ent->client->ps.viewangles);
-	VectorClear (ent->client->v_angle);
+// 	VectorClear (ent->s.angles);
+// 	VectorClear (ent->client->ps.viewangles);
+// 	VectorClear (ent->client->v_angle);
 
-	VectorCopy(angles,ent->s.angles);
-	VectorCopy(ent->s.angles,ent->client->v_angle);
+// 	VectorCopy(angles,ent->s.angles);
+// 	VectorCopy(ent->s.angles,ent->client->v_angle);
 
-	for (i=0;i<2;i++)
-		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(ent->client->v_angle[i] - ent->client->resp.cmd_angles[i]);
+// 	for (i=0;i<2;i++)
+// 		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(ent->client->v_angle[i] - ent->client->resp.cmd_angles[i]);
 	
-	if (ent->client->pers.spectator)
-		ent->solid = SOLID_BBOX;
-	else
-		ent->solid = SOLID_TRIGGER;
+// 	if (ent->client->pers.spectator)
+// 		ent->solid = SOLID_BBOX;
+// 	else
+// 		ent->solid = SOLID_TRIGGER;
 	
-	ent->deadflag = DEAD_NO;
-	gi.linkentity (ent);
-	ent->movetype = MOVETYPE_WALK;
-}
+// 	ent->deadflag = DEAD_NO;
+// 	gi.linkentity (ent);
+// 	ent->movetype = MOVETYPE_WALK;
+// }
 
 void EspRespawnPlayer(edict_t *ent)
 {
@@ -752,7 +755,7 @@ void EspAssignTeam(gclient_t * who)
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
-	edict_t 	*spot, *spot1, *spot2;
+	edict_t 	*spot, *spot1, *spot2, *teamLeader;
 	int 		count = 0;
 	int 		selection;
 	float 		range, range1, range2;
@@ -775,18 +778,22 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		/* FIXME: might return NULL when dm spawns are converted to team ones */
 		return SelectRandomDeathmatchSpawnPoint();
 	}
-
 	spot = NULL;
 	range1 = range2 = 99999;
 	spot1 = spot2 = NULL;
 
 	// This is a respawn, not a regular spawn!
-	if (team_round_going) {
-		// Gets the leader entity
-		spot = teams[ent->client->resp.team].leader;
+	if (team_round_going &&
+    ((etv->value && ent->client->resp.team == TEAM1) ||
+     (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)))) {
+		// Get the leader's coordinates
+		teamLeader = teams[ent->client->resp.team].leader;
+		VectorCopy(teamLeader->s.origin, respawn_coords);
+
+		gi.dprintf("Coordinates are %i %i %i\n", respawn_coords[0], respawn_coords[1], respawn_coords[2]);
 
 		// Copies the entity's coordinates
-		VectorCopy (spot->s.origin, respawn_coords);
+		VectorCopy (spot->s.origin, teamLeader->s.origin);
 		respawn_coords[2] += 9;
 		VectorCopy (spot->s.angles, angles);
 
@@ -797,6 +804,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	} else {
 
 		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+			gi.dprintf("Coordinates are: %i %i %i\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2]);
 			count++;
 			range = PlayersRangeFromSpot(spot);
 			if (range < range1) {
