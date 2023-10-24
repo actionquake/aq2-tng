@@ -834,8 +834,6 @@ int Gamemode(void)
 		gamemode = GM_TEAMPLAY;
 	} else if (dom->value) {
 		gamemode = GM_DOMINATION;
-	} else if (esp->value) {
-		gamemode = GM_ESPIONAGE;
 	} else if (deathmatch->value) {
 		gamemode = GM_DEATHMATCH;
 	} else if (esp->value && atl->value) {

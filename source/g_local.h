@@ -655,6 +655,9 @@ bind 6 "use Sniper Rifle"
 #define ITF_DEFAULT				63 //ITF_MASK
 #define ITF_DEFAULT_STR			TOSTRING(ITF_DEFAULT)
 #define ITF_ALLOWED(typeNum)	((int)itm_flags->value & items[typeNum].flag)
+
+#define MAX_SPAWNS 512		// max DM spawn points supported
+
 //AQ2:TNG End adding flags
 
 typedef struct itemList_s
@@ -974,9 +977,8 @@ extern int sm_meat_index;
 #define GM_TOURNEY 3
 #define GM_DEATHMATCH 4
 #define GM_DOMINATION 5
-#define GM_ESPIONAGE 6
-#define GM_ASSASSINATE_THE_LEADER 7
-#define GM_ESCORT_THE_VIP 8
+#define GM_ASSASSINATE_THE_LEADER 6
+#define GM_ESCORT_THE_VIP 7
 
 // Game Mode Flags
 #define GMF_NONE 0
@@ -1556,6 +1558,8 @@ void SetChase( edict_t *ent, edict_t *target );
 void ChaseNext (edict_t * ent);
 void ChasePrev (edict_t * ent);
 void GetChaseTarget (edict_t * ent);
+void TeamplayChaseCam(edict_t *self, edict_t *attacker);
+void EspionageChaseCam(edict_t *self, edict_t *attacker);
 
 
 //

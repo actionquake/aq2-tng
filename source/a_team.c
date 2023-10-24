@@ -324,7 +324,7 @@ team_t teams[TEAM_TOP];
 int	teamCount = 2;
 int gameSettings;
 
-#define MAX_SPAWNS 512		// max DM spawn points supported
+//#define MAX_SPAWNS 512		// moved to g_local.h
 
 edict_t *potential_spawns[MAX_SPAWNS];
 int num_potential_spawns;

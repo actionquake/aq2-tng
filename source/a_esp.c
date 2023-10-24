@@ -6,6 +6,9 @@
 
 espsettings_t espsettings;
 
+edict_t *potential_spawns[MAX_SPAWNS];
+int num_potential_spawns;
+
 cvar_t *esp_respawn = NULL;
 
 unsigned int esp_team_effect[] = {
@@ -188,10 +191,10 @@ void EspResetCapturePoint()
 		i++;
 	}
 
-	if (flag == NULL){
-		gi.dprintf("Warning: No flag found, aborting reset\n");
-		return;
-	}
+	// if (flag == NULL){
+	// 	gi.dprintf("Warning: No flag found, aborting reset\n");
+	// 	return;
+	// }
 
 	// Save the flag's origin and angles
 	VectorCopy(flag->s.origin, origin);
@@ -229,16 +232,16 @@ void EspSetTeamSpawns(int team, char *str)
 
 	next = strtok(str, ",");
 	do {
-		
 		if (sscanf(next, "<%f %f %f %f>", &pos[0], &pos[1], &pos[2], &angle) != 4) {
 			gi.dprintf("EspSetTeamSpawns: invalid spawn point: %s, expected <x y z a>\n", next);
 			continue;
 		}
-		spawn = G_Spawn ();
+		
+		spawn = G_Spawn();
 		VectorCopy(pos, spawn->s.origin);
 		spawn->s.angles[YAW] = angle;
 		spawn->classname = ED_NewString (team_spawn_name);
-		ED_CallSpawn (spawn);
+		ED_CallSpawn(spawn);
 
 		next = strtok(NULL, ",");
 	} while(next != NULL);
@@ -480,8 +483,6 @@ qboolean EspLoadConfig(const char *mapname)
 				EspForceEspionage(ESPMODE_ATL);
 			}
 		}
-
-		gi.dprintf("\n HEY HEY HEY \n \n");
 
 		//if (espsettings.custom_spawns){
 		ptr = INI_Find(fh, "spawns", "red");
@@ -752,10 +753,10 @@ void EspAssignTeam(gclient_t * who)
 	teams_changed = true;
 }
 
-
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
-	edict_t 	*spot, *spot1, *spot2, *teamLeader;
+	edict_t 	*spot, *spot1, *spot2;
+	edict_t		*teamLeader, *spawn;
 	int 		count = 0;
 	int 		selection;
 	float 		range, range1, range2;
@@ -782,29 +783,44 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	range1 = range2 = 99999;
 	spot1 = spot2 = NULL;
 
-	// This is a respawn, not a regular spawn!
+	/*
+	Check if this is a respawn or a round start spawn
+	Respawn Logic: 
+	1. It's ETV mode
+	2. You are on TEAM1
+	3. Your leader is alive
+	4. Then spawn at the leader's location
+		or
+	1. It's ATL mode
+	2. Your leader is alive
+	3. Then spawn at your leader's location
+	*/
 	if (team_round_going &&
     ((etv->value && ent->client->resp.team == TEAM1) ||
      (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)))) {
+		float angle = 0.0;
 		// Get the leader's coordinates
 		teamLeader = teams[ent->client->resp.team].leader;
 		VectorCopy(teamLeader->s.origin, respawn_coords);
 
-		gi.dprintf("Coordinates are %i %i %i\n", respawn_coords[0], respawn_coords[1], respawn_coords[2]);
-
-		// Copies the entity's coordinates
-		VectorCopy (spot->s.origin, teamLeader->s.origin);
+		spawn = G_Spawn();
 		respawn_coords[2] += 9;
-		VectorCopy (spot->s.angles, angles);
+		VectorCopy(respawn_coords, spawn->s.origin);
+		spawn->s.angles[YAW] = angle;
+		spawn->classname = ED_NewString(cname);
+		//ED_CallSpawn(spawn);
 
-		gi.dprintf("Team %i leader x y z is %i %i %i", 
-		ent->client->resp.team, respawn_coords[0], respawn_coords[1], respawn_coords[2]);
+		gi.dprintf("Coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
 
-		return spot;
+		return spawn;
+		// Copies the entity's coordinates
+		// VectorCopy (spot->s.origin, teamLeader->s.origin);
+		// respawn_coords[2] += 9;
+		// VectorCopy (spot->s.angles, angles);
+		// return spot;
 	} else {
-
 		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-			gi.dprintf("Coordinates are: %i %i %i\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2]);
+			gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
 			count++;
 			range = PlayersRangeFromSpot(spot);
 			if (range < range1) {

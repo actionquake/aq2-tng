@@ -409,3 +409,35 @@ void GetChaseTarget( edict_t * ent )
 
 	//gi.cprintf(ent, PRINT_HIGH, "No players to chase.\n");
 }
+
+void TeamplayChaseCam(edict_t *self, edict_t *attacker)
+{
+	if ((limchasecam->value < 2 && attacker && attacker->client) && attacker != NULL) {
+		self->client->resp.last_chase_target = attacker; // Always reset chase to killer
+	} else {
+		self->client->resp.last_chase_target = NULL;
+	}
+}
+
+void EspionageChaseCam(edict_t *self, edict_t *attacker)
+{
+	edict_t *last_target = self->client->resp.last_chase_target;
+	edict_t *team_leader = teams[self->client->resp.team].leader;
+	int player_team = self->client->resp.team;
+
+	// ATL is simple, chase your own leader
+	if (atl->value) {
+		if (IS_ALIVE(team_leader))
+			last_target = team_leader; // Chase cam your own leader
+		else
+			last_target = NULL; // If you can't chase your own leader, the round is over anyway
+	} else { // ETV is more difficult, only one team has a leader
+		if (player_team == TEAM1 && team_leader != NULL)
+			last_target = team_leader; // Chase cam your own leader
+		else if (player_team != TEAM1 || team_leader == NULL)
+			last_target = NULL;
+	}
+
+	// Cast to (void) to avoid compiler warning because this will only ever be called in Espionage mode
+    (void)last_target;
+}
