@@ -2597,6 +2597,10 @@ int CheckTeamRules (void)
 
 	if (holding_on_tie_check)
 	{
+		if (esp->value) {
+			holding_on_tie_check = 0;
+			checked_tie = 1;
+		}
 		holding_on_tie_check--;
 		if (holding_on_tie_check > 0)
 			return 0;

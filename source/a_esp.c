@@ -6,10 +6,11 @@
 
 espsettings_t espsettings;
 
-edict_t *potential_spawns[MAX_SPAWNS];
-int num_potential_spawns;
+// edict_t *potential_spawns[MAX_SPAWNS];
+// int num_potential_spawns;
 
 cvar_t *esp_respawn = NULL;
+edict_t *espflag = NULL;
 
 unsigned int esp_team_effect[] = {
 	EF_BLASTER | EF_TELEPORTER,
@@ -32,6 +33,22 @@ int esp_flag = 0;
 int esp_pics[ TEAM_TOP ] = {0};
 int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
+
+
+/*
+EspModeCheck
+
+Returns which mode we are running
+*/
+int EspModeCheck()
+{
+	if (!esp->value)
+		return -1; // Espionage is disabled
+	if (atl->value)
+		return ESPMODE_ATL; // ATL mode
+	else if (etv->value)
+		return ESPMODE_ETV; // ETV mode
+}
 
 /*
 Toggles between the two game modes
@@ -191,10 +208,10 @@ void EspResetCapturePoint()
 		i++;
 	}
 
-	// if (flag == NULL){
-	// 	gi.dprintf("Warning: No flag found, aborting reset\n");
-	// 	return;
-	// }
+	if (flag == NULL){
+		gi.dprintf("Warning: No flag found, aborting reset\n");
+		return;
+	}
 
 	// Save the flag's origin and angles
 	VectorCopy(flag->s.origin, origin);
@@ -205,11 +222,12 @@ void EspResetCapturePoint()
 
 	// Create a new flag
 	flag = G_Spawn();
-	EspMakeCapturePoint(flag);
+	EspMakeCapturePoint(espflag);
 
 	// Restore the flag's origin and angles
-	VectorCopy(origin, flag->s.origin);
-	VectorCopy(angles, flag->s.angles);
+// 	VectorCopy(origin, flag->s.origin);
+// 	VectorCopy(angles, flag->s.angles);
+//
 }
 
 void EspSetTeamSpawns(int team, char *str)
@@ -457,6 +475,8 @@ qboolean EspLoadConfig(const char *mapname)
 					}
 
 					EspMakeCapturePoint( flag );
+					// Set flag info as global
+					espflag = flag;
 					ptr = strchr( (end ? end : ptr) + 1, '<' );
 				}
 
@@ -703,10 +723,14 @@ void EspRespawnPlayer(edict_t *ent)
 		//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 		// If your leader is alive, you can respawn
 		if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+			if (!teams[ent->client->resp.team].leader) // NULL check
+				return;
 			respawn(ent);
 
 		// If TEAM1's leader is alive, you can respawn
 		} else if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
+			if (!teams[TEAM1].leader) // NULL check
+				return;
 			respawn(ent);
 		}
 	}
@@ -753,6 +777,38 @@ void EspAssignTeam(gclient_t * who)
 	teams_changed = true;
 }
 
+/*
+Internally used only, spot check if leader is alive
+depending on the game mode
+Please run a NULL check on the leader before calling this
+*/
+qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
+{
+	if (espmode < 0) {
+		gi.dprintf("Warning: Invalid espmode returned from EspModeCheck()\n");
+		return false;
+	}
+	if (!leader) {
+		gi.dprintf("Warning: Leader was NULL\n");
+		return false;
+	}
+	if (espmode == ESPMODE_ATL) {
+		if (teams[leader->client->resp.team].leader)
+			return true;
+		else
+			return false;
+	}
+
+	if (espmode == ESPMODE_ETV) {
+		if (ent->client->resp.team == TEAM1 &&
+		IS_ALIVE(teams[TEAM1].leader))
+			return true;
+		else
+			return false;
+	}
+
+}
+
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
 	edict_t 	*spot, *spot1, *spot2;
@@ -788,26 +844,43 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	Respawn Logic: 
 	1. It's ETV mode
 	2. You are on TEAM1
-	3. Your leader is alive
+	3. TEAM1's leader is alive
 	4. Then spawn at the leader's location
+	(if you are on TEAM2, you respawn at your original spawnpoint)
 		or
 	1. It's ATL mode
 	2. Your leader is alive
 	3. Then spawn at your leader's location
+
+	Also run a NULL check on the leader entity, if it doesn't exist then safely respawn
+	at a map spawnpoint
 	*/
-	if (team_round_going &&
-    ((etv->value && ent->client->resp.team == TEAM1) ||
-     (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)))) {
-		float angle = 0.0;
+
+	// if (team_round_going &&
+	// // ETV Check
+    // ((etv->value && ent->client->resp.team == TEAM1 && 
+	// IS_ALIVE(teams[TEAM1].leader) && 
+	// teams[TEAM1].leader) || 
+	// //End ETV Check
+	// // ATL Check
+    // (atl->value && 
+	// teams[ent->client->resp.team].leader && 
+	// IS_ALIVE(teams[ent->client->resp.team].leader)))) {
+
+	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
+
+		//float angle = teamLeader->s.angles[YAW];
 		// Get the leader's coordinates
 		teamLeader = teams[ent->client->resp.team].leader;
 		VectorCopy(teamLeader->s.origin, respawn_coords);
 
 		spawn = G_Spawn();
-		respawn_coords[2] += 9;
+		respawn_coords[2] += 9; // So they don't spawn in the floor
 		VectorCopy(respawn_coords, spawn->s.origin);
-		spawn->s.angles[YAW] = angle;
+		spawn->s.angles[YAW] = teamLeader->s.angles[YAW]; // Facing the same direction as the leader on respawn
 		spawn->classname = ED_NewString(cname);
+		spawn->think = G_FreeEdict;
+		spawn->nextthink = level.framenum + 1;
 		//ED_CallSpawn(spawn);
 
 		gi.dprintf("Coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
