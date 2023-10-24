@@ -1733,6 +1733,7 @@ void SP_worldspawn (edict_t * ent)
 		level.snd_teamwins[1] = gi.soundindex("tng/team1_wins.wav");
 		level.snd_teamwins[2] = gi.soundindex("tng/team2_wins.wav");
 		level.snd_teamwins[3] = gi.soundindex("tng/team3_wins.wav");
+		level.snd_leader = gi.soundindex("aqdt/leader.wav");
 	}
 
 	level.snd_silencer = gi.soundindex("misc/silencer.wav");	// all silencer weapons

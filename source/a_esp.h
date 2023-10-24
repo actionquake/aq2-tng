@@ -36,7 +36,6 @@ extern cvar_t *etv;
 #define ESP_GREEN_LEADER_NAME		"The Incredible Chulk"
 
 int EspCapturePointOwner( edict_t *flag );
-void EspRemember( const edict_t *ent, const gitem_t *item );
 qboolean EspLoadConfig( const char *mapname );
 void EspSetupStatusbar( void );
 void SetEspStats( edict_t *ent );
@@ -58,6 +57,7 @@ typedef struct espsettings_s
 	int capturestreak;
 	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
+	edict_t *volunteers[3][MAX_CLIENTS];
 } espsettings_t;
 
 extern espsettings_t espsettings;
@@ -96,6 +96,9 @@ qboolean AllTeamsHaveLeaders(void);
 void EspLeaderLeftTeam( edict_t *ent );
 void EspPunishment(int teamNum);
 void EspRespawnPlayer(edict_t *ent);
+void EspAnnounceDetails( void );
+void EspShiftLeaderQueue(int teamNum);
+void EspLeaderQueueMgr(edict_t *ent, qboolean add);
 
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);

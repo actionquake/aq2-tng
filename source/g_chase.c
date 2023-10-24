@@ -427,7 +427,7 @@ void EspionageChaseCam(edict_t *self, edict_t *attacker)
 
 	// ATL is simple, chase your own leader
 	if (atl->value) {
-		if (IS_ALIVE(team_leader))
+		if (team_leader != NULL && IS_ALIVE(team_leader))
 			last_target = team_leader; // Chase cam your own leader
 		else
 			last_target = NULL; // If you can't chase your own leader, the round is over anyway

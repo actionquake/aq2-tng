@@ -1971,7 +1971,10 @@ int CheckForWinner()
 	if (esp->value){
 		if (atl->value) {
 			if (teamCount == TEAM2) {
-				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
+				// If both leaders died at the same time, OR both leaders are alive
+				// at the end of the roundtimelimit, it was a TIE
+				if ((teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) ||
+				(!teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead)) {
 					return WINNER_TIE;
 				} else if (teams[TEAM1].leader_dead) {
 					return TEAM2;
@@ -1979,7 +1982,19 @@ int CheckForWinner()
 					return TEAM1;
 				}
 			} else if (teamCount == TEAM3) {
-				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) {
+				/*
+				Slightly more text here but same logic. Any combination of:
+				1. All leaders dead simultaneously
+				2. All leaders alive simultaneously at roundtimelimit end
+				3. Any combination of two team leaders being alive at roundtimelimit end
+				results in a TIE
+				*/
+				if ((teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) ||
+				(!teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead && !teams[TEAM3].leader_dead) ||
+				(!teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) ||
+				(!teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && !teams[TEAM3].leader_dead) ||
+				(teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead && !teams[TEAM3].leader_dead)
+				) {
 					return WINNER_TIE;
 				} else if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
 					return TEAM3;
@@ -1993,11 +2008,12 @@ int CheckForWinner()
 			// Check if this value is 1, which means the escorting team wins
 			// By default it is 0
 			if (espsettings.escortcap == true) {
-				gi.dprintf("The winner was team %d\n", TEAM1);
 				return TEAM1;
 			} else if (teams[TEAM1].leader_dead){
-				gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
+			} else {
+				gi.bprintf(PRINT_HIGH, "No team wins...\n");
+				return WINNER_TIE;
 			}
 		}
 	//gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
@@ -2051,6 +2067,7 @@ int CheckForForcedWinner()
 	}
 
 	bestTeam = secondBest = NOTEAM;
+
 	for (i = TEAM1; i <= teamCount; i++)
 	{
 		if (players[i] < players[bestTeam]) {
@@ -2220,6 +2237,8 @@ static void StartLCA(void)
 		lights_camera_action = 43;	// TempFile changed from 41
 	}
 	SpawnPlayers();
+	if (esp->value)
+		EspAnnounceDetails();
 }
 
 // FindOverlap: Find the first (or next) overlapping player for ent.
@@ -2392,7 +2411,10 @@ static qboolean CheckRoundTimeLimit( void )
 			gi.bprintf( PRINT_HIGH, "Round timelimit hit.\n" );
 			IRC_printf( IRC_T_GAME, "Round timelimit hit." );
 
-			winTeam = CheckForForcedWinner();
+			if (esp->value)
+				winTeam = CheckForWinner();
+			else
+				winTeam = CheckForForcedWinner();
 			if (WonGame( winTeam ))
 				return true;
 
@@ -2511,7 +2533,7 @@ int WonGame (int winner)
 			if (esp->value) {
 				for (i = 0; i <= teamCount; i++) {
 					// Reset leader_dead for all teams before next round starts and set escortcap to false
-					gi.dprintf("Resetting team %d leader status to false\n", i);
+					gi.dprintf("Resetting team %d leader_dead status to false\n", i);
 					espsettings.escortcap = false;
 					teams[i].leader_dead = false;
 				}

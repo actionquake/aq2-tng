@@ -1345,9 +1345,21 @@ void Cmd_Placenode_f (edict_t *ent)
 }
 #endif
 
+qboolean _IsVolunteerListEmpty(int teamNum) {
+    espsettings_t *espsettings = &espsettings;
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (espsettings->volunteers[teamNum][i] != NULL) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Cmd_Volunteer_f(edict_t * ent)
 {
-	int teamNum;
+	int teamNum = ent->client->resp.team;
+	int playernum = ent - g_edicts - 1;
+	int i = 0;
 	edict_t *oldLeader;
 
 	// Ignore if not Espionage mode
@@ -1357,9 +1369,14 @@ void Cmd_Volunteer_f(edict_t * ent)
 	}
 
 	// Ignore entity if not on a team
-	teamNum = ent->client->resp.team;
 	if (teamNum == NOTEAM) {
 		gi.cprintf(ent, PRINT_HIGH, "You need to be on a team for that...\n");
+		return;
+	}
+
+	// Ignore entity if it is ETV mode and they attempt to be a leader
+	if (teamNum == TEAM2 && etv->value) {
+		gi.cprintf(ent, PRINT_HIGH, "There is no leader for your team in this mode...\n");
 		return;
 	}
 
@@ -1372,16 +1389,19 @@ void Cmd_Volunteer_f(edict_t * ent)
 	// If the current leader is issuing this command again, remove them as leader
 	oldLeader = teams[teamNum].leader;
 	if (oldLeader == ent) {
+		ent->client->resp.is_volunteer = false;
+		EspLeaderQueueMgr(ent, false);
 		EspSetLeader( teamNum, NULL );
 		return;
 	}
 
-	// If the team already has a leader, send this message to the ent volunteering
-	if (oldLeader) {
-		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\n",
-			teams[teamNum].leader->client->pers.netname );
+	// Simple, only one leader, no leader queue in matchmode
+	if (matchmode->value){
+		EspSetLeader( teamNum, ent );
 		return;
+	} else {
+		// Non-matchmode uses a queue
+		EspLeaderQueueMgr(ent, true);
 	}
-
 	EspSetLeader( teamNum, ent );
 }

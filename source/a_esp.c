@@ -48,6 +48,8 @@ int EspModeCheck()
 		return ESPMODE_ATL; // ATL mode
 	else if (etv->value)
 		return ESPMODE_ETV; // ETV mode
+	else
+		return -1;
 }
 
 /*
@@ -56,10 +58,10 @@ Toggles between the two game modes
 void EspForceEspionage(int espmode)
 {
 	gi.cvar_forceset("esp", "1");
-	if ((espmode = 0)) {
+	if ((espmode == 0)) {
 		gi.cvar_forceset("atl", "1");
 		gi.cvar_forceset("etv", "0");
-	} else if ((espmode = 1)) {
+	} else if ((espmode == 1)) {
 		gi.cvar_forceset("etv", "1");
 		gi.cvar_forceset("atl", "0");
 	}
@@ -319,6 +321,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 			gi.dprintf("  Green Team: %s -- Skin: %s\n", ESP_GREEN_TEAM, ESP_GREEN_SKIN);
 			gi.dprintf("  Green Leader: %s -- Skin: %s\n", ESP_GREEN_LEADER_NAME, ESP_GREEN_LEADER_SKIN);
 		}
+		EspForceEspionage(ESPMODE_ATL);
 	}
 }
 
@@ -722,16 +725,15 @@ void EspRespawnPlayer(edict_t *ent)
 	if (level.framenum > ent->client->respawn_framenum) {
 		//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 		// If your leader is alive, you can respawn
-		if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
-			if (!teams[ent->client->resp.team].leader) // NULL check
-				return;
-			respawn(ent);
-
+		if (teams[ent->client->resp.team].leader != NULL) {
+			if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+				respawn(ent);
+			}
 		// If TEAM1's leader is alive, you can respawn
-		} else if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
-			if (!teams[TEAM1].leader) // NULL check
-				return;
-			respawn(ent);
+		} else if (teams[TEAM1].leader != NULL) { // NULL check
+			if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
+				respawn(ent);
+			}
 		}
 	}
 }
@@ -807,6 +809,8 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 			return false;
 	}
 
+	// Catch-all safety
+	return false;
 }
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
@@ -817,7 +821,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	int 		selection;
 	float 		range, range1, range2;
 	char 		*cname;
-	vec3_t 		respawn_coords, angles;
+	vec3_t 		respawn_coords;
 
 	ent->client->resp.esp_state = ESP_STATE_PLAYING;
 
@@ -868,8 +872,6 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	// IS_ALIVE(teams[ent->client->resp.team].leader)))) {
 
 	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
-
-		//float angle = teamLeader->s.angles[YAW];
 		// Get the leader's coordinates
 		teamLeader = teams[ent->client->resp.team].leader;
 		VectorCopy(teamLeader->s.origin, respawn_coords);
@@ -883,7 +885,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		spawn->nextthink = level.framenum + 1;
 		//ED_CallSpawn(spawn);
 
-		gi.dprintf("Coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
+		//gi.dprintf("Coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
 
 		return spawn;
 		// Copies the entity's coordinates
@@ -893,7 +895,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		// return spot;
 	} else {
 		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-			gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
+			//gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
 			count++;
 			range = PlayersRangeFromSpot(spot);
 			if (range < range1) {
@@ -1184,6 +1186,8 @@ qboolean EspCheckRules(void)
 	return false;
 }
 
+
+
 /*
 This check is similiar to checking that all teams have
 Captains in matchmode
@@ -1213,8 +1217,82 @@ qboolean AllTeamsHaveLeaders(void)
 		return true;
 	}
 
-	//gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
+	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
 	return false;
+}
+
+/*
+Used to select the next leader, should the previous one have died in the line of duty
+*/
+qboolean SelectNextLeader(int teamNum) {
+    espsettings_t *espsettings = &espsettings;
+    edict_t *nextLeader = espsettings->volunteers[teamNum][0];
+    if (nextLeader != NULL) {
+        EspSetLeader(teamNum, nextLeader);
+        gi.dprintf("Selected %s as the new leader for team %d\n", nextLeader->client->pers.netname, teamNum);
+		return true;
+	} else {
+        gi.dprintf("No volunteers available for team %d\n", teamNum);
+		return false;
+    }
+	// Implicit false safety measure
+	return false;
+}
+
+/*
+This is called when a leader dies, and we need to shift the leader queue
+*/
+void EspShiftLeaderQueue(int teamNum)
+{
+	espsettings_t *espsettings = &espsettings;
+	// Shift the elements of the volunteer list to the right
+	edict_t *temp = espsettings->volunteers[teamNum][MAX_CLIENTS - 1];
+	for (int i = MAX_CLIENTS - 1; i > 0; i--) {
+		espsettings->volunteers[teamNum][i] = espsettings->volunteers[teamNum][i - 1];
+	}
+	espsettings->volunteers[teamNum][0] = temp;
+
+	// A new leader is born
+	EspSetLeader(teamNum, espsettings->volunteers[teamNum][0]);
+}
+
+/*
+This manages Espionage leader queues, responsible for
+adding and removing volunteers from the queue
+*/
+void EspLeaderQueueMgr(edict_t *ent, qboolean add)
+{
+	espsettings_t *espsettings = &espsettings;
+	int teamNum = ent->client->resp.team;
+	int playernum = ent - g_edicts - 1;
+	edict_t *existingLeader = teams[teamNum].leader;
+
+	if (ent->client->resp.is_volunteer || !add) {
+		// Player is already a volunteer, remove them from the volunteer list
+		ent->client->resp.is_volunteer = false;
+		espsettings->volunteers[teamNum][playernum] = NULL;
+		if (ent->inuse) // Don't sent messages to potentially disappearing clients
+			gi.cprintf (ent, PRINT_HIGH, "You are no longer volunteering for leader\n");
+	} else {
+		// Player is not already a volunteer, add them to the volunteer list
+		ent->client->resp.is_volunteer = true;
+		gi.dprintf("teamNum: %d, playernum: %d\n", teamNum, playernum);
+		espsettings->volunteers[teamNum][playernum] = ent;
+		gi.cprintf (ent, PRINT_HIGH, "You are now volunteering to be a team leader\n");
+	}
+
+	// If the team already has a leader, send this message to the ent volunteering
+	if (existingLeader) {
+		if (ent->client->resp.is_volunteer) {
+			gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\nAdding you to the volunteer queue",
+				teams[teamNum].leader->client->pers.netname );
+			return;
+		} else {
+			gi.cprintf( ent, PRINT_HIGH, "Removing you from the volunteer list\n",
+				teams[teamNum].leader->client->pers.netname );
+			return;
+		}
+	}
 }
 
 void EspSetLeader( int teamNum, edict_t *ent )
@@ -1247,7 +1325,11 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		if (oldLeader) {
 			Com_sprintf(temp, sizeof(temp), "%s is no longer %s's leader\n", oldLeader->client->pers.netname, teams[teamNum].name );
 			CenterPrintAll(temp);
-			gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
+			//if(!esp_mustvolunteer->value) {
+			SelectNextLeader(teamNum);
+			//} else {
+			//gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
+			//}
 		}
 		teams[teamNum].locked = 0;
 		return;
@@ -1298,11 +1380,12 @@ void EspLeaderLeftTeam( edict_t *ent )
 {
 	int teamNum = ent->client->resp.team;
 
+	// If client wasn't a leader, don't do anything
 	if (!IS_LEADER(ent)){
 		return;
 	} else {
+		// Clears current leader
 		EspSetLeader( teamNum, NULL );
-
 		ent->client->resp.subteam = 0;
 
 		// esp_mustvolunteer is off, anyone can get picked, except a bot
@@ -1363,6 +1446,9 @@ int EspReportLeaderDeath(edict_t *ent)
 			}
 		}
 	}
+	// Leader shifts to the next volunteer in non-matchmode games
+	if (!matchmode->value)
+		EspShiftLeaderQueue(dead_leader_team);
 	return winner;
 }
 
@@ -1459,5 +1545,31 @@ void EspSetupStatusbar( void )
 			// Green Team
 			"yb -124 " "if 30 xr -24 pic 30 endif " "xr -92 num 4 31 ",
 			sizeof(level.statusbar) );
+	}
+}
+
+void EspAnnounceDetails( void )
+{
+	int i;
+	edict_t *ent;
+
+	for (i = 0; i < game.maxclients; i++){
+		ent = g_edicts + 1 + i;
+		if (!ent->inuse)
+			continue;
+		if (IS_LEADER(ent)){
+			gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+			gi.cprintf(ent, PRINT_HIGH, "Take cover, you're the leader!\n");
+		}
+		if (!IS_LEADER(ent)) {
+			if (atl->value){
+				gi.cprintf(ent, PRINT_HIGH, "Defend your leader and attack the other one to win!\n");
+			} else if (etv->value){
+				if (ent->client->resp.team == TEAM1)
+					gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
+				else
+					gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
+			}
+		}
 	}
 }

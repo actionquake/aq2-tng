@@ -813,6 +813,7 @@ typedef struct
   int snd_camera;
   int snd_action;
   int snd_teamwins[TEAM_TOP];
+  int snd_leader;
   int snd_silencer;
   int snd_headshot;
   int snd_vesthit;
@@ -1809,6 +1810,7 @@ typedef struct
   int esp_leaderfragcount;
   int esp_markerdefendercount;
   int esp_lasthurtleader;
+  qboolean is_volunteer;
 
   int medkit_award_time;
 
