@@ -907,7 +907,7 @@ void HUD_SpectatorUpdate(edict_t *clent)
 			if (cl->curr_weap)
 				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->curr_weap]);
 			else
-				Ghud_SetInt(clent, hud[h + 4], level.pic_items[MK23_NUM]);
+				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->pers.chosenWeapon->typeNum]);
 		}
 
 
@@ -986,7 +986,7 @@ void HUD_SpectatorUpdate(edict_t *clent)
 			if (cl->curr_weap)
 				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->curr_weap]);
 			else
-				Ghud_SetInt(clent, hud[h + 4], level.pic_items[MK23_NUM]);
+				Ghud_SetInt(clent, hud[h + 4], level.pic_items[cl->pers.chosenWeapon->typeNum]);
 		}
 	}
 }
