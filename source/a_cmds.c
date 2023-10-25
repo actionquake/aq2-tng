@@ -797,8 +797,8 @@ void Cmd_Bandage_f(edict_t *ent)
 
 	// No need to bandage if enhanced slippers are enabled and you only have fall damage
 	// but you can still use the medkit to regain health
-	if (ent->client->bleeding == 0 && e_enhancedSlippers->value && ! can_use_medkit){
-		gi.cprintf(ent, PRINT_HIGH, "No need to bandage\n");
+	if (ent->client->bleeding == 0 && e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM) && ! can_use_medkit){
+		gi.cprintf(ent, PRINT_HIGH, "Not bleeding: No need to bandage\n");
 		return;
 	}
 

@@ -68,7 +68,9 @@
     <OutDir>..\$(Configuration)\</OutDir>
     <IntDir>..\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\$(Configuration)\</OutDir>
     <IntDir>..\$(Configuration)\</IntDir>
@@ -112,7 +114,7 @@
       <StringPooling>true</StringPooling>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;USE_AQTION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -135,7 +137,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetName)$(TargetExt) D:\Quake2\AQtion\action\$(TargetName)$(TargetExt)</Command>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt) C:\Program Files (x86)\Steam\steamapps\common\AQtion\action\$(TargetName)$(TargetExt)</Command>
       <Message>Copying DLL to Quake2\action.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -182,7 +184,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;BUILDING_REF_GL;PATCHNAME=sl-dm;MODGAMEVERSION=baseq2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;BUILDING_REF_GL;PATCHNAME=sl-dm;MODGAMEVERSION=action;USE_AQTION;AQTION_EXTENSION;TNG_BUILD_FOR=WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Midl>
@@ -207,7 +209,7 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(OutDir)$(TargetName)$(TargetExt) D:\Quake2\AQtion\action\$(TargetName)$(TargetExt)</Command>
+      <Command>copy $(OutDir)$(TargetName)$(TargetExt) "C:\Program Files (x86)\Steam\steamapps\common\AQtion\action\$(TargetName)$(TargetExt)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying DLL to Quake2\action.</Message>
@@ -234,6 +236,7 @@
     <ClCompile Include="g_chase.c" />
     <ClCompile Include="g_cmds.c" />
     <ClCompile Include="g_combat.c" />
+    <ClCompile Include="g_ext.c" />
     <ClCompile Include="g_func.c" />
     <ClCompile Include="g_grapple.c" />
     <ClCompile Include="g_items.c" />
@@ -299,6 +302,7 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="m_player.h" />
     <ClInclude Include="p_antilag.h" />
+    <ClInclude Include="q_ghud.h" />
     <ClInclude Include="q_shared.h" />
     <ClInclude Include="tng_balancer.h" />
     <ClInclude Include="tng_ini.h" />
