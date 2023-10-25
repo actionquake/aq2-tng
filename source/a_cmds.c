@@ -1348,16 +1348,6 @@ void Cmd_Placenode_f (edict_t *ent)
 }
 #endif
 
-qboolean _IsVolunteerListEmpty(int teamNum) {
-    espsettings_t *espsettings = &espsettings;
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (espsettings->volunteers[teamNum][i] != NULL) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void Cmd_Volunteer_f(edict_t * ent)
 {
 	int teamNum = ent->client->resp.team;
@@ -1365,6 +1355,7 @@ void Cmd_Volunteer_f(edict_t * ent)
 	int i = 0;
 	edict_t *oldLeader;
 
+	/* Perform player state checks */
 	// Ignore if not Espionage mode
 	if (!esp->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs Espionage to be enabled\n");
@@ -1389,22 +1380,6 @@ void Cmd_Volunteer_f(edict_t * ent)
 		return;
 	}
 
-	// If the current leader is issuing this command again, remove them as leader
-	oldLeader = teams[teamNum].leader;
-	if (oldLeader == ent) {
-		ent->client->resp.is_volunteer = false;
-		EspLeaderQueueMgr(ent, false);
-		EspSetLeader( teamNum, NULL );
-		return;
-	}
-
-	// Simple, only one leader, no leader queue in matchmode
-	if (matchmode->value){
-		EspSetLeader( teamNum, ent );
-		return;
-	} else {
-		// Non-matchmode uses a queue
-		EspLeaderQueueMgr(ent, true);
-	}
-	EspSetLeader( teamNum, ent );
+	// This function manages the queue/leadership
+	EspLeaderQueueMgr(ent);
 }

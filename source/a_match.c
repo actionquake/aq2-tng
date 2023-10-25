@@ -146,7 +146,7 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 
 	teams[teamNum].captain = ent;
 	if (esp->value) {
-		EspSetLeader(teamNum, ent);
+		EspLeaderQueueMgr(ent);
 	}
 	if (!ent) {
 		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
@@ -226,7 +226,7 @@ void Cmd_Captain_f(edict_t * ent)
 	if (oldCaptain == ent) {
 		MM_SetCaptain( teamNum, NULL );
 		if (esp->value) {
-			EspSetLeader(teamNum, NULL);
+			EspLeaderQueueMgr(oldCaptain);
 		}
 		return;
 	}
@@ -238,7 +238,7 @@ void Cmd_Captain_f(edict_t * ent)
 
 	MM_SetCaptain( teamNum, ent );
 	if (esp->value) {
-		EspSetLeader( teamNum, ent );
+		EspLeaderQueueMgr( ent );
 	}
 }
 

@@ -90,6 +90,7 @@ void RemoveFromTransparentList (edict_t *);
 qboolean OnTransparentList( const edict_t *ent );
 void PrintTransparentList ();
 void CenterPrintAll (const char *msg);
+void CenterPrintTeam (int teamNum, char *fmt, ...);
 int TeamHasPlayers( int team );
 
 //TNG:Freud - new spawning system
@@ -97,9 +98,14 @@ void NS_GetSpawnPoints ();
 qboolean NS_SelectFarTeamplaySpawnPoint (int team, qboolean teams_assigned[]);
 void NS_SetupTeamSpawnPoints ();
 int OtherTeam(int teamNum);
+int WonGame (int winner);
 
 //PaTMaN - Menu support
 void OpenPMItemMenu (edict_t * ent);
+
+//Espionage support
+void KillEveryone(int teamNum);
+void MakeTeamInvulnerable(int winner, int uvtime);
 
 typedef struct spawn_distances_s
 {

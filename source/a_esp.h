@@ -57,7 +57,7 @@ typedef struct espsettings_s
 	int capturestreak;
 	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
-	edict_t *volunteers[3][MAX_CLIENTS];
+	edict_t *volunteers[MAX_TEAMS][MAX_CLIENTS];
 } espsettings_t;
 
 extern espsettings_t espsettings;
@@ -91,14 +91,17 @@ void EspSetTeamSpawns(int, char *);
 int EspGetRespawnTime(edict_t *ent);
 
 void Cmd_Volunteer_f(edict_t * ent);
-void EspSetLeader( int teamNum, edict_t *ent );
+void EspSetLeader(void);
+void EspClearVolunteers(void);
+int EspGetVolunteerCount(int teamNum);
+//void EspSetLeader( int teamNum, edict_t *ent );
 qboolean AllTeamsHaveLeaders(void);
 void EspLeaderLeftTeam( edict_t *ent );
 void EspPunishment(int teamNum);
 void EspRespawnPlayer(edict_t *ent);
 void EspAnnounceDetails( void );
 void EspShiftLeaderQueue(int teamNum);
-void EspLeaderQueueMgr(edict_t *ent, qboolean add);
+qboolean EspLeaderQueueMgr(edict_t *ent);
 
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);

@@ -1186,7 +1186,29 @@ qboolean EspCheckRules(void)
 	return false;
 }
 
+/*
+This clears the Espionage volunteer table and all volunteers
+*/
 
+void EspClearVolunteers(void)
+{
+	espsettings_t *es = &espsettings;
+	int i, j, k = 0;
+	// Clear the struct array
+	for (i = 0; i < MAX_TEAMS; i++) {
+		for (j = 0; j < MAX_CLIENTS; j++) {
+			es->volunteers[i][j] = NULL;
+		}
+	}
+
+	// Clear the player resp value
+	edict_t *ent;
+	for (k = 0; k < game.maxclients; k++)
+	{
+		ent = &g_edicts[1 + i];
+		ent->client->resp.is_volunteer = false;
+	}
+}
 
 /*
 This check is similiar to checking that all teams have
@@ -1194,7 +1216,7 @@ Captains in matchmode
 */
 qboolean AllTeamsHaveLeaders(void)
 {
-	int teamsWithLeaders = 0;
+	int teamsWithLeaders = false;
 	int i = 0;
 
 	//AQ2:TNG Slicer Matchmode
@@ -1204,20 +1226,31 @@ qboolean AllTeamsHaveLeaders(void)
 
 	for (i = TEAM1; i <= teamCount; i++)
 	{
-		if (HAVE_LEADER(i)) {
-			teamsWithLeaders++;
+		// if (HAVE_LEADER(i)) {
+		// 	teamsWithLeaders++;
+		// }
+		gi.dprintf("Volunteer Count for team %i: %d\n", i, EspGetVolunteerCount(i));
+	}
+
+	if (atl->value) {
+		if (teamCount == 2) {
+			if (HAVE_LEADER(TEAM1) && HAVE_LEADER(TEAM2))
+			teamsWithLeaders = true;
+		} else if (teamCount == 3) {
+			if (HAVE_LEADER(TEAM1) && HAVE_LEADER(TEAM2) && HAVE_LEADER(TEAM3))
+				teamsWithLeaders = true;
 		}
+	} else if (etv->value) {
+		if (HAVE_LEADER(TEAM1))
+			teamsWithLeaders = true;
 	}
 
-	// Only Team 1 needs a leader in ETV mode
-	if((etv->value) && HAVE_LEADER(TEAM1))
-		return true;
-
-	if(teamsWithLeaders == teamCount){
+	if(teamsWithLeaders){
 		return true;
 	}
 
-	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
+	// Cycle through the queue manager
+	EspSetLeader();
 	return false;
 }
 
@@ -1225,10 +1258,10 @@ qboolean AllTeamsHaveLeaders(void)
 Used to select the next leader, should the previous one have died in the line of duty
 */
 qboolean SelectNextLeader(int teamNum) {
-    espsettings_t *espsettings = &espsettings;
-    edict_t *nextLeader = espsettings->volunteers[teamNum][0];
+    espsettings_t *es = &espsettings;
+    edict_t *nextLeader = es->volunteers[teamNum][0];
     if (nextLeader != NULL) {
-        EspSetLeader(teamNum, nextLeader);
+        EspSetLeader();
         gi.dprintf("Selected %s as the new leader for team %d\n", nextLeader->client->pers.netname, teamNum);
 		return true;
 	} else {
@@ -1244,103 +1277,104 @@ This is called when a leader dies, and we need to shift the leader queue
 */
 void EspShiftLeaderQueue(int teamNum)
 {
-	espsettings_t *espsettings = &espsettings;
+	espsettings_t *es = &espsettings;
+	int i = 0;
 	// Shift the elements of the volunteer list to the right
-	edict_t *temp = espsettings->volunteers[teamNum][MAX_CLIENTS - 1];
-	for (int i = MAX_CLIENTS - 1; i > 0; i--) {
-		espsettings->volunteers[teamNum][i] = espsettings->volunteers[teamNum][i - 1];
+	edict_t *temp = es->volunteers[teamNum][MAX_CLIENTS - 1];
+	for (i = MAX_CLIENTS - 1; i > 0; i--) {
+		es->volunteers[teamNum][i] = es->volunteers[teamNum][i - 1];
 	}
-	espsettings->volunteers[teamNum][0] = temp;
+	es->volunteers[teamNum][0] = temp;
 
 	// A new leader is born
-	EspSetLeader(teamNum, espsettings->volunteers[teamNum][0]);
+	EspSetLeader();
+}
+
+/*
+Returns count of players in the volunteer queue
+*/
+int EspGetVolunteerCount(int teamNum)
+{
+    espsettings_t *es = &espsettings;
+    int count = 0;
+	int i = 0;
+    for (i = 0; i < game.maxclients; i++) {
+        if (es->volunteers[teamNum][i]) {
+            count++;
+        }
+    }
+    return count;
 }
 
 /*
 This manages Espionage leader queues, responsible for
 adding and removing volunteers from the queue
+
+Returns true if player successfully added to queue
+
+EspSetLeader() is called on round end, to notify the next leader if they are queued
 */
-void EspLeaderQueueMgr(edict_t *ent, qboolean add)
+qboolean EspLeaderQueueMgr(edict_t *ent)
 {
-	espsettings_t *espsettings = &espsettings;
+	espsettings_t *es = &espsettings;
 	int teamNum = ent->client->resp.team;
 	int playernum = ent - g_edicts - 1;
 	edict_t *existingLeader = teams[teamNum].leader;
+	//edict_t *playerQueueStatus = es->volunteers[teamNum][playernum] = ent;
+	qboolean is_volunteer = ent->client->resp.is_volunteer;
+	int volunteer_count = EspGetVolunteerCount(teamNum);
 
-	if (ent->client->resp.is_volunteer || !add) {
-		// Player is already a volunteer, remove them from the volunteer list
-		ent->client->resp.is_volunteer = false;
-		espsettings->volunteers[teamNum][playernum] = NULL;
-		if (ent->inuse) // Don't sent messages to potentially disappearing clients
-			gi.cprintf (ent, PRINT_HIGH, "You are no longer volunteering for leader\n");
-	} else {
-		// Player is not already a volunteer, add them to the volunteer list
-		ent->client->resp.is_volunteer = true;
-		gi.dprintf("teamNum: %d, playernum: %d\n", teamNum, playernum);
-		espsettings->volunteers[teamNum][playernum] = ent;
-		gi.cprintf (ent, PRINT_HIGH, "You are now volunteering to be a team leader\n");
-	}
-
-	// If the team already has a leader, send this message to the ent volunteering
-	if (existingLeader) {
-		if (ent->client->resp.is_volunteer) {
-			gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\nAdding you to the volunteer queue",
-				teams[teamNum].leader->client->pers.netname );
-			return;
-		} else {
-			gi.cprintf( ent, PRINT_HIGH, "Removing you from the volunteer list\n",
-				teams[teamNum].leader->client->pers.netname );
-			return;
-		}
-	}
-}
-
-void EspSetLeader( int teamNum, edict_t *ent )
-{
-	edict_t *oldLeader = teams[teamNum].leader;
-	char temp[128];
-
-	//ChooseRandomPlayer(teamNum, true);
-
-	if (teamNum == NOTEAM)
-		ent = NULL;
-
+	// No leader for TEAM2 in ETV mode
 	if (etv->value && teamNum != TEAM1) {
 		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
-		return;
+		return false;
 	}
 
-	teams[teamNum].leader = ent;
-	if(ent) // Only assign a skin to an ent
-		AssignSkin(ent, teams[teamNum].leader_skin, false);
-
-	if (!ent) {
-		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
-			if (teams[teamNum].ready) {
-				Com_sprintf( temp, sizeof( temp ), "%s has lost their leader and is no longer ready to play!", teams[teamNum].name );
-				CenterPrintAll( temp );
-			}
-			teams[teamNum].ready = 0;
+	/*
+	Keep it simple:  
+	If matchmode is on, only allow 1 volunteer per team, and if they aren't the captain, deny them
+	*/
+	if (matchmode->value) {
+		if (volunteer_count > 1) {
+			gi.dprintf("Error: Detected more than 1 volunteer in queue for team %d\nThis can lead to unexpected behavior!", teamNum);
+			return false;
 		}
-		if (oldLeader) {
-			Com_sprintf(temp, sizeof(temp), "%s is no longer %s's leader\n", oldLeader->client->pers.netname, teams[teamNum].name );
-			CenterPrintAll(temp);
-			//if(!esp_mustvolunteer->value) {
-			SelectNextLeader(teamNum);
-			//} else {
-			//gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
-			//}
-		}
-		teams[teamNum].locked = 0;
-		return;
-	}
 
-	if (ent != oldLeader) {
-		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
-		CenterPrintAll(temp);
-		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
-		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
-		AssignSkin(ent, teams[teamNum].leader_skin, false);
+		if (!IS_CAPTAIN(ent)) {
+			// Someone tried to volunteer without being Captain
+			gi.cprintf(ent, PRINT_HIGH, "To be a team Leader you must be the team Captain.\n");
+			is_volunteer = false;
+			return false;
+		} else {
+			// Automatically become Leader if Captain
+			es->volunteers[teamNum][playernum] = ent;
+			is_volunteer = true;
+			return true;
+		}
+	
+	} // Not matchmode
+	else
+	{
+		// Toggles volunteer status for player
+		if (is_volunteer) {
+			// Player is already a volunteer, remove them from the volunteer list
+			is_volunteer = false;
+			es->volunteers[teamNum][playernum] = NULL;
+			if (ent->inuse) // Don't sent messages to potentially disappearing clients
+				gi.cprintf (ent, PRINT_HIGH, "You are no longer volunteering for duty\n");
+			return false;
+		} else {
+			// Player is not already a volunteer, add them to the volunteer list
+			is_volunteer = true;
+			gi.dprintf("teamNum: %d, playernum: %d\n", teamNum, playernum);
+			es->volunteers[teamNum][playernum] = ent;
+			if (!existingLeader)
+				gi.cprintf (ent, PRINT_HIGH, "You are now volunteering to be a team leader\n");
+			else
+				gi.cprintf(ent, PRINT_HIGH, "Your team already has a leader (%s)\nAdding you to the volunteer queue",
+					teams[teamNum].leader->client->pers.netname );
+			return true;
+		}
 	}
 }
 
@@ -1348,14 +1382,16 @@ void EspSetLeader( int teamNum, edict_t *ent )
 Call this if esp_mustvolunteer is 0
 or if a the leader of a team disconnects/leaves
 */
-void ChooseRandomLeader(int teamNum)
+int ChooseRandomLeader(int teamNum)
 {
 	int players[TEAM_TOP] = { 0 }, i;
 	edict_t *ent;
 
+	// Not sure if we'd ever get to this state...?
 	if (matchmode->value && !TeamsReady())
-		return;
+		return 0;
 
+	// Get all eligible players
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
@@ -1368,13 +1404,139 @@ void ChooseRandomLeader(int teamNum)
 	if (ent->client->resp.team == teamNum) {
 		if (matchmode->value && ent->client->resp.subteam == teamNum)
 			// Subs can't be elected leaders
-			return;
-		else
+			return 0;
+		else {
 			// Congrats, you're the new leader
-			EspSetLeader(teamNum, ent);
+			EspLeaderQueueMgr(ent);
+			return 1;
+		}
+	} else {
+		// No one is eligible, halt the match?
+		return 0;
+	}
+}
+
+/*
+This sets the leader of a team, and assigns a skin to the leader
+It depends on the volunteer queue in the espsettings_t struct
+*/
+void EspSetLeader(void) 
+{
+	espsettings_t *es = &espsettings;
+	edict_t *newLeader = NULL;
+	qboolean leaderChange = false;
+	int i, j = 0;
+	//edict_t *oldLeader = teams[ent->client->resp.team].leader;
+
+	// A mid-round change, we have to select the next player to be the leader!
+	if (team_round_going){
+		for (i = 0; i < MAX_TEAMS; i++) {
+				// Choose the first member of the array as the new leader for each team
+				// This will always results in a new leader somehow, unless there are no
+				// more players at all
+				if (es->volunteers[i][0]) {
+					newLeader = es->volunteers[i][0];
+					leaderChange = true;
+				} else {
+					// If there are no volunteers, select a random player
+					if (!ChooseRandomLeader(i)) {
+						// Halt the game immediately, there can be no winner
+						gi.dprintf("Error: No eligible players for team %d\n", i);
+						// The other team immediately wins, and the next round should not
+						// automatically begin because AllTeamsHaveLeaders() should fail
+						if (teamCount == 2) {
+							WonGame(OtherTeam(i));
+						} else if (teamCount == 3) {
+							// We have no choice but to kill everyone on the team with no leader
+							CenterPrintTeam(i, "Your leader has abandoned you, you have been eliminated!");
+							KillEveryone(i);
+						}
+					}
+				}
+		}
 	}
 
+	// We're setting a leader before or in-between rounds
+	if (!team_round_going || (gameSettings & GS_ROUNDBASED)){
+		for (i = 0; i < MAX_TEAMS; i++) {
+			for (j = 0; j < game.maxclients; j++) {
+				if (es->volunteers[i][j]) {
+					if (es->volunteers[i][0] != teams[i].leader) {
+						newLeader = es->volunteers[i][0];
+						leaderChange = true;
+					}
+				}
+			}
+		}
+	}
+
+	if (leaderChange) {
+		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
+		AssignSkin(newLeader, teams[newLeader->client->resp.team].leader_skin, false);
+	
+		gi.dprintf("New leader elected!\n");
+		newLeader->client->resp.is_volunteer = true;
+		teams[newLeader->client->resp.team].leader = newLeader;
+
+		char temp[128];
+		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", newLeader->client->pers.netname, teams[newLeader->client->resp.team].name );
+		CenterPrintAll(temp);
+		gi.cprintf( newLeader, PRINT_CHAT, "You are the leader of '%s'\n", teams[newLeader->client->resp.team].name );
+
+	}
+	
 }
+
+// Old, deprecate:
+// void EspSetLeader( int teamNum, edict_t *ent )
+// {
+// 	edict_t *oldLeader = teams[teamNum].leader;
+// 	char temp[128];
+
+// 	//ChooseRandomPlayer(teamNum, true);
+
+// 	if (teamNum == NOTEAM)
+// 		ent = NULL;
+
+// 	if (etv->value && teamNum != TEAM1) {
+// 		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
+// 		return;
+// 	}
+
+// 	teams[teamNum].leader = ent;
+// 	if(ent) // Only assign a skin to an ent
+// 		AssignSkin(ent, teams[teamNum].leader_skin, false);
+
+// 	if (!ent) {
+// 		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
+// 			if (teams[teamNum].ready) {
+// 				Com_sprintf( temp, sizeof( temp ), "%s has lost their leader and is no longer ready to play!", teams[teamNum].name );
+// 				CenterPrintAll( temp );
+// 			}
+// 			teams[teamNum].ready = 0;
+// 		}
+// 		if (oldLeader) {
+// 			Com_sprintf(temp, sizeof(temp), "%s is no longer %s's leader\n", oldLeader->client->pers.netname, teams[teamNum].name );
+// 			CenterPrintAll(temp);
+// 			//if(!esp_mustvolunteer->value) {
+// 			SelectNextLeader(teamNum);
+// 			//} else {
+// 			//gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
+// 			//}
+// 		}
+// 		teams[teamNum].locked = 0;
+// 		return;
+// 	}
+
+// 	if (ent != oldLeader) {
+// 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
+// 		CenterPrintAll(temp);
+// 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
+// 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
+// 		AssignSkin(ent, teams[teamNum].leader_skin, false);
+// 	}
+// }
+
 
 void EspLeaderLeftTeam( edict_t *ent )
 {
@@ -1385,15 +1547,9 @@ void EspLeaderLeftTeam( edict_t *ent )
 		return;
 	} else {
 		// Clears current leader
-		EspSetLeader( teamNum, NULL );
+		EspLeaderQueueMgr(ent);
 		ent->client->resp.subteam = 0;
-
-		// esp_mustvolunteer is off, anyone can get picked, except a bot
-		if (!teams[teamNum].leader && !ent->is_bot) {
-			if (!esp_mustvolunteer->value) {
-				ChooseRandomLeader(teamNum);
-			}
-		}
+		EspShiftLeaderQueue(teamNum);
 	}
 }
 
@@ -1450,38 +1606,6 @@ int EspReportLeaderDeath(edict_t *ent)
 	if (!matchmode->value)
 		EspShiftLeaderQueue(dead_leader_team);
 	return winner;
-}
-
-void KillEveryone(int teamNum)
-{
-	edict_t *ent;
-	int i;
-
-	for (i = 0; i < game.maxclients; i++)
-	{
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse)
-			continue;
-		if(ent->solid == SOLID_NOT && !ent->deadflag)
-			continue;
-		if (game.clients[i].resp.team == teamNum){
-			killPlayer(ent, false);
-		}
-	}
-}
-
-void MakeTeamInvulnerable(int winner, int uvtime)
-{
-	edict_t *ent;
-	int i = 0;
-
-	for (i = 0; i < game.maxclients; i++){
-		ent = &g_edicts[1 + i];
-		// Make alive clients invulnerable
-		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){
-			ent->client->uvTime = uvtime;
-		}
-	}
 }
 
 void EspPunishment(int teamNum)

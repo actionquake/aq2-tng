@@ -182,6 +182,10 @@ void BeginIntermission(edict_t *targ)
 		MoveClientToIntermission(ent);
 	}
 
+	// Clear the Espionage volunteers
+	if (esp->value)
+		EspClearVolunteers();
+
 	InitTransparentList();
 	#ifndef NO_BOTS
 	// Clear LTK bot names

@@ -1901,6 +1901,30 @@ void CenterPrintAll (const char *msg)
 	}
 }
 
+/*
+Same as CenterPrintAll except this one prints only to the specific team
+*/
+void CenterPrintTeam (int teamNum, char *fmt, ...)
+{
+	int i = 0;
+	va_list ap;
+    char msg[MAX_STRING_CHARS];
+
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, ap);
+    va_end(ap);
+
+    for (i = 1; i <= maxclients->value; i++) {
+        edict_t *client = g_edicts + i;
+        if (!client->inuse || !client->client) {
+            continue;
+        }
+        if (client->client->resp.team == teamNum) {
+            gi.centerprintf(client, "%s", msg);
+        }
+    }
+}
+
 int TeamHasPlayers (int team)
 {
 	int i, players;
@@ -2308,6 +2332,7 @@ void MakeAllLivePlayersObservers (void)
 	// Reset Espionage flag
 	if (esp->value && etv->value)
 		EspResetCapturePoint();
+		EspSetLeader();
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -2538,6 +2563,8 @@ int WonGame (int winner)
 					teams[i].leader_dead = false;
 				}
 				EspResetCapturePoint();
+				// If new leaders need elected, do it now before the next round begins!
+				EspSetLeader();
 			}
 
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
@@ -3979,4 +4006,42 @@ int OtherTeam(int teamNum)
 
 	// Returns zero if teamNum is not 1 or 2
 	return 0;
+}
+
+/*
+Simple function, kills everyone on a team
+*/
+void KillEveryone(int teamNum)
+{
+	edict_t *ent;
+	int i;
+
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse)
+			continue;
+		if(ent->solid == SOLID_NOT && !ent->deadflag)
+			continue;
+		if (game.clients[i].resp.team == teamNum){
+			killPlayer(ent, false);
+		}
+	}
+}
+
+/*
+Simple function, makes everyone on a team invincible for a period of time
+*/
+void MakeTeamInvulnerable(int winner, int uvtime)
+{
+	edict_t *ent;
+	int i = 0;
+
+	for (i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		// Make alive clients invulnerable
+		if ((game.clients[i].resp.team == winner) && (IS_ALIVE(ent))){
+			ent->client->uvTime = uvtime;
+		}
+	}
 }
