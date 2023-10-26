@@ -237,6 +237,7 @@ void EspSetTeamSpawns(int team, char *str)
 	char *next;
 	vec3_t pos;
 	float angle;
+	int i = 0;
 
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
@@ -248,7 +249,12 @@ void EspSetTeamSpawns(int team, char *str)
 	while ((spawn = G_Find(spawn, FOFS(classname), team_spawn_name)) != NULL) {
 		G_FreeEdict (spawn);
 	}
+	for (i = 0; i < MAX_SPAWNS; i++) {
+		es->custom_spawns[team][i] = NULL;
+	}
+	/* End Cleanup phase */
 
+	/* Generate spawn points based on file contents */
 	next = strtok(str, ",");
 	do {
 		if (sscanf(next, "<%f %f %f %f>", &pos[0], &pos[1], &pos[2], &angle) != 4) {
