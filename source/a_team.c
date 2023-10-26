@@ -1998,6 +1998,9 @@ int CheckForWinner()
 			} else if (teams[TEAM1].leader_dead){
 				gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
+			} else {
+				gi.bprintf(PRINT_HIGH, "No team wins...\n");
+				return WINNER_TIE;
 			}
 		}
 	//gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
@@ -2220,6 +2223,9 @@ static void StartLCA(void)
 		lights_camera_action = 43;	// TempFile changed from 41
 	}
 	SpawnPlayers();
+
+	if (esp->value)
+		EspAnnounceDetails();
 }
 
 // FindOverlap: Find the first (or next) overlapping player for ent.
@@ -2511,7 +2517,7 @@ int WonGame (int winner)
 			if (esp->value) {
 				for (i = 0; i <= teamCount; i++) {
 					// Reset leader_dead for all teams before next round starts and set escortcap to false
-					gi.dprintf("Resetting team %d leader status to false\n", i);
+					gi.dprintf("Resetting team %d leader_dead status to false\n", i);
 					espsettings.escortcap = false;
 					teams[i].leader_dead = false;
 				}

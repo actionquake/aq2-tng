@@ -11,6 +11,8 @@ espsettings_t espsettings;
 
 cvar_t *esp_respawn = NULL;
 edict_t *espflag = NULL;
+int esp_potential_spawns;
+int esp_last_chosen_spawn = 0;
 
 unsigned int esp_team_effect[] = {
 	EF_BLASTER | EF_TELEPORTER,
@@ -56,10 +58,10 @@ Toggles between the two game modes
 void EspForceEspionage(int espmode)
 {
 	gi.cvar_forceset("esp", "1");
-	if ((espmode = 0)) {
+	if (espmode == 0) {
 		gi.cvar_forceset("atl", "1");
 		gi.cvar_forceset("etv", "0");
-	} else if ((espmode = 1)) {
+	} else if (espmode == 1) {
 		gi.cvar_forceset("etv", "1");
 		gi.cvar_forceset("atl", "0");
 	}
@@ -236,6 +238,7 @@ void EspSetTeamSpawns(int team, char *str)
 	char *next;
 	vec3_t pos;
 	float angle;
+	espsettings_t *es = &espsettings;
 
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
@@ -254,12 +257,28 @@ void EspSetTeamSpawns(int team, char *str)
 			gi.dprintf("EspSetTeamSpawns: invalid spawn point: %s, expected <x y z a>\n", next);
 			continue;
 		}
-		
+
 		spawn = G_Spawn();
 		VectorCopy(pos, spawn->s.origin);
 		spawn->s.angles[YAW] = angle;
 		spawn->classname = ED_NewString (team_spawn_name);
-		ED_CallSpawn(spawn);
+
+		es->custom_spawns[team][esp_potential_spawns] = spawn;
+		esp_potential_spawns++;
+		if (esp_potential_spawns >= MAX_SPAWNS)
+		{
+			gi.dprintf ("Warning: MAX_SPAWNS exceeded\n");
+			break;
+		}
+		
+		// spawn = G_Spawn();
+		// VectorCopy(pos, spawn->s.origin);
+		// spawn->s.angles[YAW] = angle;
+		// spawn->classname = ED_NewString (team_spawn_name);
+		// ED_CallSpawn(spawn);
+
+
+		// es->custom_spawns[team][esp_potential_spawns] = spawn;
 
 		next = strtok(NULL, ",");
 	} while(next != NULL);
@@ -271,6 +290,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	qboolean default_team = (Q_stricmp(defaulttype,"team")==0) ? true : false;
 	qboolean default_respawn = (Q_stricmp(defaulttype,"respawn")==0) ? true : false;
 	qboolean default_author = (Q_stricmp(defaulttype,"author")==0) ? true : false;
+	int i = 0;
 
 	//gi.dprintf("I was called to set the default for %s\n", defaulttype);
 
@@ -285,10 +305,8 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	}
 
 	if(default_respawn) {
-		teams[TEAM1].respawn_timer = ESP_RESPAWN_TIME;
-		teams[TEAM2].respawn_timer = ESP_RESPAWN_TIME;
-		if (teamCount == 3){
-			teams[TEAM3].respawn_timer = ESP_RESPAWN_TIME;
+		for (i = TEAM1; i < teamCount; i++) {
+			teams[i].respawn_timer = ESP_RESPAWN_TIME;
 		}
 		gi.dprintf("  Respawn Rate: %d seconds\n", ESP_RESPAWN_TIME);
 	}
@@ -328,7 +346,6 @@ qboolean EspLoadConfig(const char *mapname)
 	char *ptr;
 	qboolean no_file = false;
 	FILE *fh;
-	espsettings.custom_spawns = true; // Assuming true until proven otherwise
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
@@ -366,8 +383,6 @@ qboolean EspLoadConfig(const char *mapname)
 		EspEnforceDefaultSettings("respawn");
 		EspEnforceDefaultSettings("team");
 
-		// No custom spawns, use default for map
-		espsettings.custom_spawns = false;
 	} else {
 
 		gi.dprintf("-------------------------------------\n");
@@ -504,25 +519,21 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
-		//if (espsettings.custom_spawns){
 		ptr = INI_Find(fh, "spawns", "red");
 		if(ptr) {
 			gi.dprintf("Team 1 spawns: %s\n", ptr);
 			EspSetTeamSpawns(TEAM1, ptr);
-			espsettings.custom_spawns = true;
 		}
 		ptr = INI_Find(fh, "spawns", "blue");
 		if(ptr) {
 			gi.dprintf("Team 2 spawns: %s\n", ptr);
 			EspSetTeamSpawns(TEAM2, ptr);
-			espsettings.custom_spawns = true;
 		}
 		if (teamCount == 3){
 			ptr = INI_Find(fh, "spawns", "green");
 			if(ptr) {
 				gi.dprintf("Team 3 spawns: %s\n", ptr);
 				EspSetTeamSpawns(TEAM3, ptr);
-				espsettings.custom_spawns = true;
 			}
 		}
 			//}
@@ -545,64 +556,141 @@ qboolean EspLoadConfig(const char *mapname)
 		// 	}
 		// }
 
-		ptr = INI_Find(fh, "red_team", "name");
-		Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
-		ptr = INI_Find(fh, "red_team", "skin");
-		Q_strncpyz(teams[TEAM1].skin, ptr, sizeof(teams[TEAM1].skin));
-		ptr = INI_Find(fh, "red_team", "leader_name");
-		Q_strncpyz(teams[TEAM1].leader_name, ptr, sizeof(teams[TEAM1].leader_name));
-		ptr = INI_Find(fh, "red_team", "leader_skin");
-		Q_strncpyz(teams[TEAM1].leader_skin, ptr, sizeof(teams[TEAM1].leader_skin));
+		// ptr = INI_Find(fh, "red_team", "name");
+		// Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
+		// ptr = INI_Find(fh, "red_team", "skin");
+		// Q_strncpyz(teams[TEAM1].skin, ptr, sizeof(teams[TEAM1].skin));
+		// ptr = INI_Find(fh, "red_team", "leader_name");
+		// Q_strncpyz(teams[TEAM1].leader_name, ptr, sizeof(teams[TEAM1].leader_name));
+		// ptr = INI_Find(fh, "red_team", "leader_skin");
+		// Q_strncpyz(teams[TEAM1].leader_skin, ptr, sizeof(teams[TEAM1].leader_skin));
 
-		ptr = INI_Find(fh, "blue_team", "name");
-		Q_strncpyz(teams[TEAM2].name, ptr, sizeof(teams[TEAM2].name));
-		ptr = INI_Find(fh, "blue_team", "skin");
-		Q_strncpyz(teams[TEAM2].skin, ptr, sizeof(teams[TEAM2].skin));
-		ptr = INI_Find(fh, "blue_team", "leader_name");
-		Q_strncpyz(teams[TEAM2].leader_name, ptr, sizeof(teams[TEAM2].leader_name));
-		ptr = INI_Find(fh, "blue_team", "leader_skin");
-		Q_strncpyz(teams[TEAM2].leader_skin, ptr, sizeof(teams[TEAM2].leader_skin));
+		// ptr = INI_Find(fh, "blue_team", "name");
+		// Q_strncpyz(teams[TEAM2].name, ptr, sizeof(teams[TEAM2].name));
+		// ptr = INI_Find(fh, "blue_team", "skin");
+		// Q_strncpyz(teams[TEAM2].skin, ptr, sizeof(teams[TEAM2].skin));
+		// ptr = INI_Find(fh, "blue_team", "leader_name");
+		// Q_strncpyz(teams[TEAM2].leader_name, ptr, sizeof(teams[TEAM2].leader_name));
+		// ptr = INI_Find(fh, "blue_team", "leader_skin");
+		// Q_strncpyz(teams[TEAM2].leader_skin, ptr, sizeof(teams[TEAM2].leader_skin));
 
-		if (teamCount == 3){
-			ptr = INI_Find(fh, "green_team", "name");
-			Q_strncpyz(teams[TEAM3].name, ptr, sizeof(teams[TEAM3].name));
-			ptr = INI_Find(fh, "green_team", "skin");
-			Q_strncpyz(teams[TEAM3].skin, ptr, sizeof(teams[TEAM3].skin));
-			ptr = INI_Find(fh, "green_team", "leader_name");
-			Q_strncpyz(teams[TEAM3].leader_name, ptr, sizeof(teams[TEAM3].leader_name));
-			ptr = INI_Find(fh, "green_team", "leader_skin");
-			Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
-		}
+		// if (teamCount == 3){
+		// 	ptr = INI_Find(fh, "green_team", "name");
+		// 	Q_strncpyz(teams[TEAM3].name, ptr, sizeof(teams[TEAM3].name));
+		// 	ptr = INI_Find(fh, "green_team", "skin");
+		// 	Q_strncpyz(teams[TEAM3].skin, ptr, sizeof(teams[TEAM3].skin));
+		// 	ptr = INI_Find(fh, "green_team", "leader_name");
+		// 	Q_strncpyz(teams[TEAM3].leader_name, ptr, sizeof(teams[TEAM3].leader_name));
+		// 	ptr = INI_Find(fh, "green_team", "leader_skin");
+		// 	Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
+		// }
 
-		// TODO: This will always resolve to true, maybe need to validate in another way
-		if((!teams[TEAM1].skin || !teams[TEAM1].name || !teams[TEAM1].leader_name || !teams[TEAM1].leader_skin ||
-		!teams[TEAM2].skin || !teams[TEAM2].name || !teams[TEAM2].leader_name || !teams[TEAM2].leader_skin) || 
-		((teamCount == 3) && (!teams[TEAM3].skin || !teams[TEAM3].name || !teams[TEAM3].leader_name || !teams[TEAM3].leader_skin))){
-			gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin, review your file\n");
-			gi.dprintf("Enforcing defaults\n");
-			EspEnforceDefaultSettings("team");
-			espsettings.custom_skins = false;
-		} else {
-			espsettings.custom_skins = true;
+		for (int i = TEAM1; i <= teamCount; i++) {
+			const char *team_color;
+			switch (i) {
+				case TEAM1:
+					team_color = "red";
+					break;
+				case TEAM2:
+					team_color = "blue";
+					break;
+				case TEAM3:
+					team_color = "green";
+					break;
+				default:
+					continue;
+			}
 
-			gi.dprintf("    Red Team: %s, Skin: %s\n", 
-			teams[TEAM1].name, teams[TEAM1].skin);
-			gi.dprintf("    Red Leader: %s, Skin: %s\n\n", 
-			teams[TEAM1].leader_name, teams[TEAM1].leader_skin);
-			
-			gi.dprintf("    Blue Team: %s, Skin: %s\n", 
-			teams[TEAM2].name, teams[TEAM2].skin);
-			gi.dprintf("    Blue Leader: %s, Skin: %s\n\n", 
-			teams[TEAM2].leader_name, teams[TEAM2].leader_skin);
+			ptr = INI_Find(fh, team_color, "name");
+			if (ptr) {
+				Q_strncpyz(teams[i].name, ptr, sizeof(teams[i].name));
+			}
 
-			if(teamCount == 3) {
-				gi.dprintf("    Green Team: %s, Skin: %s\n", 
-				teams[TEAM3].name, teams[TEAM3].skin);
-				gi.dprintf("    Green Leader: %s, Skin: %s\n", 
-				teams[TEAM3].leader_name, teams[TEAM3].leader_skin);
+			ptr = INI_Find(fh, team_color, "skin");
+			if (ptr) {
+				Q_strncpyz(teams[i].skin, ptr, sizeof(teams[i].skin));
+			}
+
+			ptr = INI_Find(fh, team_color, "leader_name");
+			if (ptr) {
+				Q_strncpyz(teams[i].leader_name, ptr, sizeof(teams[i].leader_name));
+			}
+
+			ptr = INI_Find(fh, team_color, "leader_skin");
+			if (ptr) {
+				Q_strncpyz(teams[i].leader_skin, ptr, sizeof(teams[i].leader_skin));
 			}
 		}
+
+		qboolean missing_property = false;
+			for (int i = TEAM1; i <= teamCount; i++) {
+				if (strlen(teams[i].skin) == 0 || 
+				strlen(teams[i].name) == 0 || 
+				strlen(teams[i].leader_name) == 0 || 
+				strlen(teams[i].leader_skin) == 0) {
+					missing_property = true;
+					break;
+				}
+			}
+			if (missing_property) {
+				gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin; review your file\n");
+				gi.dprintf("Enforcing defaults\n");
+				EspEnforceDefaultSettings("team");
+				espsettings.custom_skins = false;
+			} else {
+				espsettings.custom_skins = true;
+			}
+
+			for (int i = TEAM1; i <= teamCount; i++) {
+				const char *team_color;
+				switch (i) {
+					case TEAM1:
+						team_color = "Red";
+						break;
+					case TEAM2:
+						team_color = "Blue";
+						break;
+					case TEAM3:
+						team_color = "Green";
+						break;
+					default:
+						continue;
+				}
+
+				gi.dprintf("    %s Team: %s, Skin: %s\n", team_color, teams[i].name, teams[i].skin);
+				gi.dprintf("    %s Leader: %s, Skin: %s\n\n", team_color, teams[i].leader_name, teams[i].leader_skin);
+			}
 	}
+
+		// TODO: This will always resolve to true, maybe need to validate in another way
+	// 	if((!teams[TEAM1].skin || !teams[TEAM1].name || !teams[TEAM1].leader_name || !teams[TEAM1].leader_skin ||
+	// 	!teams[TEAM2].skin || !teams[TEAM2].name || !teams[TEAM2].leader_name || !teams[TEAM2].leader_skin) || 
+	// 	((teamCount == 3) && (!teams[TEAM3].skin || !teams[TEAM3].name || !teams[TEAM3].leader_name || !teams[TEAM3].leader_skin))){
+	// 		gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin, review your file\n");
+	// 		gi.dprintf("Enforcing defaults\n");
+	// 		EspEnforceDefaultSettings("team");
+	// 		espsettings.custom_skins = false;
+	// 	} else {
+	// 		espsettings.custom_skins = true;
+
+	// 		gi.dprintf("    Red Team: %s, Skin: %s\n", 
+	// 		teams[TEAM1].name, teams[TEAM1].skin);
+	// 		gi.dprintf("    Red Leader: %s, Skin: %s\n\n", 
+	// 		teams[TEAM1].leader_name, teams[TEAM1].leader_skin);
+			
+	// 		gi.dprintf("    Blue Team: %s, Skin: %s\n", 
+	// 		teams[TEAM2].name, teams[TEAM2].skin);
+	// 		gi.dprintf("    Blue Leader: %s, Skin: %s\n\n", 
+	// 		teams[TEAM2].leader_name, teams[TEAM2].leader_skin);
+
+	// 		if(teamCount == 3) {
+	// 			gi.dprintf("    Green Team: %s, Skin: %s\n", 
+	// 			teams[TEAM3].name, teams[TEAM3].skin);
+	// 			gi.dprintf("    Green Leader: %s, Skin: %s\n", 
+	// 			teams[TEAM3].leader_name, teams[TEAM3].leader_skin);
+	// 		}
+	// 	}
+	// }
 
 	// automagically change spawns *only* when we do not have team spawns
 	// if(!espgame.custom_spawns)
@@ -722,16 +810,16 @@ void EspRespawnPlayer(edict_t *ent)
 	if (level.framenum > ent->client->respawn_framenum) {
 		//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 		// If your leader is alive, you can respawn
-		if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
-			if (!teams[ent->client->resp.team].leader) // NULL check
-				return;
-			respawn(ent);
+		if (teams[ent->client->resp.team].leader != NULL) {
+			if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+				respawn(ent);
+			}
 
 		// If TEAM1's leader is alive, you can respawn
-		} else if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
-			if (!teams[TEAM1].leader) // NULL check
-				return;
-			respawn(ent);
+		} else if (teams[TEAM1].leader != NULL) { // NULL check
+			if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
+				respawn(ent);
+			}
 		}
 	}
 }
@@ -1459,5 +1547,56 @@ void EspSetupStatusbar( void )
 			// Green Team
 			"yb -124 " "if 30 xr -24 pic 30 endif " "xr -92 num 4 31 ",
 			sizeof(level.statusbar) );
+	}
+}
+
+edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
+{
+	espsettings_t *es = &espsettings;
+    int teamNum = ent->client->resp.team;
+    srand(time(NULL)); // Random seed
+	int random_index = 0;
+
+	int count = 0;
+	int i = 0;
+    for (i = 0; i < game.maxclients; i++) {
+        if (es->custom_spawns[teamNum][i]) {
+            count++;
+        }
+    }
+    if (count > 0) {
+        do {
+            random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+        } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
+    }
+	// Keep track of which spawn was last chosen
+	esp_last_chosen_spawn = random_index;
+
+	return es->custom_spawns[teamNum][random_index];
+}
+
+void EspAnnounceDetails( void )
+{
+	int i;
+	edict_t *ent;
+
+	for (i = 0; i < game.maxclients; i++){
+		ent = g_edicts + 1 + i;
+		if (!ent->inuse)
+			continue;
+		if (IS_LEADER(ent)){
+			gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+			gi.cprintf(ent, PRINT_HIGH, "Take cover, you're the leader!\n");
+		}
+		if (!IS_LEADER(ent)) {
+			if (atl->value){
+				gi.cprintf(ent, PRINT_HIGH, "Defend your leader and attack the other one to win!\n");
+			} else if (etv->value){
+				if (ent->client->resp.team == TEAM1)
+					gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
+				else
+					gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
+			}
+		}
 	}
 }
