@@ -6,8 +6,8 @@
 
 espsettings_t espsettings;
 
-// edict_t *potential_spawns[MAX_SPAWNS];
-// int num_potential_spawns;
+int esp_potential_spawns;
+edict_t *espionage_spawns[MAX_TEAMS][MAX_SPAWNS];
 
 cvar_t *esp_respawn = NULL;
 edict_t *espflag = NULL;
@@ -58,10 +58,10 @@ Toggles between the two game modes
 void EspForceEspionage(int espmode)
 {
 	gi.cvar_forceset("esp", "1");
-	if ((espmode == 0)) {
+	if (espmode == 0) {
 		gi.cvar_forceset("atl", "1");
 		gi.cvar_forceset("etv", "0");
-	} else if ((espmode == 1)) {
+	} else if (espmode == 1) {
 		gi.cvar_forceset("etv", "1");
 		gi.cvar_forceset("atl", "0");
 	}
@@ -202,12 +202,10 @@ void EspResetCapturePoint()
 	edict_t *flag = NULL;
 	vec3_t origin;
 	vec3_t angles;
-	int i = 0;
 
 	// Find the flag
 	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
 		flag = ent;
-		i++;
 	}
 
 	if (flag == NULL){
@@ -256,20 +254,45 @@ void EspSetTeamSpawns(int team, char *str)
 			gi.dprintf("EspSetTeamSpawns: invalid spawn point: %s, expected <x y z a>\n", next);
 			continue;
 		}
-		
+
 		spawn = G_Spawn();
 		VectorCopy(pos, spawn->s.origin);
 		spawn->s.angles[YAW] = angle;
 		spawn->classname = ED_NewString (team_spawn_name);
-		ED_CallSpawn(spawn);
+
+		espionage_spawns[team][esp_potential_spawns] = spawn;
+		esp_potential_spawns++;
+		if (esp_potential_spawns >= MAX_SPAWNS)
+		{
+			gi.dprintf ("Warning: MAX_SPAWNS exceeded\n");
+			break;
+		}
+		
+		// spawn = G_Spawn();
+		// VectorCopy(pos, spawn->s.origin);
+		// spawn->s.angles[YAW] = angle;
+		// spawn->classname = ED_NewString (team_spawn_name);
+		// ED_CallSpawn(spawn);
 
 		next = strtok(NULL, ",");
 	} while(next != NULL);
 	
+	// spot = NULL;
+	// while ((spot = G_Find (spot, FOFS (classname), "info_player_deathmatch")) != NULL)
+	// {
+	// 	potential_spawns[num_potential_spawns] = spot;
+	// 	num_potential_spawns++;
+	// 	if (num_potential_spawns >= MAX_SPAWNS)
+	// 	{
+	// 		gi.dprintf ("Warning: MAX_SPAWNS exceeded\n");
+	// 		break;
+	// 	}
+	// }
 }
 
 void EspEnforceDefaultSettings(char *defaulttype)
 {
+	int i = 0;
 	qboolean default_team = (Q_stricmp(defaulttype,"team")==0) ? true : false;
 	qboolean default_respawn = (Q_stricmp(defaulttype,"respawn")==0) ? true : false;
 	qboolean default_author = (Q_stricmp(defaulttype,"author")==0) ? true : false;
@@ -287,10 +310,8 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	}
 
 	if(default_respawn) {
-		teams[TEAM1].respawn_timer = ESP_RESPAWN_TIME;
-		teams[TEAM2].respawn_timer = ESP_RESPAWN_TIME;
-		if (teamCount == 3){
-			teams[TEAM3].respawn_timer = ESP_RESPAWN_TIME;
+		for (i = TEAM1; i < teamCount; i++) {
+			teams[i].respawn_timer = ESP_RESPAWN_TIME;
 		}
 		gi.dprintf("  Respawn Rate: %d seconds\n", ESP_RESPAWN_TIME);
 	}
@@ -331,7 +352,6 @@ qboolean EspLoadConfig(const char *mapname)
 	char *ptr;
 	qboolean no_file = false;
 	FILE *fh;
-	espsettings.custom_spawns = true; // Assuming true until proven otherwise
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
@@ -368,9 +388,6 @@ qboolean EspLoadConfig(const char *mapname)
 		EspEnforceDefaultSettings("author");
 		EspEnforceDefaultSettings("respawn");
 		EspEnforceDefaultSettings("team");
-
-		// No custom spawns, use default for map
-		espsettings.custom_spawns = false;
 	} else {
 
 		gi.dprintf("-------------------------------------\n");
@@ -507,32 +524,24 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
-		//if (espsettings.custom_spawns){
 		ptr = INI_Find(fh, "spawns", "red");
 		if(ptr) {
 			gi.dprintf("Team 1 spawns: %s\n", ptr);
 			EspSetTeamSpawns(TEAM1, ptr);
-			espsettings.custom_spawns = true;
 		}
 		ptr = INI_Find(fh, "spawns", "blue");
 		if(ptr) {
 			gi.dprintf("Team 2 spawns: %s\n", ptr);
 			EspSetTeamSpawns(TEAM2, ptr);
-			espsettings.custom_spawns = true;
 		}
 		if (teamCount == 3){
 			ptr = INI_Find(fh, "spawns", "green");
 			if(ptr) {
 				gi.dprintf("Team 3 spawns: %s\n", ptr);
 				EspSetTeamSpawns(TEAM3, ptr);
-				espsettings.custom_spawns = true;
 			}
 		}
-			//}
-		// } else {
-		// 	gi.dprintf("Enforcing normal spawnpoints\n");
-		// 	espsettings.custom_spawns = false;
-		// }
+
 
 		gi.dprintf("- Teams\n");
 
@@ -548,64 +557,124 @@ qboolean EspLoadConfig(const char *mapname)
 		// 	}
 		// }
 
-		ptr = INI_Find(fh, "red_team", "name");
-		Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
-		ptr = INI_Find(fh, "red_team", "skin");
-		Q_strncpyz(teams[TEAM1].skin, ptr, sizeof(teams[TEAM1].skin));
-		ptr = INI_Find(fh, "red_team", "leader_name");
-		Q_strncpyz(teams[TEAM1].leader_name, ptr, sizeof(teams[TEAM1].leader_name));
-		ptr = INI_Find(fh, "red_team", "leader_skin");
-		Q_strncpyz(teams[TEAM1].leader_skin, ptr, sizeof(teams[TEAM1].leader_skin));
+		// Cleaned up?
+		// ptr = INI_Find(fh, "red_team", "name");
+		// Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
+		// ptr = INI_Find(fh, "red_team", "skin");
+		// Q_strncpyz(teams[TEAM1].skin, ptr, sizeof(teams[TEAM1].skin));
+		// ptr = INI_Find(fh, "red_team", "leader_name");
+		// Q_strncpyz(teams[TEAM1].leader_name, ptr, sizeof(teams[TEAM1].leader_name));
+		// ptr = INI_Find(fh, "red_team", "leader_skin");
+		// Q_strncpyz(teams[TEAM1].leader_skin, ptr, sizeof(teams[TEAM1].leader_skin));
 
-		ptr = INI_Find(fh, "blue_team", "name");
-		Q_strncpyz(teams[TEAM2].name, ptr, sizeof(teams[TEAM2].name));
-		ptr = INI_Find(fh, "blue_team", "skin");
-		Q_strncpyz(teams[TEAM2].skin, ptr, sizeof(teams[TEAM2].skin));
-		ptr = INI_Find(fh, "blue_team", "leader_name");
-		Q_strncpyz(teams[TEAM2].leader_name, ptr, sizeof(teams[TEAM2].leader_name));
-		ptr = INI_Find(fh, "blue_team", "leader_skin");
-		Q_strncpyz(teams[TEAM2].leader_skin, ptr, sizeof(teams[TEAM2].leader_skin));
+		// ptr = INI_Find(fh, "blue_team", "name");
+		// Q_strncpyz(teams[TEAM2].name, ptr, sizeof(teams[TEAM2].name));
+		// ptr = INI_Find(fh, "blue_team", "skin");
+		// Q_strncpyz(teams[TEAM2].skin, ptr, sizeof(teams[TEAM2].skin));
+		// ptr = INI_Find(fh, "blue_team", "leader_name");
+		// Q_strncpyz(teams[TEAM2].leader_name, ptr, sizeof(teams[TEAM2].leader_name));
+		// ptr = INI_Find(fh, "blue_team", "leader_skin");
+		// Q_strncpyz(teams[TEAM2].leader_skin, ptr, sizeof(teams[TEAM2].leader_skin));
 
-		if (teamCount == 3){
-			ptr = INI_Find(fh, "green_team", "name");
-			Q_strncpyz(teams[TEAM3].name, ptr, sizeof(teams[TEAM3].name));
-			ptr = INI_Find(fh, "green_team", "skin");
-			Q_strncpyz(teams[TEAM3].skin, ptr, sizeof(teams[TEAM3].skin));
-			ptr = INI_Find(fh, "green_team", "leader_name");
-			Q_strncpyz(teams[TEAM3].leader_name, ptr, sizeof(teams[TEAM3].leader_name));
-			ptr = INI_Find(fh, "green_team", "leader_skin");
-			Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
+		// if (teamCount == 3){
+		// 	ptr = INI_Find(fh, "green_team", "name");
+		// 	Q_strncpyz(teams[TEAM3].name, ptr, sizeof(teams[TEAM3].name));
+		// 	ptr = INI_Find(fh, "green_team", "skin");
+		// 	Q_strncpyz(teams[TEAM3].skin, ptr, sizeof(teams[TEAM3].skin));
+		// 	ptr = INI_Find(fh, "green_team", "leader_name");
+		// 	Q_strncpyz(teams[TEAM3].leader_name, ptr, sizeof(teams[TEAM3].leader_name));
+		// 	ptr = INI_Find(fh, "green_team", "leader_skin");
+		// 	Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
+		// }
+
+		for (int i = TEAM1; i <= teamCount; i++) {
+			const char *team_color;
+			switch (i) {
+				case TEAM1:
+					team_color = "red";
+					break;
+				case TEAM2:
+					team_color = "blue";
+					break;
+				case TEAM3:
+					team_color = "green";
+					break;
+				default:
+					continue;
+			}
+
+			ptr = INI_Find(fh, team_color, "name");
+			if (ptr) {
+				Q_strncpyz(teams[i].name, ptr, sizeof(teams[i].name));
+			}
+
+			ptr = INI_Find(fh, team_color, "skin");
+			if (ptr) {
+				Q_strncpyz(teams[i].skin, ptr, sizeof(teams[i].skin));
+			}
+
+			ptr = INI_Find(fh, team_color, "leader_name");
+			if (ptr) {
+				Q_strncpyz(teams[i].leader_name, ptr, sizeof(teams[i].leader_name));
+			}
+
+			ptr = INI_Find(fh, team_color, "leader_skin");
+			if (ptr) {
+				Q_strncpyz(teams[i].leader_skin, ptr, sizeof(teams[i].leader_skin));
+			}
 		}
 
 		// TODO: This will always resolve to true, maybe need to validate in another way
-		if((!teams[TEAM1].skin || !teams[TEAM1].name || !teams[TEAM1].leader_name || !teams[TEAM1].leader_skin ||
-		!teams[TEAM2].skin || !teams[TEAM2].name || !teams[TEAM2].leader_name || !teams[TEAM2].leader_skin) || 
-		((teamCount == 3) && (!teams[TEAM3].skin || !teams[TEAM3].name || !teams[TEAM3].leader_name || !teams[TEAM3].leader_skin))){
-			gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin, review your file\n");
-			gi.dprintf("Enforcing defaults\n");
-			EspEnforceDefaultSettings("team");
-			espsettings.custom_skins = false;
-		} else {
-			espsettings.custom_skins = true;
+		// if((!teams[TEAM1].skin || !teams[TEAM1].name || !teams[TEAM1].leader_name || !teams[TEAM1].leader_skin ||
+		// !teams[TEAM2].skin || !teams[TEAM2].name || !teams[TEAM2].leader_name || !teams[TEAM2].leader_skin) || 
+		// ((teamCount == 3) && (!teams[TEAM3].skin || !teams[TEAM3].name || !teams[TEAM3].leader_name || !teams[TEAM3].leader_skin))){
+		// 	gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin, review your file\n");
+		// 	gi.dprintf("Enforcing defaults\n");
+		// 	EspEnforceDefaultSettings("team");
+		// 	espsettings.custom_skins = false;
+		// } else {
+		// 	espsettings.custom_skins = true;
 
-			gi.dprintf("    Red Team: %s, Skin: %s\n", 
-			teams[TEAM1].name, teams[TEAM1].skin);
-			gi.dprintf("    Red Leader: %s, Skin: %s\n\n", 
-			teams[TEAM1].leader_name, teams[TEAM1].leader_skin);
-			
-			gi.dprintf("    Blue Team: %s, Skin: %s\n", 
-			teams[TEAM2].name, teams[TEAM2].skin);
-			gi.dprintf("    Blue Leader: %s, Skin: %s\n\n", 
-			teams[TEAM2].leader_name, teams[TEAM2].leader_skin);
+			qboolean missing_property = false;
+			for (int i = TEAM1; i <= teamCount; i++) {
+				if (strlen(teams[i].skin) == 0 || 
+				strlen(teams[i].name) == 0 || 
+				strlen(teams[i].leader_name) == 0 || 
+				strlen(teams[i].leader_skin) == 0) {
+					missing_property = true;
+					break;
+				}
+			}
+			if (missing_property) {
+				gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin; review your file\n");
+				gi.dprintf("Enforcing defaults\n");
+				EspEnforceDefaultSettings("team");
+				espsettings.custom_skins = false;
+			} else {
+				espsettings.custom_skins = true;
+			}
 
-			if(teamCount == 3) {
-				gi.dprintf("    Green Team: %s, Skin: %s\n", 
-				teams[TEAM3].name, teams[TEAM3].skin);
-				gi.dprintf("    Green Leader: %s, Skin: %s\n", 
-				teams[TEAM3].leader_name, teams[TEAM3].leader_skin);
+			for (int i = TEAM1; i <= teamCount; i++) {
+				const char *team_color;
+				switch (i) {
+					case TEAM1:
+						team_color = "Red";
+						break;
+					case TEAM2:
+						team_color = "Blue";
+						break;
+					case TEAM3:
+						team_color = "Green";
+						break;
+					default:
+						continue;
+				}
+
+				gi.dprintf("    %s Team: %s, Skin: %s\n", team_color, teams[i].name, teams[i].skin);
+				gi.dprintf("    %s Leader: %s, Skin: %s\n\n", team_color, teams[i].leader_name, teams[i].leader_skin);
 			}
 		}
-	}
+	
 
 	// automagically change spawns *only* when we do not have team spawns
 	// if(!espgame.custom_spawns)
@@ -813,6 +882,44 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 	return false;
 }
 
+edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
+{
+	espsettings_t *es = &espsettings;
+    int teamNum = ent->client->resp.team;
+    srand(time(NULL)); // Random seed
+
+	int count = 0;
+	int i = 0;
+    for (i = 0; i < game.maxclients; i++) {
+        if (es->custom_spawns[teamNum][i]) {
+            count++;
+        }
+    }
+    int random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+
+    return es->custom_spawns[teamNum][random_index];
+}
+
+	// if (espionage_spawns[teamNum][] < 1) {
+	// 	gi.dprintf("New Spawncode: gone through all spawns, re-reading spawns\n");
+	// 	NS_GetSpawnPoints ();
+	// 	NS_SetupTeamSpawnPoints ();
+	// 	return false;
+	// }
+
+	// spawn_point = newrand (esp_potential_spawns[teamNum]);
+	// esp_potential_spawns[teamNum]--;
+
+	// teamplay_spawns[teamNum] = NS_potential_spawns[teamNum][spawn_point];
+	// teams_assigned[teamNum] = true;
+
+	// for (z = spawn_point;z < esp_potential_spawns[teamNum];z++) {
+	// 	NS_potential_spawns[teamNum][z] = NS_potential_spawns[teamNum][z + 1];
+	// }
+
+	//return true;
+
+
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
 	edict_t 	*spot, *spot1, *spot2;
@@ -894,44 +1001,68 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		// VectorCopy (spot->s.angles, angles);
 		// return spot;
 	} else {
-		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-			//gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
-			count++;
-			range = PlayersRangeFromSpot(spot);
-			if (range < range1) {
-				if (range1 < range2) {
-					range2 = range1;
-					spot2 = spot1;
-				}
-				range1 = range;
-				spot1 = spot;
-			} else if (range < range2) {
-				range2 = range;
-				spot2 = spot;
-			}
-		}
+		if (!espsettings.custom_spawns[ent->client->resp.team][0])
+			return SelectTeamplaySpawnPoint(ent);
+		else
+			return SelectEspCustomSpawnPoint(ent);
+	// // Print all of the teamplay_spawns
+	// 	int spawn_point, z;
 
-		//gi.dprintf("*********Found %i spawn points\n", count);
+	// 	if (esp_potential_spawns[team] < 1) {
+	// 		gi.dprintf("New Spawncode: gone through all spawns, re-reading spawns\n");
+	// 		NS_GetSpawnPoints ();
+	// 		NS_SetupTeamSpawnPoints ();
+	// 		return false;
+	// 	}
 
-		if (!count)
-			return SelectRandomDeathmatchSpawnPoint();
+	// 	spawn_point = newrand (NS_num_potential_spawns[team]);
+	// 	NS_num_potential_spawns[team]--;
 
-		if (count <= 2) {
-			spot1 = spot2 = NULL;
-		} else
-			count -= 2;
+	// 	teamplay_spawns[team] = NS_potential_spawns[team][spawn_point];
+	// 	teams_assigned[team] = true;
 
-		selection = rand() % count;
+	// 	for (z = spawn_point;z < NS_num_potential_spawns[team];z++) {
+	// 		NS_potential_spawns[team][z] = NS_potential_spawns[team][z + 1];
+	// 	}
 
-		spot = NULL;
-		do {
-			spot = G_Find(spot, FOFS(classname), cname);
-			if (spot == spot1 || spot == spot2)
-				selection++;
-		}
-		while (selection--);
+		// while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+		// 	//gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
+		// 	count++;
+		// 	range = PlayersRangeFromSpot(spot);
+		// 	if (range < range1) {
+		// 		if (range1 < range2) {
+		// 			range2 = range1;
+		// 			spot2 = spot1;
+		// 		}
+		// 		range1 = range;
+		// 		spot1 = spot;
+		// 	} else if (range < range2) {
+		// 		range2 = range;
+		// 		spot2 = spot;
+		// 	}
+		// }
 
-		return spot;
+		// //gi.dprintf("*********Found %i spawn points\n", count);
+
+		// if (!count)
+		// 	return SelectRandomDeathmatchSpawnPoint();
+
+		// if (count <= 2) {
+		// 	spot1 = spot2 = NULL;
+		// } else
+		// 	count -= 2;
+
+		// selection = rand() % count;
+
+		// spot = NULL;
+		// do {
+		// 	spot = G_Find(spot, FOFS(classname), cname);
+		// 	if (spot == spot1 || spot == spot2)
+		// 		selection++;
+		// }
+		// while (selection--);
+
+		// return spot;
 	}
 }
 
@@ -1194,7 +1325,7 @@ Tends to only be used in Matchmode
 void EspClearVolunteer(int teamNum)
 {
 	espsettings_t *es = &espsettings;
-	int i, j, k = 0;
+	int i, j = 0;
 	// Clear the struct array
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		es->volunteers[teamNum][i] = NULL;
@@ -1202,7 +1333,7 @@ void EspClearVolunteer(int teamNum)
 
 	// Clear the player resp values
 	edict_t *ent;
-	for (k = 0; k < game.maxclients; k++)
+	for (j = 0; j < game.maxclients; j++)
 	{
 		ent = &g_edicts[1 + i];
 		if (ent->client->resp.team == teamNum)

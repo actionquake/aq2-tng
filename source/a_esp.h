@@ -51,13 +51,13 @@ typedef struct espsettings_s
 {
 	char author[MAX_ESP_STRLEN*3];
 	char name[MAX_ESP_STRLEN];
-	qboolean custom_spawns;
 	qboolean custom_skins;
 	int halftime;
 	int capturestreak;
 	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
 	edict_t *volunteers[MAX_TEAMS][MAX_CLIENTS];
+	edict_t *custom_spawns[MAX_TEAMS][MAX_SPAWNS];
 } espsettings_t;
 
 extern espsettings_t espsettings;
