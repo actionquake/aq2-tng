@@ -1924,6 +1924,10 @@ void CenterPrintTeam (int teamNum, char *fmt, ...)
         if (!client->inuse || !client->client) {
             continue;
         }
+    #ifndef NO_BOTS
+	if (client->is_bot) // Bots don't get messages
+            continue;
+    #endif
         if (client->client->resp.team == teamNum) {
             gi.centerprintf(client, "%s", msg);
         }
@@ -2001,8 +2005,12 @@ qboolean AllTeamsHaveLeaders(void)
 		return false;
 
 	// Debug stuff, comment/remove later
+	espsettings_t *es = &espsettings;
 	for (i = TEAM1; i <= teamCount; i++)
 		gi.dprintf("Volunteer Count for team %i: %d\n", i, EspGetVolunteerCount(i));
+		if (es->volunteers[i][0]){
+			gi.dprintf("Volunteers for team %i: %s\n", i, es->volunteers[i][0]->client->pers.netname);
+		}
 
 	if (atl->value) {
 		if (teamCount == 2) {
