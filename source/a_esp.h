@@ -93,7 +93,7 @@ void Cmd_Volunteer_f(edict_t * ent);
 void EspSetLeader(void);
 void EspClearVolunteer(int teamNum);
 void EspClearVolunteers(void);
-int EspGetVolunteerCount(int teamNum);
+int EspGetVolunteerCount(int teamNum, espsettings_t *es);
 void EspLeaderLeftTeam(edict_t *ent);
 void EspPunishment(int teamNum);
 void EspRespawnPlayer(edict_t *ent);

@@ -2007,7 +2007,7 @@ qboolean AllTeamsHaveLeaders(void)
 	// Debug stuff, comment/remove later
 	espsettings_t *es = &espsettings;
 	for (i = TEAM1; i <= teamCount; i++)
-		gi.dprintf("Volunteer Count for team %i: %d\n", i, EspGetVolunteerCount(i));
+		gi.dprintf("Volunteer Count for team %i: %d\n", i, EspGetVolunteerCount(i, es));
 		if (es->volunteers[i][0]){
 			gi.dprintf("Volunteers for team %i: %s\n", i, es->volunteers[i][0]->client->pers.netname);
 		}
@@ -2046,32 +2046,13 @@ int CheckForWinner()
 	if (esp->value){
 		if (atl->value) {
 			if (teamCount == TEAM2) {
-				// If both leaders died at the same time, OR both leaders are alive
-				// at the end of the roundtimelimit, it was a TIE
-				if ((teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) ||
-				(!teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead)) {
-					return WINNER_TIE;
-				} else if (teams[TEAM1].leader_dead) {
+				if (teams[TEAM1].leader_dead) {
 					return TEAM2;
 				} else if (teams[TEAM2].leader_dead) {
 					return TEAM1;
 				}
 			} else if (teamCount == TEAM3) {
-				/*
-				Slightly more text here but same logic. Any combination of:
-				1. All leaders dead simultaneously
-				2. All leaders alive simultaneously at roundtimelimit end
-				3. Any combination of two team leaders being alive at roundtimelimit end
-				results in a TIE
-				*/
-				if ((teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) ||
-				(!teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead && !teams[TEAM3].leader_dead) ||
-				(!teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) ||
-				(!teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && !teams[TEAM3].leader_dead) ||
-				(teams[TEAM1].leader_dead && !teams[TEAM2].leader_dead && !teams[TEAM3].leader_dead)
-				) {
-					return WINNER_TIE;
-				} else if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
+				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
 					return TEAM3;
 				} else if (teams[TEAM1].leader_dead && teams[TEAM3].leader_dead) {
 					return TEAM2;
@@ -2488,10 +2469,10 @@ static qboolean CheckRoundTimeLimit( void )
 			gi.bprintf( PRINT_HIGH, "Round timelimit hit.\n" );
 			IRC_printf( IRC_T_GAME, "Round timelimit hit." );
 
-			if (esp->value)
-				winTeam = CheckForWinner();
-			else
-				winTeam = CheckForForcedWinner();
+			// if (esp->value)
+			// 	winTeam = CheckForWinner();
+			// else
+			winTeam = CheckForForcedWinner();
 			if (WonGame( winTeam ))
 				return true;
 
