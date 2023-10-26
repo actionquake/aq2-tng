@@ -7,7 +7,7 @@
 espsettings_t espsettings;
 
 int esp_potential_spawns;
-edict_t *espionage_spawns[MAX_TEAMS][MAX_SPAWNS];
+int esp_last_chosen_spawn = 0;
 
 cvar_t *esp_respawn = NULL;
 edict_t *espflag = NULL;
@@ -232,6 +232,7 @@ void EspResetCapturePoint()
 
 void EspSetTeamSpawns(int team, char *str)
 {
+	espsettings_t *es = &espsettings;
 	edict_t *spawn = NULL;
 	char *next;
 	vec3_t pos;
@@ -260,7 +261,7 @@ void EspSetTeamSpawns(int team, char *str)
 		spawn->s.angles[YAW] = angle;
 		spawn->classname = ED_NewString (team_spawn_name);
 
-		espionage_spawns[team][esp_potential_spawns] = spawn;
+		es->custom_spawns[team][esp_potential_spawns] = spawn;
 		esp_potential_spawns++;
 		if (esp_potential_spawns >= MAX_SPAWNS)
 		{
@@ -887,17 +888,25 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 	espsettings_t *es = &espsettings;
     int teamNum = ent->client->resp.team;
     srand(time(NULL)); // Random seed
-
+	int random_index = 0;
 	int count = 0;
 	int i = 0;
+
     for (i = 0; i < game.maxclients; i++) {
         if (es->custom_spawns[teamNum][i]) {
             count++;
         }
     }
-    int random_index = rand() % count; // Generate a random index between 0 and the number of spawns
 
-    return es->custom_spawns[teamNum][random_index];
+	if (count > 0) {
+        do {
+            random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+        } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
+    }
+	// Keep track of which spawn was last chosen
+	esp_last_chosen_spawn = random_index;
+
+	return es->custom_spawns[teamNum][random_index];
 }
 
 	// if (espionage_spawns[teamNum][] < 1) {
