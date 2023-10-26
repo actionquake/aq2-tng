@@ -805,6 +805,10 @@ void Cmd_Bandage_f(edict_t *ent)
 	// 	return;
 	// }
 
+	if (esp->value && IS_LEADER(ent) && can_use_medkit){
+
+	}
+
 	if (ent->client->bleeding == 0 && ent->client->leg_damage == 0 && ! can_use_medkit) {
 		gi.cprintf(ent, PRINT_HIGH, "No need to bandage\n");
 		return;
@@ -1351,11 +1355,14 @@ void Cmd_Placenode_f (edict_t *ent)
 void Cmd_Volunteer_f(edict_t * ent)
 {
 	int teamNum = ent->client->resp.team;
-	int playernum = ent - g_edicts - 1;
-	int i = 0;
-	edict_t *oldLeader;
 
 	/* Perform player state checks */
+	// Volunteer does not work in matchmode, use captain
+	if (matchmode->value && !IS_CAPTAIN(ent)) {
+		gi.cprintf(ent, PRINT_HIGH, "This command is disabled in matchmode\n");
+		return;
+	}
+
 	// Ignore if not Espionage mode
 	if (!esp->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs Espionage to be enabled\n");
@@ -1380,6 +1387,7 @@ void Cmd_Volunteer_f(edict_t * ent)
 		return;
 	}
 
+	// Everything else passes the test, onto the queue
 	// This function manages the queue/leadership
 	EspLeaderQueueMgr(ent);
 }

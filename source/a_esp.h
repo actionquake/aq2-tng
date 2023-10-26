@@ -87,35 +87,28 @@ extern gitem_t *team_flag[TEAM_TOP];
 #define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
 
 void EspForceEspionage(int espmode);
-void EspSetTeamSpawns(int, char *);
 int EspGetRespawnTime(edict_t *ent);
 
 void Cmd_Volunteer_f(edict_t * ent);
 void EspSetLeader(void);
+void EspClearVolunteer(int teamNum);
 void EspClearVolunteers(void);
 int EspGetVolunteerCount(int teamNum);
-//void EspSetLeader( int teamNum, edict_t *ent );
-qboolean AllTeamsHaveLeaders(void);
-void EspLeaderLeftTeam( edict_t *ent );
+void EspLeaderLeftTeam(edict_t *ent);
 void EspPunishment(int teamNum);
 void EspRespawnPlayer(edict_t *ent);
 void EspAnnounceDetails( void );
-void EspShiftLeaderQueue(int teamNum);
 qboolean EspLeaderQueueMgr(edict_t *ent);
 
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);
-//void EspResetFlag(void);
 void EspResetCapturePoint( void );
-void GenerateMedKit(qboolean instant);
+void EspGenerateMedKit(qboolean instant);
 
-void EspTouchCapturePoint( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
 void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker);
 void EspCheckHurtLeader (edict_t * targ, edict_t * attacker);
 
 qboolean EspCheckRules (void);
 qboolean HasFlag (edict_t * ent);
 
-void ResetPlayers ();
-void GetEspScores(int *t1score, int *t2score);
-void EspCapReward(edict_t *);
+void GetEspScores(int *t1score, int *t2score, int *t3score);

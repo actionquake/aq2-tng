@@ -1187,89 +1187,54 @@ qboolean EspCheckRules(void)
 }
 
 /*
-This clears the Espionage volunteer table and all volunteers
+This clears a single team of volunteers and leaders
+Tends to only be used in Matchmode
 */
 
-void EspClearVolunteers(void)
+void EspClearVolunteer(int teamNum)
 {
 	espsettings_t *es = &espsettings;
 	int i, j, k = 0;
 	// Clear the struct array
-	for (i = 0; i < MAX_TEAMS; i++) {
-		for (j = 0; j < MAX_CLIENTS; j++) {
-			es->volunteers[i][j] = NULL;
-		}
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		es->volunteers[teamNum][i] = NULL;
 	}
 
-	// Clear the player resp value
+	// Clear the player resp values
 	edict_t *ent;
 	for (k = 0; k < game.maxclients; k++)
 	{
 		ent = &g_edicts[1 + i];
-		ent->client->resp.is_volunteer = false;
+		if (ent->client->resp.team == teamNum)
+			ent->client->resp.is_volunteer = false;
 	}
 }
 
 /*
-This check is similiar to checking that all teams have
-Captains in matchmode
+This clears the Espionage volunteer table and all volunteers
 */
-qboolean AllTeamsHaveLeaders(void)
+void EspClearVolunteers(void)
 {
-	int teamsWithLeaders = false;
-	int i = 0;
-
-	//AQ2:TNG Slicer Matchmode
-	if (matchmode->value && !TeamsReady())
-		return false;
-	//AQ2:TNG END
-
+	int i = TEAM1;
 	for (i = TEAM1; i <= teamCount; i++)
-	{
-		// if (HAVE_LEADER(i)) {
-		// 	teamsWithLeaders++;
-		// }
-		gi.dprintf("Volunteer Count for team %i: %d\n", i, EspGetVolunteerCount(i));
-	}
+		EspClearVolunteer(i);
 
-	if (atl->value) {
-		if (teamCount == 2) {
-			if (HAVE_LEADER(TEAM1) && HAVE_LEADER(TEAM2))
-			teamsWithLeaders = true;
-		} else if (teamCount == 3) {
-			if (HAVE_LEADER(TEAM1) && HAVE_LEADER(TEAM2) && HAVE_LEADER(TEAM3))
-				teamsWithLeaders = true;
-		}
-	} else if (etv->value) {
-		if (HAVE_LEADER(TEAM1))
-			teamsWithLeaders = true;
-	}
+	// espsettings_t *es = &espsettings;
+	// int i, j, k = 0;
+	// // Clear the struct array
+	// for (i = 0; i < MAX_TEAMS; i++) {
+	// 	for (j = 0; j < MAX_CLIENTS; j++) {
+	// 		es->volunteers[i][j] = NULL;
+	// 	}
+	// }
 
-	if(teamsWithLeaders){
-		return true;
-	}
-
-	// Cycle through the queue manager
-	EspSetLeader();
-	return false;
-}
-
-/*
-Used to select the next leader, should the previous one have died in the line of duty
-*/
-qboolean SelectNextLeader(int teamNum) {
-    espsettings_t *es = &espsettings;
-    edict_t *nextLeader = es->volunteers[teamNum][0];
-    if (nextLeader != NULL) {
-        EspSetLeader();
-        gi.dprintf("Selected %s as the new leader for team %d\n", nextLeader->client->pers.netname, teamNum);
-		return true;
-	} else {
-        gi.dprintf("No volunteers available for team %d\n", teamNum);
-		return false;
-    }
-	// Implicit false safety measure
-	return false;
+	// // Clear the player resp value
+	// edict_t *ent;
+	// for (k = 0; k < game.maxclients; k++)
+	// {
+	// 	ent = &g_edicts[1 + i];
+	// 	ent->client->resp.is_volunteer = false;
+	// }
 }
 
 /*
@@ -1379,8 +1344,7 @@ qboolean EspLeaderQueueMgr(edict_t *ent)
 }
 
 /*
-Call this if esp_mustvolunteer is 0
-or if a the leader of a team disconnects/leaves
+This is called if the leader of a team disconnects/leaves
 */
 int ChooseRandomLeader(int teamNum)
 {
@@ -1431,28 +1395,29 @@ void EspSetLeader(void)
 	// A mid-round change, we have to select the next player to be the leader!
 	if (team_round_going){
 		for (i = 0; i < MAX_TEAMS; i++) {
-				// Choose the first member of the array as the new leader for each team
-				// This will always results in a new leader somehow, unless there are no
-				// more players at all
-				if (es->volunteers[i][0]) {
-					newLeader = es->volunteers[i][0];
-					leaderChange = true;
-				} else {
-					// If there are no volunteers, select a random player
-					if (!ChooseRandomLeader(i)) {
-						// Halt the game immediately, there can be no winner
-						gi.dprintf("Error: No eligible players for team %d\n", i);
-						// The other team immediately wins, and the next round should not
-						// automatically begin because AllTeamsHaveLeaders() should fail
-						if (teamCount == 2) {
-							WonGame(OtherTeam(i));
-						} else if (teamCount == 3) {
-							// We have no choice but to kill everyone on the team with no leader
-							CenterPrintTeam(i, "Your leader has abandoned you, you have been eliminated!");
-							KillEveryone(i);
-						}
+			// Choose the first member of the array as the new leader for each team
+			// This will always results in a new leader somehow, unless there are no
+			// more players at all
+			if (es->volunteers[i][0]) {
+				newLeader = es->volunteers[i][0];
+				leaderChange = true;
+			} else {
+				// If there are no volunteers, select a random player
+				if (!ChooseRandomLeader(i)) {
+					// Halt the game immediately, there can be no winner
+					gi.dprintf("Error: No eligible players for team %d\n", i);
+					// The other team immediately wins, and the next round should not
+					// automatically begin because AllTeamsHaveLeaders() should fail
+					if (teamCount == 2) {
+						gi.bprintf(PRINT_HIGH, "%s has no eligible leaders, %s wins!", teams[i].name, teams[OtherTeam(i)].name);
+						WonGame(OtherTeam(i));
+					} else if (teamCount == 3) {
+						// We have no choice but to kill everyone on the team with no leader
+						CenterPrintTeam(i, "Your leader has abandoned you, you have been eliminated!");
+						KillEveryone(i);
 					}
 				}
+			}
 		}
 	}
 
@@ -1481,8 +1446,8 @@ void EspSetLeader(void)
 		char temp[128];
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", newLeader->client->pers.netname, teams[newLeader->client->resp.team].name );
 		CenterPrintAll(temp);
-		gi.cprintf( newLeader, PRINT_CHAT, "You are the leader of '%s'\n", teams[newLeader->client->resp.team].name );
-
+		gi.cprintf(newLeader, PRINT_CHAT, "You are the leader of '%s'\n", teams[newLeader->client->resp.team].name );
+		gi.sound(newLeader, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
 	}
 	
 }
@@ -1537,8 +1502,7 @@ void EspSetLeader(void)
 // 	}
 // }
 
-
-void EspLeaderLeftTeam( edict_t *ent )
+void EspLeaderLeftTeam(edict_t *ent)
 {
 	int teamNum = ent->client->resp.team;
 
@@ -1628,7 +1592,7 @@ This adds a medkit to the player's inventory, up to the medkit_max value
 Passing a true parameter instantly provides this medkit
 Passing a false parameter assumes you want to generate one at a time interval set by medkit_time
 */
-void GenerateMedKit(qboolean instant)
+void EspGenerateMedKit(qboolean instant)
 {
 	int i = 0;
 	edict_t *ent;
@@ -1636,10 +1600,11 @@ void GenerateMedKit(qboolean instant)
 	int interval = (int)medkit_time->value;
 	int max_kits = (int)medkit_max->value;
 
-	// Do nothing if the ent already has max medkits
+	// Loop through all players and generate a medkit for each leader
 	for (i = 0; i < game.maxclients; i++) {
 		ent = &g_edicts[1 + i];
 		if (IS_LEADER(ent)) {
+			// Do nothing if the ent already has max medkits
 			if (ent->client->medkit >= max_kits)
 				return;
 			else if (roundseconds - ent->client->resp.medkit_award_time >= interval) {

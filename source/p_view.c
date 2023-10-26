@@ -1212,6 +1212,7 @@ void Do_Bleeding (edict_t * ent)
 void Do_MedKit( edict_t *ent )
 {
 	int i = 0;
+	int healing_value = medkit_value->value;
 
 	// Synchronize with weapon_framesync for consistent healing, as bandaging time is controlled by weapon think.
 	if( level.framenum % game.framediv != ent->client->weapon_last_activity % game.framediv )
@@ -1222,8 +1223,8 @@ void Do_MedKit( edict_t *ent )
 	if( ! IS_ALIVE(ent) )
 		return;
 
-	// Heal from medkit only while bandaging.
-	if( !(ent->client->bandaging || ent->client->bandage_stopped) )
+	// Heal from medkit only while bandaging, except in Espionage mode where you can use a medkit anytime
+	if( !(ent->client->bandaging || ent->client->bandage_stopped) && !esp->value )
 		return;
 
 	// If there is bleeding or leg damage, take care of that separately before using medkit.
@@ -1244,8 +1245,11 @@ void Do_MedKit( edict_t *ent )
 			ent->client->medkit--;
 		}
 	} else {
-		// Subtract one medkit, gain health per medkit_value
-		ent->health = ent->health + (int)medkit_value->value;
+		// Subtract one medkit, gain health per healing_value
+		// Also a check here to ensure healing value is a positive integer (default 25)
+		if( healing_value < 1 )
+			healing_value = 25;
+		ent->health = ent->health + healing_value;
 		ent->client->medkit--;
 	}
 

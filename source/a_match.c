@@ -145,9 +145,7 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 		ent = NULL;
 
 	teams[teamNum].captain = ent;
-	if (esp->value) {
-		EspLeaderQueueMgr(ent);
-	}
+
 	if (!ent) {
 		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
 			if (teams[teamNum].ready) {
@@ -159,6 +157,7 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 		}
 		if (oldCaptain) {
 			gi.bprintf( PRINT_HIGH, "%s is no longer %s's captain\n", oldCaptain->client->pers.netname, teams[teamNum].name );
+			EspClearVolunteer(teamNum);
 		}
 		teams[teamNum].locked = 0;
 		return;
@@ -168,6 +167,11 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 		gi.bprintf( PRINT_HIGH, "%s is now %s's captain\n", ent->client->pers.netname, teams[teamNum].name );
 		gi.cprintf( ent, PRINT_CHAT, "You are the captain of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
+
+		// Add new player as the leader
+		if (esp->value) {
+			EspLeaderQueueMgr(ent);
+		}
 
 		for (i = TEAM1; i <= teamCount; i++) {
 			if (i != teamNum && teams[i].wantReset)

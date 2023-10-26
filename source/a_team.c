@@ -1319,6 +1319,11 @@ void Team_f (edict_t * ent)
 		return;
 	}
 	//PG BUND - END (Tourney extension)
+
+	if (esp->value && IS_LEADER(ent)) {
+		gi.cprintf(ent, PRINT_MEDIUM, "You are a team leader, you cannot change teams. Volunteer again to become a normal player.\n");
+		return;
+	}
 	
 	Q_strncpyz(team, gi.args(), sizeof(team));
 	t = team;
@@ -1983,6 +1988,44 @@ qboolean BothTeamsHavePlayers()
 	return (teamsWithPlayers >= 2);
 }
 
+/*
+This check validates all teams have leaders so a round can begin
+*/
+qboolean AllTeamsHaveLeaders(void)
+{
+	int teamsWithLeaders = false;
+	int i = 0;
+
+	// This may be redundant but it doesn't hurt to verify
+	if (matchmode->value && !TeamsReady())
+		return false;
+
+	// Debug stuff, comment/remove later
+	for (i = TEAM1; i <= teamCount; i++)
+		gi.dprintf("Volunteer Count for team %i: %d\n", i, EspGetVolunteerCount(i));
+
+	if (atl->value) {
+		if (teamCount == 2) {
+			if (HAVE_LEADER(TEAM1) && HAVE_LEADER(TEAM2))
+			teamsWithLeaders = true;
+		} else if (teamCount == 3) {
+			if (HAVE_LEADER(TEAM1) && HAVE_LEADER(TEAM2) && HAVE_LEADER(TEAM3))
+				teamsWithLeaders = true;
+		}
+	} else if (etv->value) {
+		if (HAVE_LEADER(TEAM1))
+			teamsWithLeaders = true;
+	}
+
+	if(teamsWithLeaders){
+		return true;
+	}
+
+	// Cycle through the queue manager
+	EspSetLeader();
+	return false;
+}
+
 // CheckForWinner: Checks for a winner (or not).
 int CheckForWinner()
 {
@@ -2329,11 +2372,12 @@ void MakeAllLivePlayersObservers (void)
 	if(ctf->value)
 		CTFResetFlags();
 
-	// Reset Espionage flag
-	if (esp->value && etv->value)
-		EspResetCapturePoint();
+	// Reset Espionage items
+	if (esp->value)
 		EspSetLeader();
-
+	if (etv->value)
+		EspResetCapturePoint();
+		
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
@@ -2852,7 +2896,7 @@ int CheckTeamRules (void)
 		// Team round is going, and it's GS_ROUNDBASED
 		{
 			if (esp->value) {
-				GenerateMedKit(false);
+				EspGenerateMedKit(false);
 				// Do something here about giving players stuff
 			}
 		}
