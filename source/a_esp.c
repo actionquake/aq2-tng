@@ -17,7 +17,8 @@ unsigned int esp_team_effect[] = {
 	EF_BLASTER | EF_TELEPORTER,
 	EF_FLAG1,
 	EF_FLAG2,
-	EF_GREEN_LIGHT | EF_COLOR_SHELL
+	EF_GREEN_LIGHT | EF_COLOR_SHELL,
+	EF_ROTATE
 };
 
 unsigned int esp_team_fx[] = {
@@ -162,11 +163,12 @@ void EspTouchCapturePoint( edict_t *flag, edict_t *player, cplane_t *plane, csur
 		flag->owner = player;
 }
 
-void EspMakeCapturePoint(edict_t *flag)
+void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
 
+	//gi.dprintf("Creating a new capturepoint\n");
 	VectorSet( flag->mins, -15, -15, -15 );
 	VectorSet( flag->maxs,  15,  15,  15 );
 
@@ -191,7 +193,7 @@ void EspMakeCapturePoint(edict_t *flag)
 	flag->classname = "item_flag";
 	flag->svflags &= ~SVF_NOCLIENT;
 	gi.linkentity( flag );
-
+	
 	esp_flag_count ++;
 }
 
@@ -199,15 +201,31 @@ void EspMakeCapturePoint(edict_t *flag)
 // This is used to reset the capturepoint after a round resets
 void EspResetCapturePoint()
 {
-	edict_t *ent, *flag = NULL;
-	espsettings_t *es = &espsettings;
-	edict_t *capturepoint = es->capturepoint;
+	edict_t *ent = NULL;
+	edict_t *flag = NULL;
 	// vec3_t origin;
 	// vec3_t angles;
+
+	// Reset escortcap value
+	espsettings.escortcap = false;	
 
 	// Find the flag
 	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
 		flag = ent;
+	}
+	if (flag){
+		flag->solid = SOLID_TRIGGER;
+		flag->movetype = MOVETYPE_NONE;
+		flag->s.modelindex = esp_flag;
+		flag->s.skinnum = 0;
+		flag->s.effects = esp_team_effect[ NOTEAM ];
+		flag->s.renderfx = esp_team_fx[ NOTEAM ];
+		flag->owner = NULL;
+		flag->touch = EspTouchCapturePoint;
+		NEXT_KEYFRAME( flag, EspCapturePointThink );
+		flag->classname = "item_flag";
+		flag->svflags &= ~SVF_NOCLIENT;
+		gi.linkentity( flag );
 	}
 
 	// if (flag == NULL){
@@ -220,11 +238,11 @@ void EspResetCapturePoint()
 	// VectorCopy(newflag->s.angles, flag->s.angles);
 
 	// Remove the flag
-	G_FreeEdict(flag);
+	// G_FreeEdict(flag);
 
-	// Create a new flag
-	capturepoint = G_Spawn();
-	EspMakeCapturePoint(capturepoint);
+	// // Create a new flag
+	// capturepoint = G_Spawn();
+	// EspMakeCapturePoint(capturepoint, true);
 
 	// Restore the flag's origin and angles
 // 	VectorCopy(origin, flag->s.origin);
@@ -490,7 +508,7 @@ qboolean EspLoadConfig(const char *mapname)
 						}
 					}
 
-					EspMakeCapturePoint( flag );
+					EspMakeCapturePoint( flag, false );
 
 					// Set the capture point in the settings
 					es->capturepoint = flag;
@@ -897,7 +915,7 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 		else
 			return false;
 	}
-
+	return false;
 }
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
@@ -908,7 +926,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	int 		selection;
 	float 		range, range1, range2;
 	char 		*cname;
-	vec3_t 		respawn_coords, angles;
+	vec3_t 		respawn_coords;
 
 	ent->client->resp.esp_state = ESP_STATE_PLAYING;
 

@@ -1993,10 +1993,10 @@ int CheckForWinner()
 			// Check if this value is 1, which means the escorting team wins
 			// By default it is 0
 			if (espsettings.escortcap == true) {
-				gi.dprintf("The winner was team %d\n", TEAM1);
+				//gi.dprintf("The winner was team %d\n", TEAM1);
 				return TEAM1;
 			} else if (teams[TEAM1].leader_dead){
-				gi.dprintf("The winner was team %d\n", TEAM2);
+				//gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
 			}
 		}
@@ -2222,6 +2222,7 @@ static void StartLCA(void)
 	SpawnPlayers();
 
 	if (esp->value)
+		EspResetCapturePoint();
 		EspAnnounceDetails();
 }
 
@@ -2515,10 +2516,8 @@ int WonGame (int winner)
 				for (i = 0; i <= teamCount; i++) {
 					// Reset leader_dead for all teams before next round starts and set escortcap to false
 					gi.dprintf("Resetting team %d leader_dead status to false\n", i);
-					espsettings.escortcap = false;
 					teams[i].leader_dead = false;
 				}
-				EspResetCapturePoint();
 				EspLeaderCheck();
 			}
 
