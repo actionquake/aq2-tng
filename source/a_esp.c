@@ -14,11 +14,9 @@ int esp_potential_spawns;
 int esp_last_chosen_spawn = 0;
 
 unsigned int esp_team_effect[] = {
-	EF_BLASTER | EF_TELEPORTER,
+	EF_BLASTER | EF_ROTATE | EF_TELEPORTER,
 	EF_FLAG1,
-	EF_FLAG2,
-	EF_GREEN_LIGHT | EF_COLOR_SHELL,
-	EF_ROTATE
+	EF_GREEN_LIGHT | EF_COLOR_SHELL
 };
 
 unsigned int esp_team_fx[] = {
@@ -118,7 +116,7 @@ void EspCapturePointThink( edict_t *flag )
 				espsettings.escortcap = true;
 
 			// Escort point captured, end round and start again
-			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_win.wav"), 1.0, ATTN_NONE, 0.0 );
+			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("aqdt/aqg_bosswin.wav"), 1.0, ATTN_NONE, 0.0 );
 			espsettings.escortcap = flag->owner->client->resp.team;
 			if (esp_punish->value)
 				EspPunishment(OtherTeam(flag->owner->client->resp.team));
@@ -518,9 +516,10 @@ qboolean EspLoadConfig(const char *mapname)
 				}
 
 				if( esp_flag_count )
-					gi.dprintf( "Espionage ETV mode: %i target generated.\n", esp_flag_count );
+					gi.dprintf("Espionage ETV mode: %i target generated.\n", esp_flag_count);
 				else {
-					gi.dprintf( "Warning: Espionage needs escort target in: tng/%s.esp\n", mapname );
+					gi.dprintf("Warning: Espionage needs 'escort' target coordinates in: tng/%s.esp\n", mapname);
+					gi.dprintf("* Forcing ATL mode to be safe\n");
 					EspForceEspionage(ESPMODE_ATL);
 				}
 
@@ -536,7 +535,8 @@ qboolean EspLoadConfig(const char *mapname)
 					Q_strncpyz(espsettings.target_name, ptr, sizeof(espsettings.target_name));
 				}
 			} else {
-				gi.dprintf( "Warning: Escort target coordinates not found in tng/%s.esp, setting to ATL mode\n", mapname );
+				gi.dprintf( "Warning: Escort target coordinates not found in tng/%s.esp\n", mapname );
+				gi.dprintf("* Forcing ATL mode to be safe\n");
 				EspForceEspionage(ESPMODE_ATL);
 			}
 		}
@@ -561,11 +561,6 @@ qboolean EspLoadConfig(const char *mapname)
 				}
 			}
 		}
-			//}
-		// } else {
-		// 	gi.dprintf("Enforcing normal spawnpoints\n");
-		// 	espsettings.custom_spawns = false;
-		// }
 
 		gi.dprintf("- Teams\n");
 
@@ -614,13 +609,13 @@ qboolean EspLoadConfig(const char *mapname)
 			const char *team_color;
 			switch (i) {
 				case TEAM1:
-					team_color = "red";
+					team_color = "red_team";
 					break;
 				case TEAM2:
-					team_color = "blue";
+					team_color = "blue_team";
 					break;
 				case TEAM3:
-					team_color = "green";
+					team_color = "green_team";
 					break;
 				default:
 					continue;
@@ -659,7 +654,7 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 			if (missing_property) {
 				gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin; review your file\n");
-				gi.dprintf("Enforcing defaults\n");
+				gi.dprintf("* Enforcing safe defaults\n");
 				EspEnforceDefaultSettings("team");
 				espsettings.custom_skins = false;
 			} else {
@@ -1358,7 +1353,7 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		if (oldLeader) {
 			Com_sprintf(temp, sizeof(temp), "%s is no longer %s's leader\n", oldLeader->client->pers.netname, teams[teamNum].name );
 			CenterPrintAll(temp);
-			gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
+			//gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
 		}
 		teams[teamNum].locked = 0;
 		return;
@@ -1403,10 +1398,11 @@ qboolean EspChooseRandomLeader(int teamNum)
 		if (matchmode->value && ent->client->resp.subteam == teamNum)
 			// Subs can't be elected leaders
 			return false;
-		else
+		else {
 			// Congrats, you're the new leader
 			EspSetLeader(teamNum, ent);
 			return true;
+		}
 	}
 	return false;
 }
@@ -1439,13 +1435,17 @@ void EspLeaderCheck()
 	int i = 0;
 	edict_t *newLeader;
 
-	for (i = TEAM1; i < TEAM_TOP; i++) {
+	for (i = TEAM1; i <= teamCount; i++) {
 		if (!HAVE_LEADER(i)) {
 			newLeader = EspVolunteerCheck(i);
 			if (newLeader) {
 				EspSetLeader(i, newLeader);
 			} else {  // Oops, no volunteers
 				EspChooseRandomLeader(i);
+			} 
+			
+			if (!newLeader) {
+				gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[i].name );
 			}
 		}
 	}

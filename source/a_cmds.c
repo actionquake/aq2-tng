@@ -1372,14 +1372,20 @@ void Cmd_Volunteer_f(edict_t * ent)
 	// If the current leader is issuing this command again, remove them as leader
 	oldLeader = teams[teamNum].leader;
 	if (oldLeader == ent) {
+		if (team_round_going || lights_camera_action > 0) {
+			gi.cprintf(ent, PRINT_HIGH, "You cannot resign as leader while a round is in progress\n");
+			return;
+		}
 		EspSetLeader( teamNum, NULL );
+		oldLeader->client->resp.is_volunteer = false;
 		return;
 	}
 
 	// If the team already has a leader, send this message to the ent volunteering
 	if (oldLeader) {
-		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\n",
+		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\nYou are now volunteering for duty should he fall\n",
 			teams[teamNum].leader->client->pers.netname );
+		ent->client->resp.is_volunteer = true;
 		return;
 	}
 

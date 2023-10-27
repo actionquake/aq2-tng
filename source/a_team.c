@@ -1320,6 +1320,11 @@ void Team_f (edict_t * ent)
 		return;
 	}
 	//PG BUND - END (Tourney extension)
+
+	if (esp->value && IS_LEADER(ent)) {
+		gi.cprintf(ent, PRINT_MEDIUM, "You are a team leader, you cannot change teams.\n");
+		return;
+	}
 	
 	Q_strncpyz(team, gi.args(), sizeof(team));
 	t = team;
