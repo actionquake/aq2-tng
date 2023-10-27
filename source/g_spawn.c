@@ -1766,6 +1766,15 @@ void SP_worldspawn (edict_t * ent)
 	gi.soundindex("misc/secret.wav");	// used for ctf swap sound
 	gi.soundindex("weapons/grenlf1a.wav");	// respawn sound
 
+	// Precache insane sound effects, 11 of them total (1-11)
+	int insanesounds;
+	for (insanesounds = 1; insanesounds < 12; insanesounds++)
+	{
+		char soundname[32];
+		sprintf(soundname, "insane/insane%i.wav", insanesounds);
+		gi.soundindex(soundname);
+	}
+
 	PrecacheItems();
 	PrecacheRadioSounds();
 	PrecacheUserSounds();
