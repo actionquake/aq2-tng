@@ -117,3 +117,4 @@ void EspCapReward(edict_t *);
 void EspAnnounceDetails( void );
 qboolean EspChooseRandomLeader(int teamNum);
 void EspLeaderCheck();
+void EspEndOfRoundCleanup();

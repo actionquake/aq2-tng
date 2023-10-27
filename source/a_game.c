@@ -381,8 +381,11 @@ void PrintMOTD(edict_t * ent)
 				lines++;
 			}
 
+			qboolean espcspawns = false;
+			if (espsettings.custom_spawns[0] != NULL)
+				espcspawns = true;
 			sprintf(msg_buf + strlen(msg_buf), "Using %s spawns\n",
-					(espsettings.custom_spawns ? "CUSTOM" : "ORIGINAL"));
+					(espcspawns ? "CUSTOM" : "ORIGINAL"));
 			lines++;
 
 			if(strlen(espsettings.author) > 0) {

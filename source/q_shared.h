@@ -1250,24 +1250,25 @@ temp_event_t;
 #define STAT_GRENADE_ICON               28
 #define STAT_GRENADES                   29
 
-#define STAT_TEAM3_PIC			30
-#define STAT_TEAM3_SCORE		31
+#define STAT_TEAM3_PIC			            30
+#define STAT_TEAM3_SCORE		            31
 
 #define STAT_TEAM1_HEADER               30
 #define STAT_TEAM2_HEADER               31
+
+// If we ever get more stats, we need these for Espionage, SetEspStats():
+/*
+#define STAT_TEAM1_LEADERPIC
+#define STAT_TEAM2_LEADERPIC
+#define STAT_TEAM3_LEADERPIC
+#define STAT_TEAM3_HEADER
+*/
 
 #define MAX_STATS                       32
 
 // Espionage
 
 #define STAT_MARKER_PIC                 STAT_FLAG_PIC
-// #define STAT_TEAM1_LEADERPIC            34
-// #define STAT_TEAM2_LEADERPIC            35
-// #define STAT_TEAM3_LEADERPIC            36
-
-// #define STAT_TEAM3_HEADER               37
-
-
 
 // dmflags->value flags
 #define DF_NO_HEALTH            1

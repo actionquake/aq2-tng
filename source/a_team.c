@@ -1164,6 +1164,11 @@ char *TeamName (int team)
 		return "None";
 }
 
+/*
+AssignSkin
+
+Anytime this is called, all player models are re-skinned
+*/
 void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 {
 	int playernum = ent - g_edicts - 1;
@@ -1177,8 +1182,37 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 		default_skin = force_skin->string;
 	}
 
-	if( (ctf->value || dom->value) && ! matchmode->value )
-	{
+	// Accounts for each Espionage mode, in matchmode or not
+	if (esp->value){
+		/*
+		In ATL mode (espsettings == 0), all teams must have a leader, and will have their own skin
+		In ETV mode (espsettings == 1), only TEAM1 gets a leader.
+		*/
+	
+		switch (ent->client->resp.team) {
+		case TEAM1:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].skin);
+			if (IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].leader_skin);
+			}
+			break;
+		case TEAM2:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].skin);
+			if ((atl->value) && IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].leader_skin);
+			}
+			break;
+		case TEAM3:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].skin);
+			if ((atl->value) && IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].leader_skin);
+			}
+			break;
+		default:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, default_skin);
+			break;
+		}
+	} else if ((ctf->value || dom->value) && !matchmode->value) {
 		// forcing CTF model
 		if(ctf_model->string[0]) {
 			/* copy at most bytes that the skin name itself fits in with the delimieter and NULL */
@@ -1206,40 +1240,7 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 			break;
 		}
 	}
-	else if (esp->value)
-	{
-		/*
-		In ATL mode (espsettings == 0), all teams must have a leader, and will have their own skin
-		In ETV mode (espsettings == 1), only TEAM1 gets a leader.
-		*/
-	
-		switch (ent->client->resp.team)
-		{
-		case TEAM1:
-			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].skin);
-			if (IS_LEADER(ent)){
-				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].leader_skin);
-			}
-			break;
-		case TEAM2:
-			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].skin);
-			if ((atl->value) && IS_LEADER(ent)){
-				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].leader_skin);
-			}
-			break;
-		case TEAM3:
-			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].skin);
-			if ((atl->value) && IS_LEADER(ent)){
-				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].leader_skin);
-			}
-			break;
-		default:
-			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, default_skin);
-			break;
-		}
-		//gi.dprintf("I assigned skin  %s  to  %s\n", skin, ent->client->pers.netname);
-	}
-	else
+	else // Normal teamplay mode, not CTF/DOM/ESP/Matchmode
 	{
 		switch (ent->client->resp.team)
 		{
@@ -2513,14 +2514,8 @@ int WonGame (int winner)
 			// end of changing sound dir
 			teams[winner].score++;
 			if (esp->value) {
-				for (i = 0; i <= teamCount; i++) {
-					// Reset leader_dead for all teams before next round starts and set escortcap to false
-					gi.dprintf("Resetting team %d leader_dead status to false\n", i);
-					teams[i].leader_dead = false;
-				}
-				EspLeaderCheck();
+				EspEndOfRoundCleanup();
 			}
-
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
 
 			PrintScores ();

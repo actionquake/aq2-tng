@@ -840,7 +840,8 @@ typedef struct
 
   int pic_leaderskin[TEAM_TOP];  
   int pic_esp_teamtag[TEAM_TOP];
-  int pic_esp_marker[TEAM_TOP];
+  int pic_esp_teamicon[TEAM_TOP];
+  int pic_esp_leadericon[TEAM_TOP];
 }
 level_locals_t;
 

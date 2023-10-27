@@ -32,7 +32,6 @@ int esp_flag_count = 0;
 int esp_team_flags[ TEAM_TOP ] = {0};
 int esp_winner = NOTEAM;
 int esp_flag = 0;
-int esp_pics[ TEAM_TOP ] = {0};
 int esp_leader_pics[ TEAM_TOP ] = {0};
 int esp_last_score = 0;
 
@@ -363,6 +362,7 @@ qboolean EspLoadConfig(const char *mapname)
 	char buf[1024];
 	char *ptr;
 	qboolean no_file = false;
+	qboolean loaded_default_file = false;
 	espsettings_t *es = &espsettings;
 	FILE *fh;
 
@@ -386,6 +386,7 @@ qboolean EspLoadConfig(const char *mapname)
 			no_file = true;
 		} else {
 			gi.dprintf("Found %s, attempting to load it...\n", buf);
+			loaded_default_file = true;
 		}
 	}
 
@@ -540,21 +541,24 @@ qboolean EspLoadConfig(const char *mapname)
 			}
 		}
 
-		ptr = INI_Find(fh, "spawns", "red");
-		if(ptr) {
-			gi.dprintf("Team 1 spawns: %s\n", ptr);
-			EspSetTeamSpawns(TEAM1, ptr);
-		}
-		ptr = INI_Find(fh, "spawns", "blue");
-		if(ptr) {
-			gi.dprintf("Team 2 spawns: %s\n", ptr);
-			EspSetTeamSpawns(TEAM2, ptr);
-		}
-		if (teamCount == 3){
-			ptr = INI_Find(fh, "spawns", "green");
+		// No custom spawns in default file
+		if (!loaded_default_file) {
+			ptr = INI_Find(fh, "spawns", "red");
 			if(ptr) {
-				gi.dprintf("Team 3 spawns: %s\n", ptr);
-				EspSetTeamSpawns(TEAM3, ptr);
+				gi.dprintf("Team 1 spawns: %s\n", ptr);
+				EspSetTeamSpawns(TEAM1, ptr);
+			}
+			ptr = INI_Find(fh, "spawns", "blue");
+			if(ptr) {
+				gi.dprintf("Team 2 spawns: %s\n", ptr);
+				EspSetTeamSpawns(TEAM2, ptr);
+			}
+			if (teamCount == 3){
+				ptr = INI_Find(fh, "spawns", "green");
+				if(ptr) {
+					gi.dprintf("Team 3 spawns: %s\n", ptr);
+					EspSetTeamSpawns(TEAM3, ptr);
+				}
 			}
 		}
 			//}
@@ -1176,15 +1180,15 @@ void SetEspStats( edict_t *ent )
 	ent->client->ps.stats[ STAT_TEAM2_SCORE ] = teams[ TEAM2 ].score;
 
 	// Team icons for the score display and HUD.
-	ent->client->ps.stats[ STAT_TEAM1_PIC ] = esp_pics[ TEAM1 ];
-	ent->client->ps.stats[ STAT_TEAM2_PIC ] = esp_pics[ TEAM2 ];
-	// ent->client->ps.stats[ STAT_TEAM1_LEADERPIC ] = esp_leader_pics[ TEAM1 ];
-	// ent->client->ps.stats[ STAT_TEAM2_LEADERPIC ] = esp_leader_pics[ TEAM2 ];
+	ent->client->ps.stats[ STAT_TEAM1_PIC ] = level.pic_esp_teamicon[ TEAM1 ];
+	ent->client->ps.stats[ STAT_TEAM2_PIC ] = level.pic_esp_teamicon[ TEAM2 ];
+	// ent->client->ps.stats[ STAT_TEAM1_LEADERPIC ] = level.pic_esp_leadericon[ TEAM1 ];
+	// ent->client->ps.stats[ STAT_TEAM2_LEADERPIC ] = level.pic_esp_leadericon[ TEAM2 ];
 
 	if (teamCount == 3) {
 		ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
-		ent->client->ps.stats[ STAT_TEAM3_PIC ] = esp_pics[ TEAM3 ];
-		// ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = esp_leader_pics[ TEAM3 ];
+		ent->client->ps.stats[ STAT_TEAM3_PIC ] = level.pic_esp_teamicon[ TEAM3 ];
+		// ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
 	}
 
 	// During intermission, blink the team icon of the winning team.
@@ -1331,8 +1335,6 @@ void EspSetLeader( int teamNum, edict_t *ent )
 	edict_t *oldLeader = teams[teamNum].leader;
 	char temp[128];
 
-	//ChooseRandomPlayer(teamNum, true);
-
 	if (teamNum == NOTEAM)
 		ent = NULL;
 
@@ -1409,6 +1411,10 @@ qboolean EspChooseRandomLeader(int teamNum)
 	return false;
 }
 
+/*
+Check if this team has any volunteers, choose them first before
+randomly choosing non-volunteers.  Returns NULL if none are found.
+*/
 edict_t *EspVolunteerCheck(int teamNum)
 {
 	int i = 0;
@@ -1417,7 +1423,7 @@ edict_t *EspVolunteerCheck(int teamNum)
 	for (i = 0; i < game.maxclients; i++) {
         ent = g_edicts + 1 + i;
         if (ent->inuse && ent->client->resp.team == teamNum && ent->client->resp.is_volunteer) {
-            return ent; // Return the entity if their is_volunteer flag is set to true
+            return ent;
         }
     }
 	// No volunteer found
@@ -1428,7 +1434,6 @@ edict_t *EspVolunteerCheck(int teamNum)
 Check if each team has a leader, if not, choose a volunteer, else choose one at random
 This should only fail if there is no one to choose
 */
-
 void EspLeaderCheck()
 {
 	int i = 0;
@@ -1661,4 +1666,26 @@ void EspAnnounceDetails( void )
 			}
 		}
 	}
+}
+
+/*
+Call this at the end of the round to get us back to a good state
+*/
+void EspEndOfRoundCleanup()
+{
+	int i = 0;
+	// Reset leader_dead for all teams before next round starts
+	for (i = TEAM1; i <= teamCount; i++) {
+		teams[i].leader_dead = false;
+	}
+	// Check that we have leaders for the next round
+	EspLeaderCheck();
+
+	/* 
+	Note:  Resetting the ETV escort point is not done here,
+	it is performed in EspResetCapturePoint() and MUST be called at 
+	the _beginning_ of the round, not the end.  Calling it at the 
+	end of the round has the possibility of recapturing the point
+	after the round has ended but before the next round begins
+	*/
 }
