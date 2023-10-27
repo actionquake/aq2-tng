@@ -1809,6 +1809,7 @@ typedef struct
   int esp_leaderfragcount;
   int esp_markerdefendercount;
   int esp_lasthurtleader;
+  qboolean is_volunteer;
 
   int medkit_award_time;
 

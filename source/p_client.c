@@ -1622,11 +1622,11 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		if (!in_warmup && team_round_going) {
 			EspReportLeaderDeath(self);
 			for( self = g_edicts + 1; self <= g_edicts + game.maxclients; self ++ ){
-				// Don't send the sound if the ent is not a client or if the client is a bit
+				// Don't send the sound if the ent is not a client or if the client is a bot
 				if(!self->inuse || !self->client || !self->is_bot)
 					continue;
 				else
-					unicastSound( self, gi.soundindex("tng/leader_death.wav"), 0.75 );
+					gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_death.wav"), 1.0, ATTN_NONE, 0.0);
 			if (esp_punish->value)
 				EspPunishment(self->client->resp.team);
 			}

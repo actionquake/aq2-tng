@@ -1998,9 +1998,6 @@ int CheckForWinner()
 			} else if (teams[TEAM1].leader_dead){
 				gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
-			} else {
-				gi.bprintf(PRINT_HIGH, "No team wins...\n");
-				return WINNER_TIE;
 			}
 		}
 	//gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
@@ -2522,6 +2519,7 @@ int WonGame (int winner)
 					teams[i].leader_dead = false;
 				}
 				EspResetCapturePoint();
+				EspLeaderCheck();
 			}
 
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));

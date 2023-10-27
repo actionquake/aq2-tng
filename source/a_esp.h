@@ -58,6 +58,7 @@ typedef struct espsettings_s
 	int capturestreak;
 	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
+	edict_t *capturepoint;
 } espsettings_t;
 
 extern espsettings_t espsettings;
@@ -114,3 +115,5 @@ void ResetPlayers ();
 void GetEspScores(int *t1score, int *t2score);
 void EspCapReward(edict_t *);
 void EspAnnounceDetails( void );
+qboolean EspChooseRandomLeader(int teamNum);
+void EspLeaderCheck();

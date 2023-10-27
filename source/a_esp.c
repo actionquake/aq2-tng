@@ -10,7 +10,6 @@ espsettings_t espsettings;
 // int num_potential_spawns;
 
 cvar_t *esp_respawn = NULL;
-edict_t *espflag = NULL;
 int esp_potential_spawns;
 int esp_last_chosen_spawn = 0;
 
@@ -50,6 +49,8 @@ int EspModeCheck()
 		return ESPMODE_ATL; // ATL mode
 	else if (etv->value)
 		return ESPMODE_ETV; // ETV mode
+
+	return -1; // Espionage is disabled
 }
 
 /*
@@ -161,7 +162,7 @@ void EspTouchCapturePoint( edict_t *flag, edict_t *player, cplane_t *plane, csur
 		flag->owner = player;
 }
 
-void EspMakeCapturePoint( edict_t *flag)
+void EspMakeCapturePoint(edict_t *flag)
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
@@ -198,33 +199,32 @@ void EspMakeCapturePoint( edict_t *flag)
 // This is used to reset the capturepoint after a round resets
 void EspResetCapturePoint()
 {
-	edict_t *ent = NULL;
-	edict_t *flag = NULL;
-	vec3_t origin;
-	vec3_t angles;
-	int i = 0;
+	edict_t *ent, *flag = NULL;
+	espsettings_t *es = &espsettings;
+	edict_t *capturepoint = es->capturepoint;
+	// vec3_t origin;
+	// vec3_t angles;
 
 	// Find the flag
 	while ((ent = G_Find(ent, FOFS(classname), "item_flag")) != NULL) {
 		flag = ent;
-		i++;
 	}
 
-	if (flag == NULL){
-		gi.dprintf("Warning: No flag found, aborting reset\n");
-		return;
-	}
+	// if (flag == NULL){
+	// 	gi.dprintf("Warning: No flag found, aborting reset\n");
+	// 	return;
+	// }
 
-	// Save the flag's origin and angles
-	VectorCopy(flag->s.origin, origin);
-	VectorCopy(flag->s.angles, angles);
+	// // Save the flag's origin and angles
+	// VectorCopy(newflag->s.origin, flag->s.origin);
+	// VectorCopy(newflag->s.angles, flag->s.angles);
 
 	// Remove the flag
 	G_FreeEdict(flag);
 
 	// Create a new flag
-	flag = G_Spawn();
-	EspMakeCapturePoint(espflag);
+	capturepoint = G_Spawn();
+	EspMakeCapturePoint(capturepoint);
 
 	// Restore the flag's origin and angles
 // 	VectorCopy(origin, flag->s.origin);
@@ -345,6 +345,7 @@ qboolean EspLoadConfig(const char *mapname)
 	char buf[1024];
 	char *ptr;
 	qboolean no_file = false;
+	espsettings_t *es = &espsettings;
 	FILE *fh;
 
 	memset(&espsettings, 0, sizeof(espsettings));
@@ -490,8 +491,10 @@ qboolean EspLoadConfig(const char *mapname)
 					}
 
 					EspMakeCapturePoint( flag );
-					// Set flag info as global
-					espflag = flag;
+
+					// Set the capture point in the settings
+					es->capturepoint = flag;
+
 					ptr = strchr( (end ? end : ptr) + 1, '<' );
 				}
 
@@ -1354,14 +1357,15 @@ void EspSetLeader( int teamNum, edict_t *ent )
 Call this if esp_mustvolunteer is 0
 or if a the leader of a team disconnects/leaves
 */
-void ChooseRandomLeader(int teamNum)
+qboolean EspChooseRandomLeader(int teamNum)
 {
 	int players[TEAM_TOP] = { 0 }, i;
 	edict_t *ent;
 
 	if (matchmode->value && !TeamsReady())
-		return;
+		return false;
 
+	// Count the number of players on the team
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
@@ -1371,15 +1375,57 @@ void ChooseRandomLeader(int teamNum)
 			players[game.clients[i].resp.team]++;
 	}
 
+	// If no players are left on the team, return
+	if (players[teamNum] == 0)
+		return false;
+
 	if (ent->client->resp.team == teamNum) {
 		if (matchmode->value && ent->client->resp.subteam == teamNum)
 			// Subs can't be elected leaders
-			return;
+			return false;
 		else
 			// Congrats, you're the new leader
 			EspSetLeader(teamNum, ent);
+			return true;
 	}
+	return false;
+}
 
+edict_t *EspVolunteerCheck(int teamNum)
+{
+	int i = 0;
+	edict_t *ent;
+
+	for (i = 0; i < game.maxclients; i++) {
+        ent = g_edicts + 1 + i;
+        if (ent->inuse && ent->client->resp.team == teamNum && ent->client->resp.is_volunteer) {
+            return ent; // Return the entity if their is_volunteer flag is set to true
+        }
+    }
+	// No volunteer found
+    return NULL;
+}
+
+/*
+Check if each team has a leader, if not, choose a volunteer, else choose one at random
+This should only fail if there is no one to choose
+*/
+
+void EspLeaderCheck()
+{
+	int i = 0;
+	edict_t *newLeader;
+
+	for (i = TEAM1; i < TEAM_TOP; i++) {
+		if (!HAVE_LEADER(i)) {
+			newLeader = EspVolunteerCheck(i);
+			if (newLeader) {
+				EspSetLeader(i, newLeader);
+			} else {  // Oops, no volunteers
+				EspChooseRandomLeader(i);
+			}
+		}
+	}
 }
 
 void EspLeaderLeftTeam( edict_t *ent )
@@ -1395,9 +1441,7 @@ void EspLeaderLeftTeam( edict_t *ent )
 
 		// esp_mustvolunteer is off, anyone can get picked, except a bot
 		if (!teams[teamNum].leader && !ent->is_bot) {
-			if (!esp_mustvolunteer->value) {
-				ChooseRandomLeader(teamNum);
-			}
+			EspLeaderCheck();
 		}
 	}
 }

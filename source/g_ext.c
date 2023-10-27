@@ -95,6 +95,10 @@ int G_customizeentityforclient(edict_t *clent, edict_t *ent, entity_state_t *sta
 		if ((use_indicators->value == 2 && clent->client->resp.team) || (clent->client->resp.team && clent->client->pers.cl_indicators != 2)) // disallow indicators for players in use_indicators 2, and don't use them for players unless cl_indicators 2
 			return false;
 
+		// Leader gets effects on their arrow
+		if (IS_LEADER(clent))
+			ent->s.effects = EF_QUAD;
+
 		trace_t trace;
 		vec3_t view_pos, arrow_pos, vnull;
 		VectorClear(vnull);
