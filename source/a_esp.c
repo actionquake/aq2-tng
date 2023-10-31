@@ -826,25 +826,27 @@ int EspGetRespawnTime(edict_t *ent)
 // 	ent->movetype = MOVETYPE_WALK;
 // }
 
+/*
+TODO: Fire this when there's 4 seconds left before a respawn, somehow
+*/
 void EspRespawnLCA (edict_t *ent)
 {
 	gi.centerprintf(ent, "LIGHTS...");
-	gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
+	gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
 	lights_camera_action = 43;
 
 	if (lights_camera_action == 23)
 	{
 		gi.centerprintf(ent, "CAMERA...");
-		gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_camera , 1.0, ATTN_NONE, 0.0);
-	}
-	else if (lights_camera_action == 3)
-	{
-		gi.centerprintf(ent, "ACTION!");
-		gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_NONE, 0.0);
+		gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_camera , 1.0, ATTN_NONE, 0.0);
 	}
 	lights_camera_action--;
 }
 
+/* 
+Espionage respawn logic, depends on modified respawn() to tell
+the game to spawn the players at their leader spot
+*/
 void EspRespawnPlayer(edict_t *ent)
 {
 	// Leaders do not respawn
@@ -857,14 +859,16 @@ void EspRespawnPlayer(edict_t *ent)
 		// If your leader is alive, you can respawn
 		if (teams[ent->client->resp.team].leader != NULL) {
 			if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
-				gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_NONE, 0.0);
+				gi.centerprintf(ent, "ACTION!");
+				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 				respawn(ent);
 			}
 
 		// If TEAM1's leader is alive, you can respawn
 		} else if (teams[TEAM1].leader != NULL) { // NULL check
 			if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
-				gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_NONE, 0.0);
+				gi.centerprintf(ent, "ACTION!");
+				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 				respawn(ent);
 			}
 		}
@@ -953,6 +957,8 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	float 		range, range1, range2;
 	char 		*cname;
 	vec3_t 		respawn_coords;
+
+	//gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
 
 	ent->client->resp.esp_state = ESP_STATE_PLAYING;
 
@@ -1211,7 +1217,6 @@ void SetEspStats( edict_t *ent )
 		level.pic_esp_teamicon[TEAM3] = gi.imageindex(teams[TEAM3].skin_index);
 		level.pic_esp_leadericon[TEAM3] = gi.imageindex(teams[TEAM3].leader_skin_index);
 		gi.imageindex("sbfctf3");
-
 	}
 
 	// Now set the HUD
@@ -1363,16 +1368,14 @@ qboolean AllTeamsHaveLeaders(void)
 
 	// Only Team 1 needs a leader in ETV mode
 	if((etv->value) && HAVE_LEADER(TEAM1)) {
-		gi.dprintf("ETV team has leader\n\n");
+		gi.dprintf("ETV team has a leader\n");
 		return true;
 	} else if(atl->value && (teamsWithLeaders == teamCount)){
 		gi.dprintf("Teams with leaders is the same as the team count\n");
 		return true;
 	} else {
-		gi.dprintf("Final else false\n");
 		return false;
 	}
-
 	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
 	return false;
 }
@@ -1401,8 +1404,8 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 
 
 	teams[teamNum].leader = ent;
-	if(ent) // Only assign a skin to an ent
-		AssignSkin(ent, teams[teamNum].leader_skin, false);
+	// if(ent) // Only assign a skin to an ent
+	// 	AssignSkin(ent, teams[teamNum].leader_skin, false);
 
 	if (!ent) {
 		if (!team_round_going || (gameSettings & GS_ROUNDBASED)) {
@@ -1426,7 +1429,6 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
-
 		// Set the time the player became leader so they can't unleader immediately after
 		ent->client->resp.esp_leadertime = level.realFramenum;
 		return true;
@@ -1443,6 +1445,7 @@ qboolean EspChooseRandomLeader(int teamNum)
 {
 	int players[TEAM_TOP] = { 0 }, i;
 	edict_t *ent;
+	gi.dprintf("I was called because somone disconnected\n");
 
 	if (matchmode->value && !TeamsReady())
 		return false;
@@ -1466,6 +1469,7 @@ qboolean EspChooseRandomLeader(int teamNum)
 			// Subs can't be elected leaders
 			return false;
 		else {
+			gi.dprintf("I am a leader! %s\n", ent->client->pers.netname);
 			// Congrats, you're the new leader
 			EspSetLeader(teamNum, ent);
 			return true;
@@ -1501,44 +1505,52 @@ qboolean EspLeaderCheck()
 {
 	int i = 0;
 	edict_t *newLeader;
-	qboolean allTeamsHaveLeaders;
+	
+	qboolean athl = AllTeamsHaveLeaders();
 
 	/*
 	General leader check
 	*/
 	// All teams have leaders in ATL mode
-	if (atl->value){
-		for (i = TEAM1; i <= teamCount; i++) {
-			if (HAVE_LEADER(i)) {
-				allTeamsHaveLeaders = true;
-				continue;
-			} else {
-				//gi.dprintf("Team %d does not have a leader\n", i);
-				break;
-			}
-		}
-	} else if (etv->value){
-		if (HAVE_LEADER(TEAM1)) {
-			allTeamsHaveLeaders = true;
-		} else {
-			//gi.dprintf("Team %d does not have a leader\n", i);
-			allTeamsHaveLeaders = false;		
-		}
-	}
+	// if (atl->value){
+	// 	for (i = TEAM1; i <= teamCount; i++) {
+	// 		if (HAVE_LEADER(i)) {
+	// 			allTeamsHaveLeaders = true;
+	// 			continue;
+	// 		} else {
+	// 			allTeamsHaveLeaders = false;
+	// 			//gi.dprintf("Team %d does not have a leader\n", i);
+	// 			break;
+	// 		}
+	// 	}
+	// } else if (etv->value){
+	// 	if (HAVE_LEADER(TEAM1)) {
+	// 		allTeamsHaveLeaders = true;
+	// 	} else {
+	// 		//gi.dprintf("Team %d does not have a leader\n", i);
+	// 		allTeamsHaveLeaders = false;		
+	// 	}
+	// }
 
 
 	// If we all have leaders, then we're good
-	if (allTeamsHaveLeaders) {
+	if (athl) {
+		gi.dprintf("I don't need a leader!\n");
 		return true;
 	} else {
+		gi.dprintf("I need a leader!\n");
 		// We do not all have leaders, so we must cycle through each team
 		for (i = TEAM1; i <= teamCount; i++) {
 			if (!HAVE_LEADER(i)) { // If this team does not have a leader, get one
 				newLeader = EspVolunteerCheck(i);
 				if (newLeader) {
-					EspSetLeader(i, newLeader);
+					if (EspSetLeader(i, newLeader))
+						gi.dprintf("I found a leader!\n");
+						return true;
 				} else {  // Oops, no volunteers, then we force someone to be a leader
-					EspChooseRandomLeader(i);
+					if (EspChooseRandomLeader(i))
+						gi.dprintf("I need a random leader!\n");
+						return true;
 				}
 
 				// If we still don't have a leader, then the next round can't begin
@@ -1575,12 +1587,13 @@ void EspLeaderLeftTeam( edict_t *ent )
 	if (!IS_LEADER(ent)){
 		return;
 	} else {
+		ent->client->resp.is_volunteer = false;
 		EspSetLeader( teamNum, NULL );
 
 		ent->client->resp.subteam = 0;
 
 		// esp_mustvolunteer is off, anyone can get picked, except a bot
-		if (!teams[teamNum].leader && !ent->is_bot) {
+		if (!teams[teamNum].leader) {
 			EspLeaderCheck();
 		}
 	}
@@ -1824,7 +1837,7 @@ void EspDebug()
 		if (HAVE_LEADER(i)) {
 			gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
 		} else {
-			//gi.dprintf("Team %d does not have a leader\n", i);
+			gi.dprintf("Team %d does not have a leader\n", i);
 		}
 	}
 	edict_t *ent;

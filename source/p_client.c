@@ -1758,10 +1758,31 @@ edict_t *SelectFarthestDeathmatchSpawnPoint(void)
 
 edict_t *SelectDeathmatchSpawnPoint(void)
 {
+	//gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
 	if (DMFLAGS(DF_SPAWN_FARTHEST))
 		return SelectFarthestDeathmatchSpawnPoint();
 	else
 		return SelectRandomDeathmatchSpawnPoint();
+}
+
+/*
+
+*/
+qboolean ValidateEspionageCustomSpawnpoints(espsettings_t *es)
+{
+	int i;
+	vec3_t origin;
+	for (i = 1; i <= teamCount; i++) {
+		if (!espsettings.custom_spawns[i][0]) {
+			//gi.dprintf("Error: Not enough custom spawn points for team %d\n", i);
+			return false;
+		} else {
+			//VectorCopy(es->custom_spawns[i][0]->s.origin, origin);
+			//gi.dprintf("Spawn point %d: %f %f %f\n", i, origin[0], origin[1], origin[2]);
+			return true;
+		}
+	}
+	return true;
 }
 
 /*
@@ -1774,21 +1795,22 @@ Chooses a player start, deathmatch start, coop start, etc
 void SelectSpawnPoint(edict_t * ent, vec3_t origin, vec3_t angles)
 {
 	edict_t *spot = NULL;
+	espsettings_t *es = &espsettings;
 
 	//FIREBLADE
 	if (ctf->value) {
 		spot = SelectCTFSpawnPoint(ent);
-	} else if (esp->value) {
+	} else if ((esp->value) && (team_round_going || ValidateEspionageCustomSpawnpoints(es))) {
 		spot = SelectEspSpawnPoint(ent);
 	} else if (dom->value) {
 		spot = SelectDeathmatchSpawnPoint();
-  } else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup) {
-		spot = SelectTeamplaySpawnPoint(ent);
-  } else if (jump->value) {
-		spot = SelectFarthestDeathmatchSpawnPoint();
-  } else {
-		spot = SelectDeathmatchSpawnPoint();
-  }
+	} else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup) {
+			spot = SelectTeamplaySpawnPoint(ent);
+	} else if (jump->value) {
+			spot = SelectFarthestDeathmatchSpawnPoint();
+	} else {
+			spot = SelectDeathmatchSpawnPoint();
+	}
 
 	// find a single player start spot
 	if (!spot) {

@@ -1234,7 +1234,7 @@ void G_RunFrame (void)
 	}
 
 	//Debugging
-	EspDebug();
+	//EspDebug();
 }
 
 
