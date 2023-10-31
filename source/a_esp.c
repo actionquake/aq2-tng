@@ -367,6 +367,7 @@ qboolean EspLoadConfig(const char *mapname)
 	qboolean loaded_default_file = false;
 	espsettings_t *es = &espsettings;
 	FILE *fh;
+	int i = 0;
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
@@ -609,7 +610,7 @@ qboolean EspLoadConfig(const char *mapname)
 		// 	Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
 		// }
 
-		for (int i = TEAM1; i <= teamCount; i++) {
+		for (i = TEAM1; i <= teamCount; i++) {
 			const char *team_color;
 			switch (i) {
 				case TEAM1:
@@ -647,7 +648,7 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		qboolean missing_property = false;
-			for (int i = TEAM1; i <= teamCount; i++) {
+			for (i = TEAM1; i <= teamCount; i++) {
 				if (strlen(teams[i].skin) == 0 || 
 				strlen(teams[i].name) == 0 || 
 				strlen(teams[i].leader_name) == 0 || 
@@ -665,7 +666,7 @@ qboolean EspLoadConfig(const char *mapname)
 				espsettings.custom_skins = true;
 			}
 
-			for (int i = TEAM1; i <= teamCount; i++) {
+			for (i = TEAM1; i <= teamCount; i++) {
 				const char *team_color;
 				switch (i) {
 					case TEAM1:
