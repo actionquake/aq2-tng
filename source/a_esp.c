@@ -1371,6 +1371,14 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		return false;
 	}
 
+	// NULL check and checks if leadertime is more than 0 and less than 10 seconds ago
+	if( (ent && ent->client->resp.esp_leadertime > 0) && 
+	(level.realFramenum - ent->client->resp.esp_leadertime < 10 * HZ) ){
+		gi.cprintf(ent, PRINT_HIGH, "You must wait 10 seconds between toggling your leader role!\n");
+		return false;
+	}
+
+
 	teams[teamNum].leader = ent;
 	if(ent) // Only assign a skin to an ent
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
@@ -1397,6 +1405,9 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
+
+		// Set the time the player became leader so they can't unleader immediately after
+		ent->client->resp.esp_leadertime = level.realFramenum;
 		return true;
 	}
 

@@ -1377,7 +1377,9 @@ void Cmd_Volunteer_f(edict_t * ent)
 			return;
 		}
 		EspSetLeader( teamNum, NULL );
+		// This is the last time we know this entity was the leader, so do some cleanup first
 		oldLeader->client->resp.is_volunteer = false;
+		oldLeader->client->resp.esp_leadertime = level.realFramenum;
 		return;
 	}
 
