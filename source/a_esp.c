@@ -826,6 +826,25 @@ int EspGetRespawnTime(edict_t *ent)
 // 	ent->movetype = MOVETYPE_WALK;
 // }
 
+void EspRespawnLCA (edict_t *ent)
+{
+	gi.centerprintf(ent, "LIGHTS...");
+	gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
+	lights_camera_action = 43;
+
+	if (lights_camera_action == 23)
+	{
+		gi.centerprintf(ent, "CAMERA...");
+		gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_camera , 1.0, ATTN_NONE, 0.0);
+	}
+	else if (lights_camera_action == 3)
+	{
+		gi.centerprintf(ent, "ACTION!");
+		gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_NONE, 0.0);
+	}
+	lights_camera_action--;
+}
+
 void EspRespawnPlayer(edict_t *ent)
 {
 	// Leaders do not respawn
@@ -838,12 +857,14 @@ void EspRespawnPlayer(edict_t *ent)
 		// If your leader is alive, you can respawn
 		if (teams[ent->client->resp.team].leader != NULL) {
 			if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+				gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_NONE, 0.0);
 				respawn(ent);
 			}
 
 		// If TEAM1's leader is alive, you can respawn
 		} else if (teams[TEAM1].leader != NULL) { // NULL check
 			if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
+				gi.sound(&ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_NONE, 0.0);
 				respawn(ent);
 			}
 		}
@@ -1492,7 +1513,7 @@ qboolean EspLeaderCheck()
 				allTeamsHaveLeaders = true;
 				continue;
 			} else {
-				gi.dprintf("Team %d does not have a leader\n", i);
+				//gi.dprintf("Team %d does not have a leader\n", i);
 				break;
 			}
 		}
@@ -1500,7 +1521,7 @@ qboolean EspLeaderCheck()
 		if (HAVE_LEADER(TEAM1)) {
 			allTeamsHaveLeaders = true;
 		} else {
-			gi.dprintf("Team %d does not have a leader\n", i);
+			//gi.dprintf("Team %d does not have a leader\n", i);
 			allTeamsHaveLeaders = false;		
 		}
 	}
@@ -1614,6 +1635,12 @@ int EspReportLeaderDeath(edict_t *ent)
 			}
 		}
 	}
+
+	// Find all players in the game and play this sound
+	gi.sound(&g_edicts[0], CHAN_BODY | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_death.wav"), 1.0, ATTN_NONE, 0.0);
+	if (esp_punish->value)
+		EspPunishment(dead_leader_team);
+	
 	return winner;
 }
 
@@ -1622,6 +1649,7 @@ void KillEveryone(int teamNum)
 	edict_t *ent;
 	int i;
 
+	gi.dprintf("KillEveryone called for team %d\n", teamNum);
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
@@ -1629,7 +1657,9 @@ void KillEveryone(int teamNum)
 			continue;
 		if(ent->solid == SOLID_NOT && !ent->deadflag)
 			continue;
-		if (game.clients[i].resp.team == teamNum){
+		if(IS_LEADER(ent)) // Don't kill a dead leader
+			continue;
+		if (ent->client->resp.team == teamNum){
 			killPlayer(ent, false);
 		}
 	}
@@ -1794,7 +1824,7 @@ void EspDebug()
 		if (HAVE_LEADER(i)) {
 			gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
 		} else {
-			gi.dprintf("Team %d does not have a leader\n", i);
+			//gi.dprintf("Team %d does not have a leader\n", i);
 		}
 	}
 	edict_t *ent;

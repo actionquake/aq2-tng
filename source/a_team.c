@@ -2032,6 +2032,7 @@ int CheckForWinner()
 		if (teamsWithPlayers)
 			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 
+		gi.dprintf("I was called somehow\n\n\n");
 		return WINNER_TIE;
 	}
 	return WINNER_NONE;
