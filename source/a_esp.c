@@ -902,7 +902,7 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 		gi.dprintf("Warning: Invalid espmode returned from EspModeCheck()\n");
 		return false;
 	}
-	if (!leader) {
+	if (!leader || (etv->value && leader->client->resp.team == TEAM1)) {
 		gi.dprintf("Warning: Leader was NULL\n");
 		return false;
 	}
@@ -1316,6 +1316,7 @@ qboolean EspCheckRules(void)
 			espsettings.halftime = 3;
 		}
 	}
+	
 	return false;
 }
 
@@ -1333,22 +1334,25 @@ qboolean AllTeamsHaveLeaders(void)
 		return false;
 	//AQ2:TNG END
 
-	for (i = TEAM1; i <= teamCount; i++)
-	{
+	for (i = TEAM1; i <= teamCount; i++){
 		if (HAVE_LEADER(i)) {
 			teamsWithLeaders++;
 		}
 	}
 
 	// Only Team 1 needs a leader in ETV mode
-	if((etv->value) && HAVE_LEADER(TEAM1))
+	if((etv->value) && HAVE_LEADER(TEAM1)) {
+		gi.dprintf("ETV team has leader\n\n");
 		return true;
-
-	if(teamsWithLeaders == teamCount){
+	} else if(atl->value && (teamsWithLeaders == teamCount)){
+		gi.dprintf("Teams with leaders is the same as the team count\n");
 		return true;
+	} else {
+		gi.dprintf("Final else false\n");
+		return false;
 	}
 
-	//gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
+	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
 	return false;
 }
 
@@ -1387,7 +1391,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		teams[teamNum].locked = 0;
 	}
 
-	if (ent != oldLeader) {
+	if (ent != oldLeader && ent != NULL) {
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
 		CenterPrintAll(temp);
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
@@ -1465,10 +1469,34 @@ qboolean EspLeaderCheck()
 {
 	int i = 0;
 	edict_t *newLeader;
+	qboolean allTeamsHaveLeaders;
 
-	// If we all have leaders, yay
-	if (HAVE_LEADER(TEAM1) && (atl->value && HAVE_LEADER(TEAM2)) && (teamCount == 3 && HAVE_LEADER(TEAM3))) {
-		gi.dprintf("All teams have leaders, moving on..\n");
+	/*
+	General leader check
+	*/
+	// All teams have leaders in ATL mode
+	if (atl->value){
+		for (i = TEAM1; i <= teamCount; i++) {
+			if (HAVE_LEADER(i)) {
+				allTeamsHaveLeaders = true;
+				continue;
+			} else {
+				gi.dprintf("Team %d does not have a leader\n", i);
+				break;
+			}
+		}
+	} else if (etv->value){
+		if (HAVE_LEADER(TEAM1)) {
+			allTeamsHaveLeaders = true;
+		} else {
+			gi.dprintf("Team %d does not have a leader\n", i);
+			allTeamsHaveLeaders = false;		
+		}
+	}
+
+
+	// If we all have leaders, then we're good
+	if (allTeamsHaveLeaders) {
 		return true;
 	} else {
 		// We do not all have leaders, so we must cycle through each team
@@ -1491,22 +1519,21 @@ qboolean EspLeaderCheck()
 	}
 
 	// Debugging:
-	for (i = TEAM1; i <= teamCount; i++) {
-		if (HAVE_LEADER(i)) {
-			gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
-		} else {
-			gi.dprintf("Team %d does not have a leader\n", i);
-		}
-	}
-	edict_t *ent;
-	for (i = 0; i < game.maxclients; i++) {
-		ent = g_edicts + 1 + i;
-		if (ent->client->resp.is_volunteer) {
-			gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
-		}
-	}
-
-
+	// for (i = TEAM1; i <= teamCount; i++) {
+	// 	if (HAVE_LEADER(i)) {
+	// 		gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
+	// 	} else {
+	// 		gi.dprintf("Team %d does not have a leader\n", i);
+	// 	}
+	// }
+	// edict_t *ent;
+	// for (i = 0; i < game.maxclients; i++) {
+	// 	ent = g_edicts + 1 + i;
+	// 	if (ent->client->resp.is_volunteer) {
+	// 		gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
+	// 	}
+	// }
+	return false;
 }
 
 void EspLeaderLeftTeam( edict_t *ent )
@@ -1746,4 +1773,24 @@ void EspEndOfRoundCleanup()
 	end of the round has the possibility of recapturing the point
 	after the round has ended but before the next round begins
 	*/
+}
+
+void EspDebug()
+{
+	// Debugging:
+	int i;
+	for (i = TEAM1; i <= teamCount; i++) {
+		if (HAVE_LEADER(i)) {
+			gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
+		} else {
+			gi.dprintf("Team %d does not have a leader\n", i);
+		}
+	}
+	edict_t *ent;
+	for (i = 0; i < game.maxclients; i++) {
+		ent = g_edicts + 1 + i;
+		if (ent->client->resp.is_volunteer) {
+			gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
+		}
+	}
 }

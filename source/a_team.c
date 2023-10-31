@@ -2229,9 +2229,10 @@ static void StartLCA(void)
 	}
 	SpawnPlayers();
 
-	if (esp->value)
+	if (esp->value) {
 		EspResetCapturePoint();
 		EspAnnounceDetails();
+	}
 }
 
 // FindOverlap: Find the first (or next) overlapping player for ent.
@@ -2618,27 +2619,31 @@ int CheckTeamRules (void)
 		team_round_countdown--;
 		if(!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers ())
+			if (!esp->value && BothTeamsHavePlayers())
 			{
 				in_warmup = 0;
 				team_game_going = 1;
 				StartLCA();
 			}
-			else if (esp->value && AllTeamsHaveLeaders())
+			else if (esp->value && AllTeamsHaveLeaders() && BothTeamsHavePlayers())
 			{
+				gi.dprintf("Esp mode on, All teams have leaders, Both teams have players\n");
 				in_warmup = 0;
 				team_game_going = 1;
 				StartLCA();
 			}
 			else
 			{
-				if (!matchmode->value || TeamsReady())
+				if (esp->value && !AllTeamsHaveLeaders()) {
+					if (atl->value)
+						CenterPrintAll ("All Teams Must Have a Leader!");
+					else if (etv->value)
+						CenterPrintAll ("Team 1 Must Have a Leader!");
+				} else if (!matchmode->value || TeamsReady()) {
 					CenterPrintAll ("Not enough players to play!");
-				else if (esp->value && !AllTeamsHaveLeaders())
-					CenterPrintAll ("Both Teams Must Have a Leader!");
-				else
+				} else {
 					CenterPrintAll ("Both Teams Must Be Ready!");
-
+				}
 				team_round_going = team_round_countdown = team_game_going = 0;
 				MakeAllLivePlayersObservers ();
 			}
@@ -2789,10 +2794,12 @@ int CheckTeamRules (void)
 				return 1;
 			}
 
-			if (!BothTeamsHavePlayers())
+			if (!BothTeamsHavePlayers() || (esp->value && !AllTeamsHaveLeaders()))
 			{
 				if (!matchmode->value || TeamsReady())
 					CenterPrintAll( "Not enough players to play!" );
+				else if (esp->value && !AllTeamsHaveLeaders())
+					CenterPrintAll ("Both Teams Must Have a Leader!");
 				else
 					CenterPrintAll( "Both Teams Must Be Ready!" );
 

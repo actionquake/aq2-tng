@@ -118,3 +118,5 @@ void EspAnnounceDetails( void );
 qboolean EspChooseRandomLeader(int teamNum);
 qboolean EspLeaderCheck();
 void EspEndOfRoundCleanup();
+
+void EspDebug();
