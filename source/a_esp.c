@@ -1351,17 +1351,19 @@ qboolean AllTeamsHaveLeaders(void)
 	return false;
 }
 
-void EspSetLeader( int teamNum, edict_t *ent )
+qboolean EspSetLeader( int teamNum, edict_t *ent )
 {
 	edict_t *oldLeader = teams[teamNum].leader;
 	char temp[128];
 
-	if (teamNum == NOTEAM)
+	if (teamNum == NOTEAM){
 		ent = NULL;
+		return false;
+	}
 
 	if (etv->value && teamNum != TEAM1) {
 		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
-		return;
+		return false;
 	}
 
 	teams[teamNum].leader = ent;
@@ -1382,7 +1384,6 @@ void EspSetLeader( int teamNum, edict_t *ent )
 			//gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
 		}
 		teams[teamNum].locked = 0;
-		return;
 	}
 
 	if (ent != oldLeader) {
@@ -1391,12 +1392,15 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
+		return true;
 	}
+
+	return false;
 }
 
 /*
 Call this if esp_mustvolunteer is 0
-or if a the leader of a team disconnects/leaves
+or if the leader of a team disconnects/leaves
 */
 qboolean EspChooseRandomLeader(int teamNum)
 {
@@ -1456,25 +1460,52 @@ edict_t *EspVolunteerCheck(int teamNum)
 Check if each team has a leader, if not, choose a volunteer, else choose one at random
 This should only fail if there is no one to choose
 */
-void EspLeaderCheck()
+qboolean EspLeaderCheck()
 {
 	int i = 0;
 	edict_t *newLeader;
 
-	for (i = TEAM1; i <= teamCount; i++) {
-		if (!HAVE_LEADER(i)) {
-			newLeader = EspVolunteerCheck(i);
-			if (newLeader) {
-				EspSetLeader(i, newLeader);
-			} else {  // Oops, no volunteers
-				EspChooseRandomLeader(i);
-			} 
-			
-			if (!newLeader) {
-				gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[i].name );
+	// If we all have leaders, yay
+	if (HAVE_LEADER(TEAM1) && (atl->value && HAVE_LEADER(TEAM2)) && (teamCount == 3 && HAVE_LEADER(TEAM3))) {
+		gi.dprintf("All teams have leaders, moving on..\n");
+		return true;
+	} else {
+		// We do not all have leaders, so we must cycle through each team
+		for (i = TEAM1; i <= teamCount; i++) {
+			if (!HAVE_LEADER(i)) { // If this team does not have a leader, get one
+				newLeader = EspVolunteerCheck(i);
+				if (newLeader) {
+					EspSetLeader(i, newLeader);
+				} else {  // Oops, no volunteers, then we force someone to be a leader
+					EspChooseRandomLeader(i);
+				}
+
+				// If we still don't have a leader, then the next round can't begin
+				if (!newLeader) {
+					teams[i].leader = NULL; // Clear this in case some strange things happen
+					gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[i].name );
+				}
 			}
 		}
 	}
+
+	// Debugging:
+	for (i = TEAM1; i <= teamCount; i++) {
+		if (HAVE_LEADER(i)) {
+			gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
+		} else {
+			gi.dprintf("Team %d does not have a leader\n", i);
+		}
+	}
+	edict_t *ent;
+	for (i = 0; i < game.maxclients; i++) {
+		ent = g_edicts + 1 + i;
+		if (ent->client->resp.is_volunteer) {
+			gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
+		}
+	}
+
+
 }
 
 void EspLeaderLeftTeam( edict_t *ent )

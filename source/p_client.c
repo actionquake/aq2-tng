@@ -3184,7 +3184,9 @@ void ClientDisconnect(edict_t * ent)
 		return;
 
 	MM_LeftTeam( ent );
-	EspLeaderLeftTeam ( ent );
+
+	if (esp->value)
+		EspLeaderLeftTeam ( ent );
 	ent->client->resp.team = 0;
 
 	// drop items if they are alive/not observer
