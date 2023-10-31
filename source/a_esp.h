@@ -92,7 +92,7 @@ void EspSetTeamSpawns(int, char *);
 int EspGetRespawnTime(edict_t *ent);
 
 void Cmd_Volunteer_f(edict_t * ent);
-void EspSetLeader( int teamNum, edict_t *ent );
+qboolean EspSetLeader(int teamNum, edict_t *ent);
 qboolean AllTeamsHaveLeaders(void);
 void EspLeaderLeftTeam( edict_t *ent );
 void EspPunishment(int teamNum);
@@ -116,5 +116,5 @@ void GetEspScores(int *t1score, int *t2score);
 void EspCapReward(edict_t *);
 void EspAnnounceDetails( void );
 qboolean EspChooseRandomLeader(int teamNum);
-void EspLeaderCheck();
+qboolean EspLeaderCheck();
 void EspEndOfRoundCleanup();

@@ -332,17 +332,21 @@ void EspEnforceDefaultSettings(char *defaulttype)
 		Q_strncpyz(teams[TEAM1].skin, ESP_RED_SKIN, sizeof(teams[TEAM1].skin));
 		Q_strncpyz(teams[TEAM1].leader_name, ESP_RED_LEADER_NAME, sizeof(teams[TEAM1].leader_name));
 		Q_strncpyz(teams[TEAM1].leader_skin, ESP_RED_LEADER_SKIN, sizeof(teams[TEAM1].leader_skin));
+		Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+
 		/// Default skin/team/names - blue team
 		Q_strncpyz(teams[TEAM2].name, ESP_BLUE_TEAM, sizeof(teams[TEAM2].name));
 		Q_strncpyz(teams[TEAM2].skin, ESP_BLUE_SKIN, sizeof(teams[TEAM2].skin));
 		Q_strncpyz(teams[TEAM2].leader_name, ESP_BLUE_LEADER_NAME, sizeof(teams[TEAM2].leader_name));
 		Q_strncpyz(teams[TEAM2].leader_skin, ESP_BLUE_LEADER_SKIN, sizeof(teams[TEAM2].leader_skin));
+		Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
 		if(teamCount == 3) {
 			/// Default skin/team/names - green team
 			Q_strncpyz(teams[TEAM3].name, ESP_GREEN_TEAM, sizeof(teams[TEAM3].name));
 			Q_strncpyz(teams[TEAM3].skin, ESP_GREEN_SKIN, sizeof(teams[TEAM3].skin));
 			Q_strncpyz(teams[TEAM3].leader_name, ESP_GREEN_LEADER_NAME, sizeof(teams[TEAM3].leader_name));
 			Q_strncpyz(teams[TEAM3].leader_skin, ESP_GREEN_LEADER_SKIN, sizeof(teams[TEAM3].leader_skin));
+			Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
 		}
 		gi.dprintf("  Red Team: %s -- Skin: %s\n", ESP_RED_TEAM, ESP_RED_SKIN);
 		gi.dprintf("  Red Leader: %s -- Skin: %s\n", ESP_RED_LEADER_NAME, ESP_RED_LEADER_SKIN);
@@ -363,6 +367,7 @@ qboolean EspLoadConfig(const char *mapname)
 	qboolean loaded_default_file = false;
 	espsettings_t *es = &espsettings;
 	FILE *fh;
+	int i = 0;
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
@@ -605,7 +610,7 @@ qboolean EspLoadConfig(const char *mapname)
 		// 	Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
 		// }
 
-		for (int i = TEAM1; i <= teamCount; i++) {
+		for (i = TEAM1; i <= teamCount; i++) {
 			const char *team_color;
 			switch (i) {
 				case TEAM1:
@@ -643,7 +648,7 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		qboolean missing_property = false;
-			for (int i = TEAM1; i <= teamCount; i++) {
+			for (i = TEAM1; i <= teamCount; i++) {
 				if (strlen(teams[i].skin) == 0 || 
 				strlen(teams[i].name) == 0 || 
 				strlen(teams[i].leader_name) == 0 || 
@@ -661,7 +666,7 @@ qboolean EspLoadConfig(const char *mapname)
 				espsettings.custom_skins = true;
 			}
 
-			for (int i = TEAM1; i <= teamCount; i++) {
+			for (i = TEAM1; i <= teamCount; i++) {
 				const char *team_color;
 				switch (i) {
 					case TEAM1:
@@ -722,9 +727,10 @@ qboolean EspLoadConfig(const char *mapname)
 		fclose(fh);
 
 	// Load skin indexes
-	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "players/%s_i", teams[TEAM1].skin);
-	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "players/%s_i", teams[TEAM2].skin);
-	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "players/%s_i", teams[TEAM3].skin);
+	gi.dprintf("***** Loading skin indexes\n");
+	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
+	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
 
 	if((etv->value) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
@@ -1167,6 +1173,27 @@ void EspCheckHurtLeader(edict_t * targ, edict_t * attacker)
 
 void SetEspStats( edict_t *ent )
 {
+
+	// Load scoreboard images
+	level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
+	level.pic_esp_teamicon[TEAM1] = gi.imageindex(teams[TEAM1].skin_index);
+	level.pic_esp_leadericon[TEAM1] = gi.imageindex(teams[TEAM1].leader_skin_index);
+	gi.imageindex("sbfctf1");
+
+	level.pic_esp_teamtag[TEAM2] = gi.imageindex("ctfsb2");
+	level.pic_esp_teamicon[TEAM2] = gi.imageindex(teams[TEAM2].skin_index);
+	level.pic_esp_leadericon[TEAM2] = gi.imageindex(teams[TEAM2].leader_skin_index);
+	gi.imageindex("sbfctf2");
+
+	if (atl->value && teamCount == 3) {
+		level.pic_esp_teamtag[TEAM3] = gi.imageindex("ctfsb3");
+		level.pic_esp_teamicon[TEAM3] = gi.imageindex(teams[TEAM3].skin_index);
+		level.pic_esp_leadericon[TEAM3] = gi.imageindex(teams[TEAM3].leader_skin_index);
+		gi.imageindex("sbfctf3");
+
+	}
+
+	// Now set the HUD
 	ent->client->ps.stats[STAT_TEAM1_HEADER] = level.pic_esp_teamtag[TEAM1];
 	ent->client->ps.stats[STAT_TEAM2_HEADER] = level.pic_esp_teamtag[TEAM2];
 
@@ -1325,17 +1352,19 @@ qboolean AllTeamsHaveLeaders(void)
 	return false;
 }
 
-void EspSetLeader( int teamNum, edict_t *ent )
+qboolean EspSetLeader( int teamNum, edict_t *ent )
 {
 	edict_t *oldLeader = teams[teamNum].leader;
 	char temp[128];
 
-	if (teamNum == NOTEAM)
+	if (teamNum == NOTEAM){
 		ent = NULL;
+		return false;
+	}
 
 	if (etv->value && teamNum != TEAM1) {
 		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
-		return;
+		return false;
 	}
 
 	teams[teamNum].leader = ent;
@@ -1356,7 +1385,6 @@ void EspSetLeader( int teamNum, edict_t *ent )
 			//gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[teamNum].name );
 		}
 		teams[teamNum].locked = 0;
-		return;
 	}
 
 	if (ent != oldLeader) {
@@ -1365,12 +1393,15 @@ void EspSetLeader( int teamNum, edict_t *ent )
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
+		return true;
 	}
+
+	return false;
 }
 
 /*
 Call this if esp_mustvolunteer is 0
-or if a the leader of a team disconnects/leaves
+or if the leader of a team disconnects/leaves
 */
 qboolean EspChooseRandomLeader(int teamNum)
 {
@@ -1430,25 +1461,52 @@ edict_t *EspVolunteerCheck(int teamNum)
 Check if each team has a leader, if not, choose a volunteer, else choose one at random
 This should only fail if there is no one to choose
 */
-void EspLeaderCheck()
+qboolean EspLeaderCheck()
 {
 	int i = 0;
 	edict_t *newLeader;
 
-	for (i = TEAM1; i <= teamCount; i++) {
-		if (!HAVE_LEADER(i)) {
-			newLeader = EspVolunteerCheck(i);
-			if (newLeader) {
-				EspSetLeader(i, newLeader);
-			} else {  // Oops, no volunteers
-				EspChooseRandomLeader(i);
-			} 
-			
-			if (!newLeader) {
-				gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[i].name );
+	// If we all have leaders, yay
+	if (HAVE_LEADER(TEAM1) && (atl->value && HAVE_LEADER(TEAM2)) && (teamCount == 3 && HAVE_LEADER(TEAM3))) {
+		gi.dprintf("All teams have leaders, moving on..\n");
+		return true;
+	} else {
+		// We do not all have leaders, so we must cycle through each team
+		for (i = TEAM1; i <= teamCount; i++) {
+			if (!HAVE_LEADER(i)) { // If this team does not have a leader, get one
+				newLeader = EspVolunteerCheck(i);
+				if (newLeader) {
+					EspSetLeader(i, newLeader);
+				} else {  // Oops, no volunteers, then we force someone to be a leader
+					EspChooseRandomLeader(i);
+				}
+
+				// If we still don't have a leader, then the next round can't begin
+				if (!newLeader) {
+					teams[i].leader = NULL; // Clear this in case some strange things happen
+					gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[i].name );
+				}
 			}
 		}
 	}
+
+	// Debugging:
+	for (i = TEAM1; i <= teamCount; i++) {
+		if (HAVE_LEADER(i)) {
+			gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
+		} else {
+			gi.dprintf("Team %d does not have a leader\n", i);
+		}
+	}
+	edict_t *ent;
+	for (i = 0; i < game.maxclients; i++) {
+		ent = g_edicts + 1 + i;
+		if (ent->client->resp.is_volunteer) {
+			gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
+		}
+	}
+
+
 }
 
 void EspLeaderLeftTeam( edict_t *ent )

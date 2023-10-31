@@ -1493,7 +1493,9 @@ void LeaveTeam (edict_t * ent)
 	IRC_printf (IRC_T_GAME, "%n left %n team.", ent->client->pers.netname, genderstr);
 
 	MM_LeftTeam( ent );
-	EspLeaderLeftTeam ( ent );
+
+	if (esp->value)
+		EspLeaderLeftTeam ( ent );
 
 	ent->client->resp.joined_team = 0;
 	ent->client->resp.team = NOTEAM;

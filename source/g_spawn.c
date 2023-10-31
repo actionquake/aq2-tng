@@ -1692,24 +1692,7 @@ void SP_worldspawn (edict_t * ent)
 			gi.imageindex("sbfctf2");
 		}
 
-		if (esp->value) {
-			level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
-			level.pic_esp_teamicon[TEAM1] = gi.imageindex(teams[TEAM1].skin_index);
-			level.pic_esp_leadericon[TEAM1] = gi.imageindex(teams[TEAM1].leader_skin_index);
-			level.pic_esp_teamtag[TEAM2] = gi.imageindex("ctfsb2");
-			level.pic_esp_teamicon[TEAM2] = gi.imageindex(teams[TEAM2].skin_index);
-			level.pic_esp_leadericon[TEAM2] = gi.imageindex(teams[TEAM2].leader_skin_index);
-			if (atl->value && teamCount == 3) {
-				level.pic_esp_teamtag[TEAM3] = gi.imageindex("ctfsb3");
-				level.pic_esp_teamicon[TEAM3] = gi.imageindex(teams[TEAM3].skin_index);
-				level.pic_esp_leadericon[TEAM3] = gi.imageindex(teams[TEAM3].leader_skin_index);
-			}
-		}
-
-		// TODO: Add espionage leader skin/index items
-		// if (esp->value) {
-
-		// }
+		// Espionage HUD is setup in SetEspStats()
 
 		for(i = TEAM1; i <= teamCount; i++)
 		{
