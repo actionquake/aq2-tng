@@ -1487,8 +1487,8 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 			CTFFragBonuses(self, inflictor, attacker);
 
 		// TODO: Make this work
-		// if (esp->value)
-		// 	EspScoreBonuses(self, inflictor, attacker);
+		if (esp->value)
+			EspScoreBonuses(self, inflictor, attacker);
 
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
@@ -1790,6 +1790,9 @@ qboolean ValidateEspionageCustomSpawnpoints(espsettings_t *es)
 SelectSpawnPoint
 
 Chooses a player start, deathmatch start, coop start, etc
+Espionage uses custom spawn points and custom respawns, but only
+once a round has started, otherwise it uses the normal deathmatch
+chosen ones
 ============
 */
 void SelectSpawnPoint(edict_t * ent, vec3_t origin, vec3_t angles)
@@ -3197,9 +3200,6 @@ void ClientDisconnect(edict_t * ent)
 		return;
 
 	MM_LeftTeam( ent );
-
-	if (esp->value)
-		EspLeaderLeftTeam ( ent );
 	ent->client->resp.team = 0;
 
 	// drop items if they are alive/not observer
@@ -3241,6 +3241,9 @@ void ClientDisconnect(edict_t * ent)
 
 	if (ctf->value)
 		CTFDeadDropFlag(ent);
+
+	if (esp->value)
+		EspLeaderLeftTeam (ent);
 
 	PMenu_Close(ent);
 

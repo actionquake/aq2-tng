@@ -2845,6 +2845,10 @@ int CheckTeamRules (void)
 			return 0;
 		}
 
+		// Give respawners time to ready up
+		if (esp->value)
+			EspRespawnLCA();
+
 		if (CheckRoundTimeLimit())
 			return 1;
 	}

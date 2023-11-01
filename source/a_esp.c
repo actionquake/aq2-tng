@@ -829,18 +829,35 @@ int EspGetRespawnTime(edict_t *ent)
 /*
 TODO: Fire this when there's 4 seconds left before a respawn, somehow
 */
-void EspRespawnLCA (edict_t *ent)
+int EspRespawnLCA()
 {
-	gi.centerprintf(ent, "LIGHTS...");
-	gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
-	lights_camera_action = 43;
+	edict_t *ent = NULL;
+	int i;
 
-	if (lights_camera_action == 23)
-	{
-		gi.centerprintf(ent, "CAMERA...");
-		gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_camera , 1.0, ATTN_NONE, 0.0);
+	for (i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		// Basically we just want dead players who are in the respawn waiting period
+		if (!ent->inuse ||
+		game.clients[i].resp.team == NOTEAM ||
+		game.clients[i].respawn_framenum <= 0 ||
+		IS_LEADER(ent) ||
+		ent->client->pers.spectator ||
+		ent->is_bot)
+			continue;
+		if (ent->client->resp.team && !IS_ALIVE(ent)){
+			int timercalc = ent->client->respawn_framenum - level.framenum;
+			// Subtract current framenum from respawn_timer to get a countdown
+			if (timercalc <= 2) {
+				gi.centerprintf(ent, "CAMERA...");
+				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
+				return 0;
+			} else if (timercalc <= 4) {
+				gi.centerprintf(ent, "LIGHTS...");
+				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
+				return 0;
+			}
+		}
 	}
-	lights_camera_action--;
 }
 
 /* 
@@ -1125,44 +1142,6 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 			   teams[attacker->client->resp.team].name);
 		return;
 	}
-	// flag and flag carrier area defense bonuses
-	// we have to find the flag and carrier entities
-	// find the flag
-	flag = NULL;
-	// while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
-	// 	if (!(flag->spawnflags & DROPPED_ITEM))
-	// 		break;
-	// }
-
-	if (!flag)
-		return;		// can't find attacker's flag
-
-	// find attacker's team's flag carrier
-	// for (i = 1; i <= game.maxclients; i++) {
-	// 	leader = g_edicts + i;
-	// 	if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
-	// 		break;
-	// 	leader = NULL;
-	// }
-
-	// ok we have the attackers flag and a pointer to the carrier
-	// check to see if we are defending the base's flag
-	VectorSubtract(targ->s.origin, flag->s.origin, v1);
-	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
-
-	if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
-		|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
-		// we defended the base flag
-		attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
-		if (flag->solid == SOLID_NOT) {
-			gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
-				   attacker->client->pers.netname, espsettings.target_name);
-			IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
-				   attacker->client->pers.netname,
-				   espsettings.target_name);
-		}
-		return;
-	}
 
 	if (leader && leader != attacker) {
 		VectorSubtract(targ->s.origin, leader->s.origin, v1);
@@ -1177,6 +1156,49 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 			IRC_printf(IRC_T_GAME, "%n thwarts an assassination attempt on %n\n",
 				   attacker->client->pers.netname,
 				   teams[attacker->client->resp.team].leader_name);
+			return;
+		}
+	}
+	// flag and flag carrier area defense bonuses
+	// we have to find the flag and carrier entities
+	// find the flag
+	//flag = NULL;
+	// while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
+	// 	if (!(flag->spawnflags & DROPPED_ITEM))
+	// 		break;
+	// }
+
+	//if (!flag)
+	//	return;		// can't find attacker's flag
+
+	// find attacker's team's flag carrier
+	// for (i = 1; i <= game.maxclients; i++) {
+	// 	leader = g_edicts + i;
+	// 	if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
+	// 		break;
+	// 	leader = NULL;
+	// }
+
+
+	if (etv->value){
+		// Get flag coordinates, calculate distance from attacker and targ,
+		// and award accordingly
+		espsettings_t *es = &espsettings;
+		flag = es->capturepoint;
+		VectorSubtract(targ->s.origin, flag->s.origin, v1);
+		VectorSubtract(attacker->s.origin, flag->s.origin, v2);
+
+		if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
+			|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
+			// we defended the base flag
+			attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
+			if (flag->solid == SOLID_NOT) {
+				gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
+					attacker->client->pers.netname, espsettings.target_name);
+				IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
+					attacker->client->pers.netname,
+					espsettings.target_name);
+			}
 			return;
 		}
 	}
@@ -1396,7 +1418,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 	}
 
 	// NULL check and checks if leadertime is more than 0 and less than 10 seconds ago
-	if( (ent && ent->client->resp.esp_leadertime > 0) && 
+	if ((ent && ent->client->resp.esp_leadertime > 0) && 
 	(level.realFramenum - ent->client->resp.esp_leadertime < 10 * HZ) ){
 		gi.cprintf(ent, PRINT_HIGH, "You must wait 10 seconds between toggling your leader role!\n");
 		return false;
@@ -1427,7 +1449,8 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
 		CenterPrintAll(temp);
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
-		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
+		gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+		//gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
 		// Set the time the player became leader so they can't unleader immediately after
 		ent->client->resp.esp_leadertime = level.realFramenum;
@@ -1505,33 +1528,14 @@ qboolean EspLeaderCheck()
 {
 	int i = 0;
 	edict_t *newLeader;
-	
 	qboolean athl = AllTeamsHaveLeaders();
 
-	/*
-	General leader check
-	*/
-	// All teams have leaders in ATL mode
-	// if (atl->value){
-	// 	for (i = TEAM1; i <= teamCount; i++) {
-	// 		if (HAVE_LEADER(i)) {
-	// 			allTeamsHaveLeaders = true;
-	// 			continue;
-	// 		} else {
-	// 			allTeamsHaveLeaders = false;
-	// 			//gi.dprintf("Team %d does not have a leader\n", i);
-	// 			break;
-	// 		}
-	// 	}
-	// } else if (etv->value){
-	// 	if (HAVE_LEADER(TEAM1)) {
-	// 		allTeamsHaveLeaders = true;
-	// 	} else {
-	// 		//gi.dprintf("Team %d does not have a leader\n", i);
-	// 		allTeamsHaveLeaders = false;		
-	// 	}
-	// }
-
+	// Bot scan, rotate leaders if a leader is a bot
+	for (i = TEAM1; i <= teamCount; i++) {
+		if (teams[i].leader && teams[i].leader->is_bot) {
+			EspChooseRandomLeader(i);
+		}
+	}
 
 	// If we all have leaders, then we're good
 	if (athl) {
@@ -1662,9 +1666,7 @@ void KillEveryone(int teamNum)
 	edict_t *ent;
 	int i;
 
-	gi.dprintf("KillEveryone called for team %d\n", teamNum);
-	for (i = 0; i < game.maxclients; i++)
-	{
+	for (i = 0; i < game.maxclients; i++){
 		ent = &g_edicts[1 + i];
 		if (!ent->inuse)
 			continue;
