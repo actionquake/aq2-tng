@@ -555,13 +555,10 @@ void InitGame( void )
 		atl = gi.cvar( "atl", "1", CVAR_LATCH );
 		etv = gi.cvar( "etv", "0", CVAR_LATCH );
 	};
-	esp_customspawns = gi.cvar( "esp_customspawns", "0", 0 );
 	esp_punish = gi.cvar( "esp_punish", "0", 0 );
 	esp_etv_halftime = gi.cvar( "esp_etv_halftime", "0", 0 );
-	esp_mustvolunteer = gi.cvar( "esp_mustvolunteer", "0", 0 );
 	esp_showleader = gi.cvar( "esp_showleader", "1", 0 );
 	esp_showtarget = gi.cvar( "esp_showtarget", "1", 0 );
-	esp_forcejoin = gi.cvar( "esp_forcejoin", "", 0 );
 	esp_leaderequip = gi.cvar( "esp_leaderequip", "0", 0 );
 	esp_leaderenhance = gi.cvar( "esp_leaderenhance", "0", 0 );
 	e_enhancedSlippers = gi.cvar( "e_enhancedSlippers", "0", 0);

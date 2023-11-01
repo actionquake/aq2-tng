@@ -1476,8 +1476,8 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 }
 
 /*
-Call this if esp_mustvolunteer is 0
-or if the leader of a team disconnects/leaves
+Call this if the leader of a team disconnects/leaves
+and there are no active volunteers for that team
 */
 qboolean EspChooseRandomLeader(int teamNum)
 {
@@ -1614,7 +1614,6 @@ void EspLeaderLeftTeam( edict_t *ent )
 
 		ent->client->resp.subteam = 0;
 
-		// esp_mustvolunteer is off, anyone can get picked, except a bot
 		if (!teams[teamNum].leader) {
 			EspLeaderCheck();
 		}

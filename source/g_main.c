@@ -485,13 +485,10 @@ cvar_t *jump;			// jumping mod
 cvar_t *esp;
 cvar_t *atl;
 cvar_t *etv;
-cvar_t *esp_customspawns;
 cvar_t *esp_punish;
 cvar_t *esp_etv_halftime;
-cvar_t *esp_mustvolunteer;
 cvar_t *esp_showleader;
 cvar_t *esp_showtarget;
-cvar_t *esp_forcejoin;
 cvar_t *esp_leaderequip;
 cvar_t *esp_leaderenhance;
 cvar_t *e_enhancedSlippers;

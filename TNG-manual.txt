@@ -596,10 +596,8 @@ Features
   etv [0/1] - Sets Escort the VIP mode, will default to Assassinate the Leader if the map configuration is missing or malformed
   esp_punish [0/1/2] - Sets punishment mode for losing team.  0 is default post-round teamplay with FF on.  1 immediately kills all remaining members of the losing team.  2 generates an invunerability shield on the remaining winning team members for the duration of post-round celebrations, so they can deal with the remaining losing team members in style
   esp_etv_halftime [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the timelimit has passed
-  esp_mustvolunteer [0/1] - In non-matchmode games, setting to 1 means a player must volunteer (using the `volunteer` command) to be the leader (in ETV mode, only Team 1 needs a leader).  Setting to 0 means that the leader is randomly chosen on round start.
   esp_showleader [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
   esp_showtarget [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
-  esp_forcejoin [0/1] Forces joining a team, following autobalancing rules
   esp_leaderequip [0/1/2/3] - Adjusts the loadout of all leaders, see Espionage.md for details
   e_enhancedSlippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage
   reduction when falling long distances

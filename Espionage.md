@@ -41,9 +41,6 @@ There are some settings you need to setup to enable it:
     * 0 is normal post-round teamplay with FF on.
     * 1 immediately kills all remaining members of the losing team.
     * 2 generates an invunerability shield on the remaining winning team members for the duration of post-round celebrations, so they can deal with the remaining losing team members in style
-* **esp_mustvolunteer** [0/1] - In non-matchmode games,    
-    * 0 means that the leader is chosen at random on round start, unless someone `volunteers`.  If that leader leaves, or toggles `volunteer`, it will choose a random player on that team to become leader
-    * 1 means a player must volunteer (using the `volunteer` command) to be the leader (in ETV mode, only Team 1 needs a leader).  A round cannot start without a leader, exactly like a matchmode round can't start without both teams being Ready.
 * **esp_showleader** [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
     * 0 disables the indicator hovering over your leader
     * 1 enables the indicator hovering over your leader, making him easy to keep track of
@@ -61,9 +58,7 @@ Generally, these settings are great for all servers:
 ```
 esp 1
 esp_punish 1
-esp_mustvolunteer 0
 esp_showleader 1
-esp_forcejoin 0
 e_enhancedSlippers 1
 ```
 Some may not like the punishment system, as it does not give any time for the team that lost their leader a few extra seconds to extract vengeance, so test this setting with your players.
