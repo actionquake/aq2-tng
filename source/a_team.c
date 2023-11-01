@@ -2686,12 +2686,18 @@ int CheckTeamRules (void)
 			else
 			{
 				if (esp->value && !AllTeamsHaveLeaders()) {
-					if (atl->value)
+					if (atl->value){
 						CenterPrintAll ("All Teams Must Have a Leader!");
-					else if (etv->value)
+					} else if (etv->value) {
 						CenterPrintAll ("Team 1 Must Have a Leader!");
+					}
+					EspEndOfRoundCleanup();
 				} else if (!matchmode->value || TeamsReady()) {
 					CenterPrintAll ("Not enough players to play!");
+						// Remove all leaders if they are bots
+						if (esp->value){
+							
+						}
 				} else {
 					CenterPrintAll ("Both Teams Must Be Ready!");
 				}

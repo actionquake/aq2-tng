@@ -1484,35 +1484,37 @@ qboolean EspChooseRandomLeader(int teamNum)
 	int players[TEAM_TOP] = { 0 }, i, numPlayers = 0;
     edict_t *ent, *playerList[MAX_CLIENTS];
 
-    gi.dprintf("I was called because someone disconnected\n");
+	if (team_round_going) {
+		gi.dprintf("I was called because someone disconnected\n");
 
-    if (matchmode->value && !TeamsReady())
-        return false;
+		if (matchmode->value && !TeamsReady())
+			return false;
 
-    // Count the number of players on the team and add them to the playerList
-    for (i = 0; i < game.maxclients; i++) {
-        ent = &g_edicts[1 + i];
-        if (!ent->inuse || game.clients[i].resp.team == NOTEAM)
-            continue;
-        if (!game.clients[i].resp.subteam && game.clients[i].resp.team == teamNum) {
-            players[teamNum]++;
-            playerList[numPlayers++] = ent;
-        }
-    }
+		// Count the number of players on the team and add them to the playerList
+		for (i = 0; i < game.maxclients; i++) {
+			ent = &g_edicts[1 + i];
+			if (!ent->inuse || game.clients[i].resp.team == NOTEAM)
+				continue;
+			if (!game.clients[i].resp.subteam && game.clients[i].resp.team == teamNum) {
+				players[teamNum]++;
+				playerList[numPlayers++] = ent;
+			}
+		}
 
-    // If no players are left on the team, return
-    if (players[teamNum] == 0)
-        return false;
+		// If no players are left on the team, return
+		if (players[teamNum] == 0)
+			return false;
 
-    gi.dprintf("Players on team %d: %d\n", teamNum, players[teamNum]);
+		gi.dprintf("Players on team %d: %d\n", teamNum, players[teamNum]);
 
-    // Choose a random player from the playerList
-    ent = playerList[rand() % numPlayers];
+		// Choose a random player from the playerList
+		ent = playerList[rand() % numPlayers];
 
-    gi.dprintf("Randomly selected player on team %d: %s\n", teamNum, ent->client->pers.netname);
+		gi.dprintf("Randomly selected player on team %d: %s\n", teamNum, ent->client->pers.netname);
 
-    // Set the selected player as the leader
-    EspSetLeader(teamNum, ent);
+		// Set the selected player as the leader
+		EspSetLeader(teamNum, ent);
+	} // The else here is that the only players here are bots and non-volunteers.  Halt the game
 
     return true;
 }
@@ -1854,6 +1856,14 @@ void EspEndOfRoundCleanup()
 	for (i = TEAM1; i <= teamCount; i++) {
 		teams[i].leader_dead = false;
 	}
+
+	// Remove all bot leaders, they are dumb
+	gi.dprintf("Removing bot leaders\n");
+	if (teams[TEAM1].leader && teams[TEAM1].leader->is_bot)
+		teams[TEAM1].leader = NULL;
+	if (teams[TEAM2].leader && teams[TEAM2].leader->is_bot)
+		teams[TEAM2].leader = NULL;
+
 	// Check that we have leaders for the next round
 	EspLeaderCheck();
 
