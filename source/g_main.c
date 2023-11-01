@@ -1232,9 +1232,6 @@ void G_RunFrame (void)
 			gi.cvar_forceset(maptime->name, va("%d:%02d", gametime / 60, gametime % 60));
 		}
 	}
-
-	//Debugging
-	//EspDebug();
 }
 
 

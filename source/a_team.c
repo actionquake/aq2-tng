@@ -1909,6 +1909,23 @@ void CenterPrintAll (const char *msg)
 	}
 }
 
+void CenterPrintTeam (int teamNum, const char *msg)
+{
+	int i;
+	edict_t *ent;
+
+	gi.dprintf("Team %d: %s\n", teamNum, msg);	// so it goes to the server console...
+
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (ent->is_bot)
+			continue;
+		if (ent->inuse && ent->client->resp.team == teamNum)
+			gi.centerprintf (ent, "%s", msg);
+	}
+}
+
 int TeamHasPlayers (int team)
 {
 	int i, players;
@@ -2045,6 +2062,33 @@ int CheckForForcedWinner()
 	int health[TEAM_TOP] = { 0 };
 	int i, teamNum, bestTeam, secondBest;
 	edict_t *ent;
+
+	/*
+	In ATL mode, if all leaders are alive, the round ends in a tie
+	health notwithstanding
+	In ETV mode, if the escorting team has
+	not captured the point, the defending team wins
+	*/
+	if (esp->value){
+		if (atl->value){
+			if (teamCount == TEAM2){
+				if (IS_ALIVE(teams[TEAM1].leader) && 
+				IS_ALIVE(teams[TEAM2].leader)){
+					return WINNER_TIE;
+				}
+			} else if (teamCount == TEAM3){
+				if (IS_ALIVE(teams[TEAM1].leader) && 
+				IS_ALIVE(teams[TEAM2].leader) && 
+				IS_ALIVE(teams[TEAM3].leader)){
+					return WINNER_TIE;
+				}
+			}
+		} else if (etv->value){
+			if (espsettings.escortcap == false){
+				return TEAM2;
+			}
+		}
+	}
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -2232,7 +2276,7 @@ static void StartLCA(void)
 
 	if (esp->value) {
 		EspResetCapturePoint();
-		EspAnnounceDetails();
+		EspAnnounceDetails(false);
 	}
 }
 
@@ -2378,6 +2422,9 @@ qboolean CheckTimelimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
+				if (esp->value){
+					EspAnnounceDetails(true);
+				}
 			}
 			else if( timewarning < 1 && (! ctf->value) && timelimit->value > 3 && level.matchTime >= (timelimit->value - 3) * 60 )
 			{
@@ -2428,6 +2475,9 @@ static qboolean CheckRoundTimeLimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
+				if (esp->value){
+					EspAnnounceDetails(true);
+				}
 			}
 			else if (roundLimitFrames <= 1800 && timewarning < 1 && roundtimelimit->value > 3)
 			{
@@ -2817,6 +2867,12 @@ int CheckTeamRules (void)
 		{
 			if (esp->value) {
 				GenerateMedKit(false);
+
+				//Debugging
+				EspDebug();
+				
+				if (!AllTeamsHaveLeaders())
+					EspLeaderCheck();
 				// Do something here about giving players stuff
 			}
 		}
@@ -2844,10 +2900,6 @@ int CheckTeamRules (void)
 
 			return 0;
 		}
-
-		// Give respawners time to ready up
-		if (esp->value)
-			EspRespawnLCA();
 
 		if (CheckRoundTimeLimit())
 			return 1;

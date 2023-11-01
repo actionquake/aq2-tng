@@ -114,7 +114,7 @@ qboolean HasFlag (edict_t * ent);
 void ResetPlayers ();
 void GetEspScores(int *t1score, int *t2score);
 void EspCapReward(edict_t *);
-void EspAnnounceDetails( void );
+void EspAnnounceDetails( qboolean timewarning );
 qboolean EspChooseRandomLeader(int teamNum);
 qboolean EspLeaderCheck();
 void EspEndOfRoundCleanup();

@@ -858,6 +858,7 @@ int EspRespawnLCA()
 			}
 		}
 	}
+	return 0;
 }
 
 /* 
@@ -1113,6 +1114,10 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	// enemy_flag_item = team_flag[otherteam];
 
 	// did the attacker frag the flag carrier?
+
+	/*
+	Leader frag bonus
+	*/
 	if (IS_LEADER(targ)){
 		attacker->client->resp.esp_lasthurtleader = level.framenum;
 		attacker->client->resp.score += ESP_LEADER_FRAG_BONUS;
@@ -1126,6 +1131,10 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		}
 		return;
 	}
+
+	/*
+	Leader defense bonus
+	*/
 
 	if (targ->client->resp.esp_lasthurtleader &&
 	    level.framenum - targ->client->resp.esp_lasthurtleader <
@@ -1143,22 +1152,6 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 		return;
 	}
 
-	if (leader && leader != attacker) {
-		VectorSubtract(targ->s.origin, leader->s.origin, v1);
-		VectorSubtract(attacker->s.origin, leader->s.origin, v1);
-
-		if (VectorLength(v1) < ESP_LEADER_DANGER_PROTECT_BONUS ||
-		    VectorLength(v2) < ESP_LEADER_DANGER_PROTECT_BONUS ||
-			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
-			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
-			gi.bprintf(PRINT_MEDIUM, "%s thwarts an assassination attempt on %s\n",
-				   attacker->client->pers.netname, teams[attacker->client->resp.team].leader_name);
-			IRC_printf(IRC_T_GAME, "%n thwarts an assassination attempt on %n\n",
-				   attacker->client->pers.netname,
-				   teams[attacker->client->resp.team].leader_name);
-			return;
-		}
-	}
 	// flag and flag carrier area defense bonuses
 	// we have to find the flag and carrier entities
 	// find the flag
@@ -1180,25 +1173,47 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	// }
 
 
-	if (etv->value){
-		// Get flag coordinates, calculate distance from attacker and targ,
-		// and award accordingly
-		espsettings_t *es = &espsettings;
-		flag = es->capturepoint;
-		VectorSubtract(targ->s.origin, flag->s.origin, v1);
-		VectorSubtract(attacker->s.origin, flag->s.origin, v2);
+	// Get flag coordinates, calculate distance from attacker and targ,
+	// and award accordingly
 
-		if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
-			|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
-			// we defended the base flag
-			attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
-			if (flag->solid == SOLID_NOT) {
-				gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
-					attacker->client->pers.netname, espsettings.target_name);
-				IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
-					attacker->client->pers.netname,
-					espsettings.target_name);
-			}
+	/*
+	Capturepoint defense bonus
+	*/
+	espsettings_t *es = &espsettings;
+	flag = es->capturepoint;
+	VectorSubtract(targ->s.origin, flag->s.origin, v1);
+	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
+
+	if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
+		|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
+		// we defended the base flag
+		attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
+		if (flag->solid == SOLID_NOT) {
+			gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
+				attacker->client->pers.netname, espsettings.target_name);
+			IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
+				attacker->client->pers.netname,
+				espsettings.target_name);
+		}
+		return;
+	}
+
+	/*
+	Leader protection bonus
+	*/
+	if (leader && leader != attacker) {
+		VectorSubtract(targ->s.origin, leader->s.origin, v1);
+		VectorSubtract(attacker->s.origin, leader->s.origin, v1);
+
+		if (VectorLength(v1) < ESP_LEADER_DANGER_PROTECT_BONUS ||
+		    VectorLength(v2) < ESP_LEADER_DANGER_PROTECT_BONUS ||
+			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
+			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
+			gi.bprintf(PRINT_MEDIUM, "%s thwarts an assassination attempt on %s\n",
+				   attacker->client->pers.netname, teams[attacker->client->resp.team].leader_name);
+			IRC_printf(IRC_T_GAME, "%n thwarts an assassination attempt on %n\n",
+				   attacker->client->pers.netname,
+				   teams[attacker->client->resp.team].leader_name);
 			return;
 		}
 	}
@@ -1466,39 +1481,40 @@ or if the leader of a team disconnects/leaves
 */
 qboolean EspChooseRandomLeader(int teamNum)
 {
-	int players[TEAM_TOP] = { 0 }, i;
-	edict_t *ent;
-	gi.dprintf("I was called because somone disconnected\n");
+	int players[TEAM_TOP] = { 0 }, i, numPlayers = 0;
+    edict_t *ent, *playerList[MAX_CLIENTS];
 
-	if (matchmode->value && !TeamsReady())
-		return false;
+    gi.dprintf("I was called because someone disconnected\n");
 
-	// Count the number of players on the team
-	for (i = 0; i < game.maxclients; i++)
-	{
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse || game.clients[i].resp.team == NOTEAM)
-			continue;
-		if (!game.clients[i].resp.subteam)
-			players[game.clients[i].resp.team]++;
-	}
+    if (matchmode->value && !TeamsReady())
+        return false;
 
-	// If no players are left on the team, return
-	if (players[teamNum] == 0)
-		return false;
+    // Count the number of players on the team and add them to the playerList
+    for (i = 0; i < game.maxclients; i++) {
+        ent = &g_edicts[1 + i];
+        if (!ent->inuse || game.clients[i].resp.team == NOTEAM)
+            continue;
+        if (!game.clients[i].resp.subteam && game.clients[i].resp.team == teamNum) {
+            players[teamNum]++;
+            playerList[numPlayers++] = ent;
+        }
+    }
 
-	if (ent->client->resp.team == teamNum) {
-		if (matchmode->value && ent->client->resp.subteam == teamNum)
-			// Subs can't be elected leaders
-			return false;
-		else {
-			gi.dprintf("I am a leader! %s\n", ent->client->pers.netname);
-			// Congrats, you're the new leader
-			EspSetLeader(teamNum, ent);
-			return true;
-		}
-	}
-	return false;
+    // If no players are left on the team, return
+    if (players[teamNum] == 0)
+        return false;
+
+    gi.dprintf("Players on team %d: %d\n", teamNum, players[teamNum]);
+
+    // Choose a random player from the playerList
+    ent = playerList[rand() % numPlayers];
+
+    gi.dprintf("Randomly selected player on team %d: %s\n", teamNum, ent->client->pers.netname);
+
+    // Set the selected player as the leader
+    EspSetLeader(teamNum, ent);
+
+    return true;
 }
 
 /*
@@ -1530,9 +1546,9 @@ qboolean EspLeaderCheck()
 	edict_t *newLeader;
 	qboolean athl = AllTeamsHaveLeaders();
 
-	// Bot scan, rotate leaders if a leader is a bot
+	// Bot scan, rotate leaders if a leader is a bot and it died last round
 	for (i = TEAM1; i <= teamCount; i++) {
-		if (teams[i].leader && teams[i].leader->is_bot) {
+		if (teams[i].leader && teams[i].leader->is_bot && teams[i].leader_dead) {
 			EspChooseRandomLeader(i);
 		}
 	}
@@ -1548,13 +1564,15 @@ qboolean EspLeaderCheck()
 			if (!HAVE_LEADER(i)) { // If this team does not have a leader, get one
 				newLeader = EspVolunteerCheck(i);
 				if (newLeader) {
-					if (EspSetLeader(i, newLeader))
+					if (EspSetLeader(i, newLeader)) {
 						gi.dprintf("I found a leader!\n");
 						return true;
+					}
 				} else {  // Oops, no volunteers, then we force someone to be a leader
-					if (EspChooseRandomLeader(i))
+					if (EspChooseRandomLeader(i)) {
 						gi.dprintf("I need a random leader!\n");
 						return true;
+					}
 				}
 
 				// If we still don't have a leader, then the next round can't begin
@@ -1588,10 +1606,10 @@ void EspLeaderLeftTeam( edict_t *ent )
 {
 	int teamNum = ent->client->resp.team;
 
+	ent->client->resp.is_volunteer = false;
 	if (!IS_LEADER(ent)){
 		return;
 	} else {
-		ent->client->resp.is_volunteer = false;
 		EspSetLeader( teamNum, NULL );
 
 		ent->client->resp.subteam = 0;
@@ -1783,27 +1801,45 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 	return es->custom_spawns[teamNum][random_index];
 }
 
-void EspAnnounceDetails( void )
+void EspAnnounceDetails( qboolean timewarning )
 {
 	int i;
 	edict_t *ent;
 
-	for (i = 0; i < game.maxclients; i++){
-		ent = g_edicts + 1 + i;
-		if (!ent->inuse)
-			continue;
-		if (IS_LEADER(ent)){
-			gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
-			gi.cprintf(ent, PRINT_HIGH, "Take cover, you're the leader!\n");
-		}
-		if (!IS_LEADER(ent)) {
+	// This is warning the players that the round is about to end
+	// and they need to accomplish their goals
+	if (timewarning){
+		for (i = 0; i < game.maxclients; i++){
+			ent = g_edicts + 1 + i;
+			if (!ent->inuse || !ent->is_bot)
+				continue;
 			if (atl->value){
-				gi.cprintf(ent, PRINT_HIGH, "Defend your leader and attack the other one to win!\n");
+				CenterPrintAll("You're running low on time! Kill the enemy leader!\n");
 			} else if (etv->value){
-				if (ent->client->resp.team == TEAM1)
-					gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
-				else
-					gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
+				CenterPrintTeam(TEAM1, "Capture that briefcase or the other team wins!\n");
+				CenterPrintTeam(TEAM2, "Keep it up! If they can't cap, they can't win!\n");
+			}
+		}
+	}
+
+	if (!timewarning) {
+		for (i = 0; i < game.maxclients; i++){
+			ent = g_edicts + 1 + i;
+			if (!ent->inuse)
+				continue;
+			if (IS_LEADER(ent)){
+				gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+				gi.cprintf(ent, PRINT_HIGH, "Take cover, you're the leader!\n");
+			}
+			if (!IS_LEADER(ent)) {
+				if (atl->value){
+					gi.cprintf(ent, PRINT_HIGH, "Defend your leader and attack the other one to win!\n");
+				} else if (etv->value){
+					if (ent->client->resp.team == TEAM1)
+						gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
+					else
+						gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
+				}
 			}
 		}
 	}

@@ -1487,8 +1487,8 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 			CTFFragBonuses(self, inflictor, attacker);
 
 		// TODO: Make this work
-		if (esp->value)
-			EspScoreBonuses(self, inflictor, attacker);
+		//if (esp->value)
+		//	EspScoreBonuses(self, inflictor, attacker);
 
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
@@ -3200,6 +3200,8 @@ void ClientDisconnect(edict_t * ent)
 		return;
 
 	MM_LeftTeam( ent );
+	if (esp->value)
+		EspLeaderLeftTeam(ent);
 	ent->client->resp.team = 0;
 
 	// drop items if they are alive/not observer
@@ -3241,9 +3243,6 @@ void ClientDisconnect(edict_t * ent)
 
 	if (ctf->value)
 		CTFDeadDropFlag(ent);
-
-	if (esp->value)
-		EspLeaderLeftTeam (ent);
 
 	PMenu_Close(ent);
 
