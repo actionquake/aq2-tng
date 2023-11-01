@@ -2874,6 +2874,7 @@ int CheckTeamRules (void)
 			if (esp->value) {
 				GenerateMedKit(false);
 
+				EspCleanUp();
 				//Debugging
 				EspDebug();
 				

@@ -119,4 +119,5 @@ qboolean EspChooseRandomLeader(int teamNum);
 qboolean EspLeaderCheck();
 void EspEndOfRoundCleanup();
 int EspRespawnLCA();
+void EspCleanUp();
 void EspDebug();

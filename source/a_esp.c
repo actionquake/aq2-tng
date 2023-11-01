@@ -1847,6 +1847,26 @@ void EspAnnounceDetails( qboolean timewarning )
 }
 
 /*
+Becomes some rounds continue for a while, let's clean up the bodies periodically
+*/
+int cleanupInterval = 20; // Initial value
+void EspCleanUp()
+{
+	int roundseconds = current_round_length / 10;
+	int intervalAdd = 20;
+
+	//gi.dprintf("Cleanupinterval is %d, the time is now %d\n", cleanupInterval, roundseconds);
+	if (roundseconds >= cleanupInterval) {
+		CleanBodies();
+		cleanupInterval = cleanupInterval + intervalAdd;
+
+		//gi.dprintf("Bodies cleaned, cleanupinterval is now %d\n", cleanupInterval);
+	}
+	//gi.dprintf("the time is now %d\n", roundseconds);
+	
+}
+
+/*
 Call this at the end of the round to get us back to a good state
 */
 void EspEndOfRoundCleanup()
@@ -1867,6 +1887,8 @@ void EspEndOfRoundCleanup()
 	// Check that we have leaders for the next round
 	EspLeaderCheck();
 
+	// Reset cleanup interval
+	cleanupInterval = 20;
 	/* 
 	Note:  Resetting the ETV escort point is not done here,
 	it is performed in EspResetCapturePoint() and MUST be called at 
@@ -1875,6 +1897,8 @@ void EspEndOfRoundCleanup()
 	after the round has ended but before the next round begins
 	*/
 }
+
+
 
 void EspDebug()
 {
