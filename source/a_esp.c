@@ -1435,7 +1435,9 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 	// NULL check and checks if leadertime is more than 0 and less than 10 seconds ago
 	if ((ent && ent->client->resp.esp_leadertime > 0) && 
 	(level.realFramenum - ent->client->resp.esp_leadertime < 10 * HZ) ){
-		gi.cprintf(ent, PRINT_HIGH, "You must wait 10 seconds between toggling your leader role!\n");
+		if (IS_CAPTAIN(ent)){ // This is to avoid printing this message when becoming captain
+			gi.cprintf(ent, PRINT_HIGH, "You must wait 10 seconds between toggling your leader role!\n");
+		}
 		return false;
 	}
 
@@ -1847,7 +1849,7 @@ void EspAnnounceDetails( qboolean timewarning )
 }
 
 /*
-Becomes some rounds continue for a while, let's clean up the bodies periodically
+Because some rounds continue for a while, let's clean up the bodies periodically
 */
 int cleanupInterval = 20; // Initial value
 void EspCleanUp()
@@ -1916,6 +1918,15 @@ void EspDebug()
 		ent = g_edicts + 1 + i;
 		if (ent->client->resp.is_volunteer) {
 			gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
+		}
+		if (ent->client->resp.team == TEAM1){
+			gi.dprintf("%s is on team 1\n", ent->client->pers.netname);
+		}
+		if (ent->client->resp.team == TEAM2){
+			gi.dprintf("%s is on team 2\n", ent->client->pers.netname);
+		}
+		if (ent->client->resp.team == NOTEAM){
+			gi.dprintf("%s is not on a team\n", ent->client->pers.netname);
 		}
 	}
 }

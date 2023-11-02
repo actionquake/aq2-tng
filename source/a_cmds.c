@@ -1356,6 +1356,12 @@ void Cmd_Volunteer_f(edict_t * ent)
 		return;
 	}
 
+	// Cannot use this command directly in Matchmode
+	if (matchmode->value){
+		gi.cprintf(ent, PRINT_HIGH, "Only the Captain can become the Leader\n");
+		return;
+	}
+
 	// Ignore entity if not on a team
 	teamNum = ent->client->resp.team;
 	if (teamNum == NOTEAM) {

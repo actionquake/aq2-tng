@@ -324,6 +324,8 @@
 #define svc_stufftext           11
 #define	svc_configstring		13
 
+// These are mapped to the enum svc_ops_t in protocol.h q2pro
+// If these need adjusted in q2pro, adjust them here too
 #define svc_extend				30
 #define svc_userstatistic		31
 

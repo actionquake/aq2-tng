@@ -200,6 +200,55 @@ qboolean TeamsReady( void )
 	return (ready >= 2);
 }
 
+void MM_CaptainLeader(edict_t * ent)
+{
+	int teamNum;
+	edict_t *oldLeader;
+
+	// Ignore if not Espionage mode
+	if (!esp->value) {
+		gi.cprintf(ent, PRINT_HIGH, "This command needs Espionage to be enabled\n");
+		return;
+	}
+
+	// Ignore entity if not on a team
+	teamNum = ent->client->resp.team;
+	if (teamNum == NOTEAM) {
+		gi.cprintf(ent, PRINT_HIGH, "You need to be on a team for that...\n");
+		return;
+	}
+
+	// Ignore entity if they are a sub
+	if (ent->client->resp.subteam == teamNum) {
+		gi.cprintf(ent, PRINT_HIGH, "Subs cannot be leaders...\n");
+		return;
+	}
+
+	// If the current leader is issuing this command again, remove them as leader
+	oldLeader = teams[teamNum].leader;
+	if (oldLeader == ent) {
+		if (team_round_going || lights_camera_action > 0) {
+			gi.cprintf(ent, PRINT_HIGH, "You cannot resign as leader while a round is in progress\n");
+			return;
+		}
+		EspSetLeader( teamNum, NULL );
+		// This is the last time we know this entity was the leader, so do some cleanup first
+		oldLeader->client->resp.is_volunteer = false;
+		oldLeader->client->resp.esp_leadertime = level.realFramenum;
+		return;
+	}
+
+	// If the team already has a leader, send this message to the ent volunteering
+	if (oldLeader) {
+		gi.cprintf( ent, PRINT_HIGH, "Your team already has a leader (%s)\nYou are now volunteering for duty should he fall\n",
+			teams[teamNum].leader->client->pers.netname );
+		ent->client->resp.is_volunteer = true;
+		return;
+	}
+
+	EspSetLeader( teamNum, ent );
+}
+
 void Cmd_Captain_f(edict_t * ent)
 {
 	int teamNum;
@@ -207,7 +256,7 @@ void Cmd_Captain_f(edict_t * ent)
 
 	// Aliases `captain` command to `volunteer` if Espionage is enabled
 	if (esp->value && !matchmode->value) {
-		Cmd_Volunteer_f(ent);
+		MM_CaptainLeader(ent);
 		return;
 	}
 

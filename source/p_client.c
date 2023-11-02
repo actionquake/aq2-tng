@@ -3199,9 +3199,18 @@ void ClientDisconnect(edict_t * ent)
 	if (!ent->client)
 		return;
 
+	if (esp->value && matchmode->value) {
+		char tempmsg[128];
+		// We have to kill him first before he is removed as captain/leader
+		killPlayer(ent, false);
+		sprintf(tempmsg, "The captain of %s (%s) disconnected, the other team wins by default!", teams[ent->client->resp.team].name, ent->client->pers.netname);
+		CenterPrintAll(tempmsg);
+	}
+
 	MM_LeftTeam( ent );
-	if (esp->value)
+	if (esp->value)		
 		EspLeaderLeftTeam(ent);
+		
 	ent->client->resp.team = 0;
 
 	// drop items if they are alive/not observer
