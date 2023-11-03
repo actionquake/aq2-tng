@@ -742,7 +742,7 @@ qboolean EspLoadConfig(const char *mapname)
 
 int EspGetRespawnTime(edict_t *ent)
 {
-	int spawntime = 0;
+	int spawntime = teams[ent->client->resp.team].respawn_timer;
 	if(ent->client->resp.team == TEAM1 && teams[TEAM1].respawn_timer > -1)
 		spawntime = teams[TEAM1].respawn_timer;
 	else if(ent->client->resp.team == TEAM2 && teams[TEAM2].respawn_timer > -1)
@@ -1276,6 +1276,17 @@ void SetEspStats( edict_t *ent )
 		// ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
 	}
 
+	// During gameplay, flash your team's icon
+	if( team_round_going && ((level.realFramenum / FRAMEDIV) & 8) )
+	{
+		if (ent->client->resp.team == TEAM1)
+			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
+		else if (ent->client->resp.team == TEAM2)
+			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
+		else if (ent->client->resp.team == TEAM3)
+			ent->client->ps.stats[ STAT_TEAM3_PIC ] = 0;
+	}
+
 	// During intermission, blink the team icon of the winning team.
 	if( level.intermission_framenum && ((level.realFramenum / FRAMEDIV) & 8) )
 	{
@@ -1434,7 +1445,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 
 	// NULL check and checks if leadertime is more than 0 and less than 10 seconds ago
 	if ((ent && ent->client->resp.esp_leadertime > 0) && 
-	(level.realFramenum - ent->client->resp.esp_leadertime < 10 * HZ) ){
+	(level.realFramenum - ent->client->resp.esp_leadertime < 10 * HZ)){
 		if (IS_CAPTAIN(ent)){ // This is to avoid printing this message when becoming captain
 			gi.cprintf(ent, PRINT_HIGH, "You must wait 10 seconds between toggling your leader role!\n");
 		}
@@ -1914,19 +1925,26 @@ void EspDebug()
 		}
 	}
 	edict_t *ent;
+	int entcount = 0;
 	for (i = 0; i < game.maxclients; i++) {
 		ent = g_edicts + 1 + i;
+		if (!ent->inuse || !ent->client)
+			continue;
 		if (ent->client->resp.is_volunteer) {
 			gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
 		}
 		if (ent->client->resp.team == TEAM1){
 			gi.dprintf("%s is on team 1\n", ent->client->pers.netname);
+			entcount++;
 		}
 		if (ent->client->resp.team == TEAM2){
 			gi.dprintf("%s is on team 2\n", ent->client->pers.netname);
+			entcount++;
 		}
 		if (ent->client->resp.team == NOTEAM){
 			gi.dprintf("%s is not on a team\n", ent->client->pers.netname);
+			entcount++;
 		}
 	}
+	gi.dprintf("There are %d players\n", entcount);
 }
