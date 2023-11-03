@@ -224,7 +224,7 @@ void PrintMOTD(edict_t * ent)
 
 
 	//Welcome Message. This shows the Version Number and website URL, followed by an empty line
-	strcpy(msg_buf, TNG_TITLE " v" VERSION "\n" "http://aq2-tng.sourceforge.net/" "\n\n");
+	strcpy(msg_buf, TNG_TITLE " v" VERSION "\n" TNG_WEBSITE " -- " AQ2_DISCORD "\n");
 	lines = 3;
 
 	/*

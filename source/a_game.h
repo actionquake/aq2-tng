@@ -89,6 +89,8 @@
 #define VERSION "2.82 git"
 #endif
 #define TNG_TITLE "AQ2: The Next Generation"
+#define TNG_WEBSITE "https://www.aq2world.com"
+#define AQ2_DISCORD "https://discord.aq2world.com"
 // AQ2:TNG Deathwatch End
 //AQ2:TNG Slicer This is the max players writen on last killed target
 //SLIC2
