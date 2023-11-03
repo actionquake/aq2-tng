@@ -320,7 +320,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	}
 
 	if(default_respawn) {
-		for (i = TEAM1; i < teamCount; i++) {
+		for (i = TEAM1; i <= teamCount; i++) {
 			teams[i].respawn_timer = ESP_RESPAWN_TIME;
 		}
 		gi.dprintf("  Respawn Rate: %d seconds\n", ESP_RESPAWN_TIME);
@@ -1947,4 +1947,21 @@ void EspDebug()
 		}
 	}
 	gi.dprintf("There are %d players\n", entcount);
+
+	// Respawn timers
+	for (i = TEAM1; i <= teamCount; i++) {
+		gi.dprintf("Spawn timer for team %d: %d\n", i, teams[i].respawn_timer);
+	}
+
+	for (i = 0; i < game.maxclients; i++) {
+		ent = g_edicts + 1 + i;
+		if (!ent->inuse || !ent->client)
+			continue;
+		if (ent->client->resp.team == TEAM1){
+			gi.dprintf("%s has %d frames left to respawn\n", ent->client->pers.netname, ent->client->respawn_framenum - level.realFramenum);
+		}
+		if (ent->client->resp.team == TEAM2){
+			gi.dprintf("%s has %d frames left to respawn\n", ent->client->pers.netname, ent->client->respawn_framenum - level.realFramenum);
+		}
+	}
 }
