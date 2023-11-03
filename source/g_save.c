@@ -555,13 +555,14 @@ void InitGame( void )
 		atl = gi.cvar( "atl", "1", CVAR_LATCH );
 		etv = gi.cvar( "etv", "0", CVAR_LATCH );
 	};
-	esp_punish = gi.cvar( "esp_punish", "0", 0 );
-	esp_etv_halftime = gi.cvar( "esp_etv_halftime", "0", 0 );
-	esp_showleader = gi.cvar( "esp_showleader", "1", 0 );
-	esp_showtarget = gi.cvar( "esp_showtarget", "1", 0 );
-	esp_leaderequip = gi.cvar( "esp_leaderequip", "0", 0 );
-	esp_leaderenhance = gi.cvar( "esp_leaderenhance", "0", 0 );
-	esp_enhancedslippers = gi.cvar( "esp_enhancedslippers", "0", 0);
+	esp_punish = gi.cvar("esp_punish", "0", 0);
+	esp_etv_halftime = gi.cvar("esp_etv_halftime", "0", 0);
+	esp_showleader = gi.cvar("esp_showleader", "1", 0);
+	esp_showtarget = gi.cvar("esp_showtarget", "1", 0);
+	esp_leaderequip = gi.cvar("esp_leaderequip", "0", 0);
+	esp_leaderenhance = gi.cvar("esp_leaderenhance", "0", 0);
+	esp_enhancedslippers = gi.cvar("esp_enhancedslippers", "0", 0);
+	esp_matchmode = gi.cvar("esp_matchmode", "0", 0);
 	// END AQ2 ETE
 
 	// 2022

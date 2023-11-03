@@ -1771,7 +1771,6 @@ edict_t *SelectDeathmatchSpawnPoint(void)
 qboolean ValidateEspionageCustomSpawnpoints(espsettings_t *es)
 {
 	int i;
-	vec3_t origin;
 	for (i = 1; i <= teamCount; i++) {
 		if (!espsettings.custom_spawns[i][0]) {
 			//gi.dprintf("Error: Not enough custom spawn points for team %d\n", i);

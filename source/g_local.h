@@ -1223,6 +1223,7 @@ extern cvar_t *esp_showtarget;
 extern cvar_t *esp_leaderequip;
 extern cvar_t *esp_leaderenhance;
 extern cvar_t *esp_enhancedslippers;
+extern cvar_t *esp_matchmode;
 
 // END AQ2 ETE
 

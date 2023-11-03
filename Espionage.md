@@ -55,9 +55,18 @@ There are some settings you need to setup to enable it:
 * **esp_leaderenhance** [0/1] - This enhances the leader in that:
     * The leader's bandage time is halved
     * The leader receives periodic medkits, if medkit_max is > 0, to be used when they bandage
-* **esp_enhancedslippers** [0/1] to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
+* **esp_enhancedslippers** [0/1] - to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances.  This used to be called `e_enhancedSlippers` from the original ETE, but was renamed to keep in with the naming convention of Espionage options
+* **esp_matchmode** [0/1] - toggles setting hard-coded defaults if matchmode is enabled, as posted below:
 
-Generally, these settings are great for all servers:
+```
+* Normal Slippers
+* No team punishment
+* Leader gets 1 weapon and all items
+* Leader is enhanced and receives a maximum of 1 healthkit worth 25 health
+```
+
+
+Generally, these settings are great for all public servers:
 ```
 esp 1
 esp_punish 1

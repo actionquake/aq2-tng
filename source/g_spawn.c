@@ -1136,6 +1136,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Matchmode Enabled - Forcing Tourney off\n");
 			gi.cvar_forceset(use_tourney->name, "0");
 		}
+		if (esp->value && esp_matchmode->value)
+		{
+			gi.dprintf ("Matchmode Enabled - Forcing Espionage defaults\n");
+			MM_EspDefaultSettings();
+		}
 	}
 	else if (use_tourney->value)
 	{

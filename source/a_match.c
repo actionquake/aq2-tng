@@ -710,3 +710,30 @@ void Cmd_TogglePause_f(edict_t * ent, qboolean pause)
 	}
 }
 
+/*
+Sets default values for Espionage Matchmode
+*/
+void MM_EspDefaultSettings(void)
+{
+	if (!matchmode->value || !esp->value)
+		return;
+
+	/*
+
+	Enforced settings for official matches
+
+	* Normal Slippers
+	* No team punishment
+	* Leader gets 1 weapon and all items
+	* Leader is enhanced and receives a maximum of 1 healthkit
+
+	*/
+
+	gi.cvar_forceset("esp_enhancedslippers", "0");
+	gi.cvar_forceset("esp_punish", "0");
+	gi.cvar_forceset("esp_leaderequip", "1");
+	gi.cvar_forceset("esp_leaderenhance", "1");
+	gi.cvar_forceset("medkit_max", "1");
+	gi.cvar_forceset("medkit_value", "25");
+	gi.dprintf("** Espionage default matchmode settings enforced **\n");
+}
