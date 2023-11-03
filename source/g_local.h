@@ -1222,7 +1222,7 @@ extern cvar_t *esp_showleader;
 extern cvar_t *esp_showtarget;
 extern cvar_t *esp_leaderequip;
 extern cvar_t *esp_leaderenhance;
-extern cvar_t *e_enhancedSlippers;
+extern cvar_t *esp_enhancedslippers;
 
 // END AQ2 ETE
 
@@ -1572,7 +1572,7 @@ void G_UpdateSpectatorStatusbar( void );
 void G_UpdatePlayerStatusbar( edict_t *ent, int force );
 int Gamemodeflag(void);
 int Gamemode(void);
-#if USE_AQTION
+#ifdef USE_AQTION
 void generate_uuid();
 #endif
 //

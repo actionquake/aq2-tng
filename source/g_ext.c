@@ -93,7 +93,7 @@ int G_customizeentityforclient(edict_t *clent, edict_t *ent, entity_state_t *sta
 			return false;
 
 		// Espionage allows indicators for leaders if set to 3
-		if (esp->value && use_indicators->value == 3 && clent->client->resp.team)
+		if (esp->value && use_indicators->value == 2 && esp_showleader->value && clent->client->resp.team)
 			// Quad is a blue glow, pent is a red glow
 			if (clent->client->resp.team == TEAM1 && IS_LEADER(clent))
 				ent->s.effects = EF_PENT;

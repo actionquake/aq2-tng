@@ -490,7 +490,7 @@ void Cmd_Statmode_f(edict_t* ent)
 	stuffcmd(ent, stuff);
 }
 
-#if USE_AQTION
+#ifdef USE_AQTION
 
 // Revisit one day...
 

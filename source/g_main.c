@@ -491,7 +491,7 @@ cvar_t *esp_showleader;
 cvar_t *esp_showtarget;
 cvar_t *esp_leaderequip;
 cvar_t *esp_leaderenhance;
-cvar_t *e_enhancedSlippers;
+cvar_t *esp_enhancedslippers;
 // END AQ2 ETE
 
 // 2022

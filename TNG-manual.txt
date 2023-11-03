@@ -599,8 +599,7 @@ Features
   esp_showleader [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
   esp_showtarget [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
   esp_leaderequip [0/1/2/3] - Adjusts the loadout of all leaders, see Espionage.md for details
-  e_enhancedSlippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage
-  reduction when falling long distances
+  esp_enhancedslippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
 
 * Latency Compensation
   Antilag
@@ -664,7 +663,7 @@ Features
     * Assassin Kit: Laser Sight + Silencer
   Players may drop the items anytime (using `drop item`) but you can only pick one up at a time, assuming the server doesn't allow for more
   On player entity death, both items will drop.  LTK bots do not use kits, they will retain their normal behavior.
-  e_enhancedSlippers settings are honored, boosting the effectiveness of the Stealth Kit even more
+  esp_enhancedslippers settings are honored, boosting the effectiveness of the Stealth Kit even more
 
 * Print rules
   printrules [0/1] - server cvar, default 0.  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes.

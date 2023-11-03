@@ -133,7 +133,7 @@
 
 #include "g_local.h"
 #include <time.h>
-#if USE_AQTION
+#ifdef USE_AQTION
 #ifdef WIN32
 #if _MSC_VER >= 1920 && !__INTEL_COMPILER
 #pragma comment(lib, "rpcrt4.lib")
@@ -797,7 +797,7 @@ void Cmd_Bandage_f(edict_t *ent)
 
 	// TODO: This breaks the ability for players to jump out of the water, so I am not checking for
 	// this at the moment
-	// if (ent->client->bleeding == 0 && e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM) && ! can_use_medkit){
+	// if (ent->client->bleeding == 0 && esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM) && ! can_use_medkit){
 	// 	gi.cprintf(ent, PRINT_HIGH, "Not bleeding: No need to bandage\n");
 	// 	return;
 	// }
@@ -1099,7 +1099,7 @@ void Cmd_Choose_f(edict_t * ent)
 		} else if (itemNum == A_KIT_NUM){
 			itmText = "Assassin Kit (Laser Sight + Silencer)";
 		} else if (itemNum == S_KIT_NUM){
-			if (e_enhancedSlippers->value){
+			if (esp_enhancedslippers->value){
 				itmText = "Stealth Kit (Enhanced Stealth Slippers + Silencer)";
 			} else {
 				itmText = "Stealth Kit (Stealth Slippers + Silencer)";
@@ -1292,7 +1292,7 @@ void Cmd_Ghost_f(edict_t * ent)
 }
 
 
-#if USE_AQTION
+#ifdef USE_AQTION
 void generate_uuid()
 {
 #ifdef WIN32

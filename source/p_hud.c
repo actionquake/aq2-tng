@@ -129,7 +129,7 @@ void BeginIntermission(edict_t *targ)
 	} else if (teamplay->value) {
 		TallyEndOfLevelTeamScores();
 	}
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	// Generates stats for non-CTF, Teamplay or Matchmode
 	else if (stat_logs->value && !matchmode->value) {
 		LogMatch();

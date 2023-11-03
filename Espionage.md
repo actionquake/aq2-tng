@@ -52,14 +52,19 @@ There are some settings you need to setup to enable it:
     * 1 (default) means that the leaders can choose their weapon, and have all items available at once when they spawn
     * 2 means that the leaders can choose their item, and have all weapons available at once when they spawn
     * 3 means that the leaders have all items and all weapons when they spawn
-* **e_enhancedSlippers** [0/1] to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
+* **esp_leaderenhance** [0/1] - This enhances the leader in that:
+    * The leader's bandage time is halved
+    * The leader receives periodic medkits, if medkit_max is > 0, to be used when they bandage
+* **esp_enhancedslippers** [0/1] to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
 
 Generally, these settings are great for all servers:
 ```
 esp 1
 esp_punish 1
 esp_showleader 1
-e_enhancedSlippers 1
+esp_leaderequip 1
+esp_leaderenhance 1
+esp_enhancedslippers 1
 ```
 Some may not like the punishment system, as it does not give any time for the team that lost their leader a few extra seconds to extract vengeance, so test this setting with your players.
 

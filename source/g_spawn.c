@@ -1188,7 +1188,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	// Set serverinfo correctly for gamemodeflags
 	Gamemodeflag();
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	generate_uuid();  // Run this once every time a map loads to generate a unique id for stats (game.matchid)
 	#endif
 

@@ -561,7 +561,7 @@ void InitGame( void )
 	esp_showtarget = gi.cvar( "esp_showtarget", "1", 0 );
 	esp_leaderequip = gi.cvar( "esp_leaderequip", "0", 0 );
 	esp_leaderenhance = gi.cvar( "esp_leaderenhance", "0", 0 );
-	e_enhancedSlippers = gi.cvar( "e_enhancedSlippers", "0", 0);
+	esp_enhancedslippers = gi.cvar( "esp_enhancedslippers", "0", 0);
 	// END AQ2 ETE
 
 	// 2022

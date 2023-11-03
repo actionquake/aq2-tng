@@ -844,7 +844,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(self->client->attacker, self);
 
-			#if USE_AQTION
+			#ifdef USE_AQTION
 			if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 				LogKill(self, inflictor, self->client->attacker);
 			}
@@ -882,7 +882,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 
 			self->enemy = NULL;
       
-			#if USE_AQTION
+			#ifdef USE_AQTION
 			if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 				LogWorldKill(self);
 			}
@@ -1223,7 +1223,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(attacker, self);
 
-			#if USE_AQTION
+			#ifdef USE_AQTION
 			if (stat_logs->value) {
 				LogKill(self, inflictor, attacker);
 			}
@@ -1253,7 +1253,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 	PrintDeathMessage(death_msg, self);
 	IRC_printf(IRC_T_DEATH, death_msg);
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 		LogWorldKill(self);
 	}
@@ -2365,7 +2365,7 @@ void ClientLegDamage(edict_t *ent)
 				break;
 			ent->client->pers.limp_nopred |= 256;
 		case 1:
-			if (e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM)) // we don't limp with enhanced slippers, so just ignore this leg damage.
+			if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM)) // we don't limp with enhanced slippers, so just ignore this leg damage.
 				break;
 
 			ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
@@ -2859,9 +2859,9 @@ void ClientBeginDeathmatch(edict_t * ent)
 
 #ifndef NO_BOTS
     	ACEIT_RebuildPlayerList();
-#if USE_AQTION
+#ifdef USE_AQTION
 		StatBotCheck();
-		#if USE_AQTION
+		#ifdef USE_AQTION
 			if(am->value){
 				attract_mode_bot_check();
 		}
@@ -3276,10 +3276,10 @@ void ClientDisconnect(edict_t * ent)
 	ent->is_bot = false;
 	ent->think = NULL;
 	ACEIT_RebuildPlayerList();
-#if USE_AQTION
+#ifdef USE_AQTION
 	StatBotCheck();
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 		if(am->value){
 			attract_mode_bot_check();
 		}
@@ -3483,8 +3483,8 @@ void ClientThink(edict_t * ent, usercmd_t * ucmd)
 		client->cmd_last = *ucmd;
 
 		// Stumbling movement with leg damage.
-		// darksaint ETE edit:  if e_enhancedSlippers are enabled/equipped, negate all stumbling
-		qboolean has_enhanced_slippers = e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM);
+		// darksaint ETE edit:  if esp_enhancedslippers are enabled/equipped, negate all stumbling
+		qboolean has_enhanced_slippers = esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM);
 		if( client->leg_damage && ent->groundentity && ! has_enhanced_slippers )
 		{
 			#ifdef AQTION_EXTENSION
