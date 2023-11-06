@@ -727,7 +727,7 @@ qboolean EspLoadConfig(const char *mapname)
 		fclose(fh);
 
 	// Load skin indexes
-	gi.dprintf("***** Loading skin indexes\n");
+	//gi.dprintf("***** Loading skin indexes\n");
 	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
 	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
 	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
@@ -743,12 +743,17 @@ qboolean EspLoadConfig(const char *mapname)
 int EspGetRespawnTime(edict_t *ent)
 {
 	int spawntime = teams[ent->client->resp.team].respawn_timer;
-	if(ent->client->resp.team == TEAM1 && teams[TEAM1].respawn_timer > -1)
-		spawntime = teams[TEAM1].respawn_timer;
-	else if(ent->client->resp.team == TEAM2 && teams[TEAM2].respawn_timer > -1)
-		spawntime = teams[TEAM2].respawn_timer;
-	else if((teamCount == 3) && ent->client->resp.team == TEAM3 && teams[TEAM3].respawn_timer > -1)
-		spawntime = teams[TEAM3].respawn_timer;
+	int min_respawn_time = 2;  // Minimum 2 seconds for respawn
+
+	for (int i = TEAM1; i <= teamCount; i++) {
+		if (teams[i].respawn_timer < min_respawn_time) {
+			teams[i].respawn_timer = min_respawn_time;
+		}
+		if (ent->client->resp.team == i && teams[i].respawn_timer >= min_respawn_time) {
+			spawntime = teams[i].respawn_timer;
+			break;
+		}
+	}
 
 	if (!IS_LEADER(ent)) {
 		gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
