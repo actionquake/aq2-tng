@@ -756,80 +756,10 @@ int EspGetRespawnTime(edict_t *ent)
 	}
 
 	if (!IS_LEADER(ent)) {
-		gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
+		gi.cprintf(ent, PRINT_LOW, "You will respawn in %d seconds\n", spawntime);
 	}
 	return spawntime;
 }
-
-// edict_t *getLeaderCoordinates (edict_t *leader)
-// {
-//         edict_t *leadercoords;
-//         float   bestdistance, bestplayerdistance;
-//         edict_t *spot;
-
-//         spot = NULL;
-//         leadercoords = NULL;
-//         bestdistance = -1;
-
-
-//         while ((spot = G_Find (spot, FOFS(classname), "info_player_deathmatch")) != NULL)
-//         {
-//                 bestplayerdistance = PlayersRangeFromSpot (spot);
-//                 if ((bestplayerdistance < bestdistance) || (bestdistance < 0))
-//                 {
-//                         leadercoords = spot;
-//                         bestdistance = bestplayerdistance;
-//                 }
-//         }
-//         return leadercoords;
-// }
-
-
-// static void SelectEspRespawnPoint(edict_t *ent)
-// {
-// 	vec3_t		respawn_coords, angles;
-// 	edict_t 	*spot = NULL;
-// 	int i;
-
-// 	// Gets the leader entity
-// 	spot = teams[ent->client->resp.team].leader->old_origin;
-
-// 	// Copies the entity's coordinates
-// 	VectorCopy (spot->s.origin, respawn_coords);
-// 	respawn_coords[2] += 9;
-// 	VectorCopy (spot->s.angles, angles);
-// 	ent->client->jumping = 0;
-// 	ent->movetype = MOVETYPE_NOCLIP;
-// 	gi.unlinkentity (ent);
-
-// 	VectorCopy (respawn_coords, ent->s.origin);
-// 	VectorCopy (respawn_coords, ent->s.old_origin);
-
-// 	// clear the velocity and hold them in place briefly
-// 	VectorClear (ent->velocity);
-
-// 	ent->client->ps.pmove.pm_time = 160>>3;		// hold time
-// 	//ent->client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
-	
-// 	VectorClear (ent->s.angles);
-// 	VectorClear (ent->client->ps.viewangles);
-// 	VectorClear (ent->client->v_angle);
-
-// 	VectorCopy(angles,ent->s.angles);
-// 	VectorCopy(ent->s.angles,ent->client->v_angle);
-
-// 	for (i=0;i<2;i++)
-// 		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(ent->client->v_angle[i] - ent->client->resp.cmd_angles[i]);
-	
-// 	if (ent->client->pers.spectator)
-// 		ent->solid = SOLID_BBOX;
-// 	else
-// 		ent->solid = SOLID_TRIGGER;
-	
-// 	ent->deadflag = DEAD_NO;
-// 	gi.linkentity (ent);
-// 	ent->movetype = MOVETYPE_WALK;
-// }
 
 /*
 TODO: Fire this when there's 4 seconds left before a respawn, somehow
@@ -1896,7 +1826,7 @@ void EspEndOfRoundCleanup()
 	}
 
 	// Remove all bot leaders, they are dumb
-	gi.dprintf("Removing bot leaders\n");
+	//gi.dprintf("Removing bot leaders\n");
 	if (teams[TEAM1].leader && teams[TEAM1].leader->is_bot)
 		teams[TEAM1].leader = NULL;
 	if (teams[TEAM2].leader && teams[TEAM2].leader->is_bot)

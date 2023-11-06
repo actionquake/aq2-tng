@@ -52,7 +52,7 @@ typedef struct espsettings_s
 {
 	char author[MAX_ESP_STRLEN*3];
 	char name[MAX_ESP_STRLEN];
-	edict_t *custom_spawns[MAX_TEAMS][MAX_SPAWNS];
+	edict_t *custom_spawns[TEAM_TOP][MAX_SPAWNS];
 	qboolean custom_skins;
 	int halftime;
 	int capturestreak;

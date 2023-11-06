@@ -368,14 +368,14 @@ void PrintMOTD(edict_t * ent)
 			lines++;
 
 			if(teams[TEAM1].respawn_timer > -1 || teams[TEAM2].respawn_timer > -1 || teams[TEAM3].respawn_timer > -1) {
-				sprintf(msg_buf + strlen(msg_buf), "Spawn times: ");
+				sprintf(msg_buf + strlen(msg_buf), "Spawn times:\n");
 				if(teams[TEAM1].respawn_timer > -1)
-					sprintf(msg_buf + strlen(msg_buf), "%s: %ds ", teams[TEAM1].name, teams[TEAM1].respawn_timer);
+					sprintf(msg_buf + strlen(msg_buf), "%s: %ds\n", teams[TEAM1].name, teams[TEAM1].respawn_timer);
 				if(teams[TEAM2].respawn_timer > -1)
-					sprintf(msg_buf + strlen(msg_buf), "%s: %ds", teams[TEAM2].name, teams[TEAM2].respawn_timer);
+					sprintf(msg_buf + strlen(msg_buf), "%s: %ds\n", teams[TEAM2].name, teams[TEAM2].respawn_timer);
 				if(use_3teams->value){
 					if(teams[TEAM3].respawn_timer > -1)
-						sprintf(msg_buf + strlen(msg_buf), "%s: %ds", teams[TEAM3].name, teams[TEAM3].respawn_timer);
+						sprintf(msg_buf + strlen(msg_buf), "%s: %ds\n", teams[TEAM3].name, teams[TEAM3].respawn_timer);
 					}
 				strcat(msg_buf, "\n");
 				lines++;
@@ -487,7 +487,7 @@ void PrintMOTD(edict_t * ent)
 			if (tgren->value > 0)
 				sprintf(grenade_num, "%d grenade%s", (int)tgren->value, (int)tgren->value == 1 ? "" : "s");
 
-			sprintf(msg_buf + strlen(msg_buf), "Bandolier w/ %s%s%s\n",
+			sprintf(msg_buf + strlen(msg_buf), " Bandolier w/ %s%s%s\n",
 				!(ir->value) ? "no IR" : "",
 				(tgren->value > 0 && !(ir->value)) ? " & " : "",
 				tgren->value > 0 ? grenade_num : "");
