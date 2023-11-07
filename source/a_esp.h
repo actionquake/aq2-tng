@@ -21,7 +21,6 @@ extern cvar_t *etv;
 
 
 // Game default settings
-#define ESP_RESPAWN_TIME			10
 #define ESP_RED_SKIN				"male/ctf_r"
 #define ESP_BLUE_SKIN				"male/ctf_b"
 #define ESP_GREEN_SKIN				"male/ctf_g"
@@ -100,7 +99,7 @@ void EspRespawnPlayer(edict_t *ent);
 
 edict_t *SelectEspSpawnPoint (edict_t * ent);
 int EspReportLeaderDeath(edict_t *ent);
-//void EspResetFlag(void);
+int EspSpawnpointCount(int teamNum);
 void EspResetCapturePoint( void );
 void GenerateMedKit(qboolean instant);
 
@@ -111,6 +110,7 @@ void EspCheckHurtLeader (edict_t * targ, edict_t * attacker);
 qboolean EspCheckRules (void);
 qboolean HasFlag (edict_t * ent);
 
+void EspSkinCheck();
 void ResetPlayers ();
 void GetEspScores(int *t1score, int *t2score);
 void EspCapReward(edict_t *);

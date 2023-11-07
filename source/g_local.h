@@ -1224,6 +1224,8 @@ extern cvar_t *esp_leaderequip;
 extern cvar_t *esp_leaderenhance;
 extern cvar_t *esp_enhancedslippers;
 extern cvar_t *esp_matchmode;
+extern cvar_t *esp_respawn_uvtime;
+extern cvar_t *esp_respawn_time;
 
 // END AQ2 ETE
 
@@ -2257,6 +2259,11 @@ struct edict_s
 	vec3_t	lastPosition;
 	qboolean	nameused[NUMNAMES][NUMNAMES];
 	qboolean	newnameused[AQ2WTEAMSIZE];
+	#ifdef AQTION_EXTENSION
+	//AQTION - Reki: Entity indicators
+	edict_t		*obj_arrow;
+	#endif
+
 #endif
 };
 

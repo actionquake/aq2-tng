@@ -9,9 +9,11 @@ espsettings_t espsettings;
 // edict_t *potential_spawns[MAX_SPAWNS];
 // int num_potential_spawns;
 
-cvar_t *esp_respawn = NULL;
-int esp_potential_spawns;
+//cvar_t *esp_respawn = NULL;
+//int esp_potential_spawns;
 int esp_last_chosen_spawn = 0;
+int esp_spawnpoint_index[TEAM_TOP] = {-1};
+
 
 unsigned int esp_team_effect[] = {
 	EF_BLASTER | EF_ROTATE | EF_TELEPORTER,
@@ -190,6 +192,29 @@ void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 	flag->classname = "item_flag";
 	flag->svflags &= ~SVF_NOCLIENT;
 	gi.linkentity( flag );
+
+	// Indicator arrow
+	// somewhere you want to spawn the arrow ("ent" being the entity who the arrow is pointing to)
+	if (use_indicators->value && !flag->obj_arrow){
+		flag->obj_arrow = G_Spawn();
+		flag->obj_arrow->solid = SOLID_NOT;
+		flag->obj_arrow->movetype = MOVETYPE_NOCLIP;
+		flag->obj_arrow->classname = "ind_arrow_objective";
+		flag->obj_arrow->owner = flag;
+		flag->obj_arrow->s.effects |= RF_INDICATOR | EF_ROTATE;
+		flag->obj_arrow->s.modelindex = level.model_arrow;
+
+		// float arrow above briefcase by 10 units
+		flag->obj_arrow->s.origin[2] += 10;
+
+		VectorCopy(flag->s.origin, flag->obj_arrow->s.origin);
+		gi.linkentity(flag->obj_arrow);
+
+		// if (use_indicators->value){
+		// 	gi.dprintf("** Indicator arrow spawned at <%d %d %d>\n", flag->obj_arrow->s.origin[0], flag->obj_arrow->s.origin[1], flag->obj_arrow->s.origin[2]);
+		// 	gi.dprintf("** Flag coordinates are: <%d %d %d>\n", flag->s.origin[0], flag->s.origin[1], flag->s.origin[2]);
+		// }
+	}
 	
 	esp_flag_count ++;
 }
@@ -254,6 +279,7 @@ void EspSetTeamSpawns(int team, char *str)
 	vec3_t pos;
 	float angle;
 	espsettings_t *es = &espsettings;
+	int esp_potential_spawns = 0;
 
 	char *team_spawn_name = "info_player_team1";
 	if(team == TEAM2)
@@ -278,6 +304,7 @@ void EspSetTeamSpawns(int team, char *str)
 		spawn->s.angles[YAW] = angle;
 		spawn->classname = ED_NewString (team_spawn_name);
 
+		//gi.dprintf("Created spawnpoint for %s at <%f %f %f %f>\n", team_spawn_name, pos[0], pos[1], pos[2], angle);
 		es->custom_spawns[team][esp_potential_spawns] = spawn;
 		esp_potential_spawns++;
 		if (esp_potential_spawns >= MAX_SPAWNS)
@@ -320,10 +347,22 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	}
 
 	if(default_respawn) {
-		for (i = TEAM1; i <= teamCount; i++) {
-			teams[i].respawn_timer = ESP_RESPAWN_TIME;
+		/*
+		If esp_respawn_time cvar is less than esp_respawn_time_default,
+		then assign this as the respawn time. Otherwise, use the default
+		*/
+		int esp_respawn_time_default = 8;
+		int respawn_time = 2;
+		if (esp_respawn_time->value < esp_respawn_time_default){
+			respawn_time = (int)esp_respawn_time->value;
+		} else {
+			respawn_time = esp_respawn_time_default;
 		}
-		gi.dprintf("  Respawn Rate: %d seconds\n", ESP_RESPAWN_TIME);
+
+		for (i = TEAM1; i <= teamCount; i++) {
+			teams[i].respawn_timer = respawn_time;
+		}
+		gi.dprintf("  Respawn Rate: %d seconds\n", respawn_time);
 	}
 
 	if(default_team) {
@@ -467,18 +506,24 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("Enforcing defaults\n");
 			EspEnforceDefaultSettings("respawn");
 		} else {
-			if(r_respawn_time) {
-				gi.dprintf("    Red     : %s seconds\n", r_respawn_time);
-				teams[TEAM1].respawn_timer = atoi(r_respawn_time);
-			}
-			if(b_respawn_time) {
-				gi.dprintf("    Blue    : %s seconds\n", b_respawn_time);
-				teams[TEAM2].respawn_timer = atoi(b_respawn_time);
-			}
-			if (teamCount == 3){
-				if(g_respawn_time) {
-					gi.dprintf("    Green   : %s seconds\n", g_respawn_time);
-					teams[TEAM3].respawn_timer = atoi(g_respawn_time);
+			if (!esp_respawn_time->value) {
+				if(r_respawn_time) {
+					gi.dprintf("    Red     : %s seconds\n", r_respawn_time);
+					teams[TEAM1].respawn_timer = atoi(r_respawn_time);
+				}
+				if(b_respawn_time) {
+					gi.dprintf("    Blue    : %s seconds\n", b_respawn_time);
+					teams[TEAM2].respawn_timer = atoi(b_respawn_time);
+				}
+				if (teamCount == 3){
+					if(g_respawn_time) {
+						gi.dprintf("    Green   : %s seconds\n", g_respawn_time);
+						teams[TEAM3].respawn_timer = atoi(g_respawn_time);
+					}
+				}
+			} else {
+				for (i = TEAM1; i <= teamCount; i++) {
+					teams[i].respawn_timer = (int)esp_respawn_time->value;
 				}
 			}
 		}
@@ -744,8 +789,9 @@ int EspGetRespawnTime(edict_t *ent)
 {
 	int spawntime = teams[ent->client->resp.team].respawn_timer;
 	int min_respawn_time = 2;  // Minimum 2 seconds for respawn
+	int i;
 
-	for (int i = TEAM1; i <= teamCount; i++) {
+	for (i = TEAM1; i <= teamCount; i++) {
 		if (teams[i].respawn_timer < min_respawn_time) {
 			teams[i].respawn_timer = min_respawn_time;
 		}
@@ -806,23 +852,26 @@ void EspRespawnPlayer(edict_t *ent)
 	if (IS_LEADER(ent))
 		return;
 
-	// Don't respawn until the current framenum is more than the respawn timer's framenum
-	if (level.framenum > ent->client->respawn_framenum) {
-		//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
-		// If your leader is alive, you can respawn
-		if (teams[ent->client->resp.team].leader != NULL) {
-			if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
-				gi.centerprintf(ent, "ACTION!");
-				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_STATIC, 0.0);
-				respawn(ent);
-			}
+	// Only respawn if the round is going
+	if (team_round_going) {
+		// Don't respawn until the current framenum is more than the respawn timer's framenum
+		if (level.framenum > ent->client->respawn_framenum) {
+			//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
+			// If your leader is alive, you can respawn
+			if (teams[ent->client->resp.team].leader != NULL) {
+				if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+					gi.centerprintf(ent, "ACTION!");
+					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
+					respawn(ent);
+				}
 
-		// If TEAM1's leader is alive, you can respawn
-		} else if (teams[TEAM1].leader != NULL) { // NULL check
-			if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
-				gi.centerprintf(ent, "ACTION!");
-				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_action, 1.0, ATTN_STATIC, 0.0);
-				respawn(ent);
+			// If TEAM1's leader is alive, you can respawn
+			} else if (teams[TEAM1].leader != NULL) { // NULL check
+				if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
+					gi.centerprintf(ent, "ACTION!");
+					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
+					respawn(ent);
+				}
 			}
 		}
 	}
@@ -901,6 +950,37 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 	return false;
 }
 
+edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
+{
+	espsettings_t *es = &espsettings;
+    int teamNum = ent->client->resp.team;
+    srand(time(NULL)); // Random seed
+	int random_index = 0;
+
+	int count = EspSpawnpointCount(teamNum);
+    if (count > 0) {
+        do {
+            random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+        } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
+    }
+	// Keep track of which spawn was last chosen
+	esp_last_chosen_spawn = random_index;
+	esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
+
+	edict_t *spawn_point = es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	if (spawn_point != NULL) {
+		gi.dprintf("For team %d, random index is %d, spawn coordinates were %f %f %f\n", teamNum, esp_spawnpoint_index[teamNum], spawn_point->s.origin[0], spawn_point->s.origin[1], spawn_point->s.origin[2]);
+	} else {
+		gi.dprintf("For team %d, random index is %d, but the spawn point is NULL\n", teamNum, esp_spawnpoint_index[teamNum]);
+	}
+
+	//if (esp_spawnpoint_index[teamNum])
+	return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	// else
+	// 	gi.dprintf("No spawnpoint found, safely return NULL so we can try another one\n");
+	// 	return NULL;
+}
+
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
 	edict_t 	*spot, *spot1, *spot2;
@@ -950,17 +1030,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	at a map spawnpoint
 	*/
 
-	// if (team_round_going &&
-	// // ETV Check
-    // ((etv->value && ent->client->resp.team == TEAM1 && 
-	// IS_ALIVE(teams[TEAM1].leader) && 
-	// teams[TEAM1].leader) || 
-	// //End ETV Check
-	// // ATL Check
-    // (atl->value && 
-	// teams[ent->client->resp.team].leader && 
-	// IS_ALIVE(teams[ent->client->resp.team].leader)))) {
-
+	// Is this a respawn?
 	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
 
 		//float angle = teamLeader->s.angles[YAW];
@@ -977,7 +1047,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		spawn->nextthink = level.framenum + 1;
 		//ED_CallSpawn(spawn);
 
-		gi.dprintf("Coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
+		gi.dprintf("Respawn coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
 
 		return spawn;
 		// Copies the entity's coordinates
@@ -985,45 +1055,48 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		// respawn_coords[2] += 9;
 		// VectorCopy (spot->s.angles, angles);
 		// return spot;
+
+	// This is an initial round spawn
 	} else {
-		while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-			gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
-			count++;
-			range = PlayersRangeFromSpot(spot);
-			if (range < range1) {
-				if (range1 < range2) {
-					range2 = range1;
-					spot2 = spot1;
-				}
-				range1 = range;
-				spot1 = spot;
-			} else if (range < range2) {
-				range2 = range;
-				spot2 = spot;
-			}
-		}
+		return SelectEspCustomSpawnPoint(ent);
+		// while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+		// 	gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
+		// 	count++;
+		// 	range = PlayersRangeFromSpot(spot);
+		// 	if (range < range1) {
+		// 		if (range1 < range2) {
+		// 			range2 = range1;
+		// 			spot2 = spot1;
+		// 		}
+		// 		range1 = range;
+		// 		spot1 = spot;
+		// 	} else if (range < range2) {
+		// 		range2 = range;
+		// 		spot2 = spot;
+		// 	}
+		// }
 
-		//gi.dprintf("*********Found %i spawn points\n", count);
+		// //gi.dprintf("*********Found %i spawn points\n", count);
 
-		if (!count)
-			return SelectRandomDeathmatchSpawnPoint();
+		// if (!count)
+		// 	return SelectRandomDeathmatchSpawnPoint();
 
-		if (count <= 2) {
-			spot1 = spot2 = NULL;
-		} else
-			count -= 2;
+		// if (count <= 2) {
+		// 	spot1 = spot2 = NULL;
+		// } else
+		// 	count -= 2;
 
-		selection = rand() % count;
+		// selection = rand() % count;
 
-		spot = NULL;
-		do {
-			spot = G_Find(spot, FOFS(classname), cname);
-			if (spot == spot1 || spot == spot2)
-				selection++;
-		}
-		while (selection--);
+		// spot = NULL;
+		// do {
+		// 	spot = G_Find(spot, FOFS(classname), cname);
+		// 	if (spot == spot1 || spot == spot2)
+		// 		selection++;
+		// }
+		// while (selection--);
 
-		return spot;
+		// return spot;
 	}
 }
 
@@ -1330,6 +1403,47 @@ qboolean EspCheckRules(void)
 }
 
 /*
+Skin Check
+Validates players and leaders have the correct skin for their team
+*/
+void EspSkinCheck()
+{
+	edict_t *ent;
+	int i;
+
+	// If we don't have proper leaders, don't run this
+	if (!EspLeaderCheck()) {
+		gi.dprintf("Leaders not found, not re-skinning");
+		return;
+	}
+
+	for (i = 0; i < game.maxclients; i++) {
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse || ent->client->resp.team == NOTEAM)
+			continue;
+		if (ent->client->resp.team == TEAM1) {
+			if (!IS_LEADER(ent)) {
+				AssignSkin(ent, teams[TEAM1].skin, false);
+			} else {
+				AssignSkin(ent, teams[TEAM1].leader_skin, false);
+			}
+		} else if (ent->client->resp.team == TEAM2) {
+			if (!IS_LEADER(ent)) {
+				AssignSkin(ent, teams[TEAM2].skin, false);
+			} else {
+				AssignSkin(ent, teams[TEAM2].leader_skin, false);
+			}
+		} else if (ent->client->resp.team == TEAM3) {
+			if (!IS_LEADER(ent)) {
+				AssignSkin(ent, teams[TEAM3].skin, false);
+			} else {
+				AssignSkin(ent, teams[TEAM3].leader_skin, false);
+			}
+		}
+	}
+}
+
+/*
 This check is similiar to checking that all teams have
 Captains in matchmode
 */
@@ -1412,7 +1526,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
 		CenterPrintAll(temp);
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
-		gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+		gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
 		//gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
 		// Set the time the player became leader so they can't unleader immediately after
@@ -1725,31 +1839,6 @@ void EspSetupStatusbar( void )
 	}
 }
 
-edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
-{
-	espsettings_t *es = &espsettings;
-    int teamNum = ent->client->resp.team;
-    srand(time(NULL)); // Random seed
-	int random_index = 0;
-
-	int count = 0;
-	int i = 0;
-    for (i = 0; i < game.maxclients; i++) {
-        if (es->custom_spawns[teamNum][i]) {
-            count++;
-        }
-    }
-    if (count > 0) {
-        do {
-            random_index = rand() % count; // Generate a random index between 0 and the number of spawns
-        } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
-    }
-	// Keep track of which spawn was last chosen
-	esp_last_chosen_spawn = random_index;
-
-	return es->custom_spawns[teamNum][random_index];
-}
-
 void EspAnnounceDetails( qboolean timewarning )
 {
 	int i;
@@ -1837,6 +1926,14 @@ void EspEndOfRoundCleanup()
 
 	// Reset cleanup interval
 	cleanupInterval = 20;
+
+	// Reset the last spawnpoint index, this is reset to 
+	// -1 because 0 is a valid index
+	for (i = TEAM1; i <= teamCount; i++) {
+		esp_spawnpoint_index[i] = -1;
+	}
+
+
 	/* 
 	Note:  Resetting the ETV escort point is not done here,
 	it is performed in EspResetCapturePoint() and MUST be called at 
@@ -1846,7 +1943,28 @@ void EspEndOfRoundCleanup()
 	*/
 }
 
+/*
 
+*/
+int EspSpawnpointCount(int teamNum)
+{
+    espsettings_t *es = &espsettings;
+    int i;
+    int spawn_count = 0;
+
+    // Get count of how many team spawns there are in espsettings.customspawns
+    for (i = 0; i < MAX_SPAWNS; i++) {
+        if (es->custom_spawns[teamNum][i]) {
+            if (es->custom_spawns[teamNum][i] == NULL)
+                break;
+			gi.dprintf("Team %d spawncount %d coordinates are: %f, %f, %f\n", teamNum, i, es->custom_spawns[teamNum][i]->s.origin[0], es->custom_spawns[teamNum][i]->s.origin[1], es->custom_spawns[teamNum][i]->s.origin[2]);
+            spawn_count++;
+        }
+    }
+
+    gi.dprintf("Team %d has %d spawnpoints\n", teamNum, spawn_count);
+    return spawn_count;
+}
 
 void EspDebug()
 {

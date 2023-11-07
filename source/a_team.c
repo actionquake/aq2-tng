@@ -2261,6 +2261,10 @@ static void StartLCA(void)
 	if ((gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED)))
 		CleanLevel();
 
+	if (esp->value)
+		// Re-skin everyone to ensure only one leader skin
+		EspSkinCheck();
+
 	if (use_tourney->value && !tourney_lca->value)
 	{
 		lights_camera_action = TourneySetTime (T_SPAWN);
