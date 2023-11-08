@@ -85,7 +85,7 @@ void EspCapturePointThink( edict_t *flag )
 			edict_t *ent = NULL;
 			int prev_owner = EspCapturePointOwner( flag );
 
-			gi.dprintf("prev flag owner team is %d\n", prev_owner);
+			//gi.dprintf("prev flag owner team is %d\n", prev_owner);
 
 			if( prev_owner != NOTEAM )
 				esp_team_flags[ prev_owner ] --;
@@ -112,10 +112,13 @@ void EspCapturePointThink( edict_t *flag )
 				espsettings.target_name,
 				teams[ flag->owner->client->resp.team ].name );
 
-				espsettings.capturestreak++;
+			espsettings.capturestreak++;
 
-				// This is the game state, where the leader made it to the capture point
-				espsettings.escortcap = true;
+			// This is the game state, where the leader made it to the capture point
+			espsettings.escortcap = true;
+
+			// Bonus point awarded
+			flag->owner->client->resp.score += ESP_LEADER_ESCORT_BONUS;
 
 			// Escort point captured, end round and start again
 			gi.sound( &g_edicts[0], CHAN_BODY | CHAN_NO_PHS_ADD, gi.soundindex("aqdt/aqg_bosswin.wav"), 1.0, ATTN_NONE, 0.0 );
@@ -950,6 +953,13 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 	return false;
 }
 
+/*
+This should return one spawnpoint coordinate for each team when round begins,
+so that everyone per team spawns in the same place.  After that, it should
+randomly choose a spawnpoint for each team, based on the es->custom_spawns[index#]
+
+This is reset back to default in EspEndOfRoundCleanup()
+*/
 edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 {
 	espsettings_t *es = &espsettings;
@@ -962,23 +972,27 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
         do {
             random_index = rand() % count; // Generate a random index between 0 and the number of spawns
         } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
-    }
+    } else {
+		// If we count zero custom spawns, then we need to safely return NULL so we can try another one
+		return NULL;
+	}
 	// Keep track of which spawn was last chosen
 	esp_last_chosen_spawn = random_index;
 	esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
 
+	// Everyone on each team spawns on the same spawnpoint index
 	edict_t *spawn_point = es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
-	if (spawn_point != NULL) {
-		gi.dprintf("For team %d, random index is %d, spawn coordinates were %f %f %f\n", teamNum, esp_spawnpoint_index[teamNum], spawn_point->s.origin[0], spawn_point->s.origin[1], spawn_point->s.origin[2]);
-	} else {
-		gi.dprintf("For team %d, random index is %d, but the spawn point is NULL\n", teamNum, esp_spawnpoint_index[teamNum]);
-	}
+	// if (spawn_point != NULL) {
+	// 	gi.dprintf("For team %d, random index is %d, spawn coordinates were %f %f %f\n", teamNum, esp_spawnpoint_index[teamNum], spawn_point->s.origin[0], spawn_point->s.origin[1], spawn_point->s.origin[2]);
+	// } else {
+	// 	gi.dprintf("For team %d, random index is %d, but the spawn point is NULL\n", teamNum, esp_spawnpoint_index[teamNum]);
+	// }
 
-	//if (esp_spawnpoint_index[teamNum])
-	return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
-	// else
-	// 	gi.dprintf("No spawnpoint found, safely return NULL so we can try another one\n");
-	// 	return NULL;
+	if (es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]])
+		return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	else
+		gi.dprintf("%s: No spawnpoint found, safely return NULL so we can try another one\n", __FUNCTION__);
+		return NULL;
 }
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
@@ -1100,7 +1114,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	}
 }
 
-void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
+void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 {
 	int i, enemyteam;
 	edict_t *ent, *flag, *leader;
@@ -1116,12 +1130,6 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	enemyteam = (targ->client->resp.team != attacker->client->resp.team);
 	if (!enemyteam)
 		return;		// whoever died isn't on a team
-
-	// // same team, if the flag at base, check to he has the enemy flag
-	// flag_item = team_flag[targ->client->resp.team];
-	// enemy_flag_item = team_flag[otherteam];
-
-	// did the attacker frag the flag carrier?
 
 	/*
 	Leader frag bonus
@@ -1192,18 +1200,20 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	VectorSubtract(targ->s.origin, flag->s.origin, v1);
 	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
 
-	if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
-		|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
-		// we defended the base flag
-		attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
-		if (flag->solid == SOLID_NOT) {
-			gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
-				attacker->client->pers.netname, espsettings.target_name);
-			IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
-				attacker->client->pers.netname,
-				espsettings.target_name);
+	if(attacker->client->resp.team == TEAM2) { // Only team2 can 'defend' the flag
+		if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
+			|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
+			// we defended the base flag
+			attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
+			if (flag->solid == SOLID_NOT) {
+				gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
+					attacker->client->pers.netname, espsettings.target_name);
+				IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
+					attacker->client->pers.netname,
+					espsettings.target_name);
+			}
+			return;
 		}
-		return;
 	}
 
 	/*
@@ -1227,25 +1237,8 @@ void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker)
 	}
 }
 
-void EspCheckHurtLeader(edict_t * targ, edict_t * attacker)
-{
-	int enemyteam;
-
-	if (!targ->client || !attacker->client)
-		return;
-
-	// Enemy team is any team that is not the attacker's (supports >2 teams)
-	enemyteam = (targ->client->resp.team != attacker->client->resp.team);
-	if (!enemyteam)
-		return;
-
-	if (targ->client->resp.team != attacker->client->resp.team)
-		attacker->client->resp.esp_lasthurtleader = level.framenum;
-}
-
 void SetEspStats( edict_t *ent )
 {
-
 	// Load scoreboard images
 	level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
 	level.pic_esp_teamicon[TEAM1] = gi.imageindex(teams[TEAM1].skin_index);
@@ -1310,27 +1303,6 @@ void SetEspStats( edict_t *ent )
 	if (!ent->client->pers.id)
 		SetIDView(ent);
 }
-
-/*
-This is only used when there are 2 teams
-
-Commenting out for now in favor of using OtherTeam()
-*/
-// int EspOtherTeam(int team)
-// {
-// 	if(teamCount == 3)
-// 		return -1;
-
-// 	switch (team) {
-// 	case TEAM1:
-// 		return TEAM2;
-// 	case TEAM2:
-// 		return TEAM1;
-// 	case NOTEAM:
-// 		return NOTEAM; /* there is no other team for NOTEAM, but I want it back! */
-// 	}
-// 	return -1;		// invalid value
-// }
 
 void EspSwapTeams()
 {
@@ -1465,15 +1437,15 @@ qboolean AllTeamsHaveLeaders(void)
 
 	// Only Team 1 needs a leader in ETV mode
 	if((etv->value) && HAVE_LEADER(TEAM1)) {
-		gi.dprintf("ETV team has a leader\n");
+		//gi.dprintf("ETV team has a leader\n");
 		return true;
 	} else if(atl->value && (teamsWithLeaders == teamCount)){
-		gi.dprintf("Teams with leaders is the same as the team count\n");
+		//gi.dprintf("Teams with leaders is the same as the team count\n");
 		return true;
 	} else {
 		return false;
 	}
-	gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
+	//gi.dprintf("Leadercount: %d\n", teamsWithLeaders);
 	return false;
 }
 
