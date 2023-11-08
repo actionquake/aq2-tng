@@ -1487,8 +1487,8 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 			CTFFragBonuses(self, inflictor, attacker);
 
 		// TODO: Make this work
-		//if (esp->value)
-		//	EspScoreBonuses(self, inflictor, attacker);
+		if (esp->value)
+			EspScoreBonuses(self, attacker);
 
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
@@ -1958,6 +1958,8 @@ void respawn(edict_t *self)
 	}
 
 	self->client->respawn_framenum = level.framenum + 2 * HZ;
+
+	// Optional respawn invulnerability in Espionage
 	if (esp->value && team_round_going && esp_respawn_uvtime->value){
 		self->client->uvTime = (int)esp_respawn_uvtime->value;
 	}

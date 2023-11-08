@@ -70,18 +70,16 @@ extern gitem_t *team_flag[TEAM_TOP];
 #define TS_TEAM_BONUS                      1   // this is the bonus point teams get for fragging enemy leader
 
 // Individual score bonuses
-#define ESP_LEADER_FRAG_BONUS   	        10	// points player receives for fragging enemy leader
-#define ESP_LEADER_ESCORT_BONUS             10  // points player receives if they are leader and they successfully touch escort marker
-
+#define ESP_LEADER_FRAG_BONUS   	        5	// points player receives for fragging enemy leader
+#define ESP_LEADER_ESCORT_BONUS             5  // points player receives if they are leader and they successfully touch escort marker
 #define ESP_LEADER_DANGER_PROTECT_BONUS 	2	// bonus for fragging someone who has recently hurt your leader
 #define ESP_LEADER_PROTECT_BONUS    		1	// bonus for fragging someone while either you or your target are near your leader
 #define ESP_FLAG_DEFENSE_BONUS    		1	// bonus for fragging someone while either you or your target are near your flag
-
 #define ESP_LEADER_HARASS_BONUS             2   // points for attacking defenders of the leader
 
+// Score bonus critieria/limitations
 #define ESP_TARGET_PROTECT_RADIUS   		400	// the radius around an object being defended where a target will be worth extra frags
 #define ESP_ATTACKER_PROTECT_RADIUS 		400	// the radius around an object being defended where an attacker will get extra frags when making kills
-
 #define ESP_LEADER_DANGER_PROTECT_TIMEOUT	8   // time in seconds until player is eligible for the bonus points after receiving them
 #define ESP_LEADER_HARASS_TIMEOUT       	8
 #define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
@@ -104,8 +102,7 @@ void EspResetCapturePoint( void );
 void GenerateMedKit(qboolean instant);
 
 void EspTouchCapturePoint( edict_t *marker, edict_t *player, cplane_t *plane, csurface_t *surf );
-void EspScoreBonuses(edict_t * targ, edict_t * inflictor, edict_t * attacker);
-void EspCheckHurtLeader (edict_t * targ, edict_t * attacker);
+void EspScoreBonuses(edict_t * targ, edict_t * attacker);
 
 qboolean EspCheckRules (void);
 qboolean HasFlag (edict_t * ent);
