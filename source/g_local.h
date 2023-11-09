@@ -1225,7 +1225,6 @@ extern cvar_t *esp_leaderenhance;
 extern cvar_t *esp_enhancedslippers;
 extern cvar_t *esp_matchmode;
 extern cvar_t *esp_respawn_uvtime;
-extern cvar_t *esp_respawn_time;
 
 // END AQ2 ETE
 

@@ -494,7 +494,6 @@ cvar_t *esp_leaderenhance;
 cvar_t *esp_enhancedslippers;
 cvar_t *esp_matchmode;
 cvar_t *esp_respawn_uvtime;
-cvar_t *esp_respawn_time;
 // END AQ2 ETE
 
 // 2022

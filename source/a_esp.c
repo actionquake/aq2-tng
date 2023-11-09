@@ -350,22 +350,10 @@ void EspEnforceDefaultSettings(char *defaulttype)
 	}
 
 	if(default_respawn) {
-		/*
-		If esp_respawn_time cvar is less than esp_respawn_time_default,
-		then assign this as the respawn time. Otherwise, use the default
-		*/
-		int esp_respawn_time_default = 8;
-		int respawn_time = 2;
-		if (esp_respawn_time->value < esp_respawn_time_default){
-			respawn_time = (int)esp_respawn_time->value;
-		} else {
-			respawn_time = esp_respawn_time_default;
-		}
-
 		for (i = TEAM1; i <= teamCount; i++) {
-			teams[i].respawn_timer = respawn_time;
+			teams[i].respawn_timer = ESP_DEFAULT_RESPAWN_TIME;
 		}
-		gi.dprintf("  Respawn Rate: %d seconds\n", respawn_time);
+		gi.dprintf("  Respawn Rate: %d seconds\n", ESP_DEFAULT_RESPAWN_TIME);
 	}
 
 	if(default_team) {
@@ -509,24 +497,18 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("Enforcing defaults\n");
 			EspEnforceDefaultSettings("respawn");
 		} else {
-			if (!esp_respawn_time->value) {
-				if(r_respawn_time) {
-					gi.dprintf("    Red     : %s seconds\n", r_respawn_time);
-					teams[TEAM1].respawn_timer = atoi(r_respawn_time);
-				}
-				if(b_respawn_time) {
-					gi.dprintf("    Blue    : %s seconds\n", b_respawn_time);
-					teams[TEAM2].respawn_timer = atoi(b_respawn_time);
-				}
-				if (teamCount == 3){
-					if(g_respawn_time) {
-						gi.dprintf("    Green   : %s seconds\n", g_respawn_time);
-						teams[TEAM3].respawn_timer = atoi(g_respawn_time);
-					}
-				}
-			} else {
-				for (i = TEAM1; i <= teamCount; i++) {
-					teams[i].respawn_timer = (int)esp_respawn_time->value;
+			if(r_respawn_time) {
+				gi.dprintf("    Red     : %s seconds\n", r_respawn_time);
+				teams[TEAM1].respawn_timer = atoi(r_respawn_time);
+			}
+			if(b_respawn_time) {
+				gi.dprintf("    Blue    : %s seconds\n", b_respawn_time);
+				teams[TEAM2].respawn_timer = atoi(b_respawn_time);
+			}
+			if (teamCount == 3){
+				if(g_respawn_time) {
+					gi.dprintf("    Green   : %s seconds\n", g_respawn_time);
+					teams[TEAM3].respawn_timer = atoi(g_respawn_time);
 				}
 			}
 		}
@@ -791,21 +773,15 @@ qboolean EspLoadConfig(const char *mapname)
 int EspGetRespawnTime(edict_t *ent)
 {
 	int spawntime = teams[ent->client->resp.team].respawn_timer;
-	int min_respawn_time = 2;  // Minimum 2 seconds for respawn
-	int i;
-
-	for (i = TEAM1; i <= teamCount; i++) {
-		if (teams[i].respawn_timer < min_respawn_time) {
-			teams[i].respawn_timer = min_respawn_time;
-		}
-		if (ent->client->resp.team == i && teams[i].respawn_timer >= min_respawn_time) {
-			spawntime = teams[i].respawn_timer;
-			break;
-		}
-	}
+	if(ent->client->resp.team == TEAM1 && teams[TEAM1].respawn_timer > -1)
+		spawntime = teams[TEAM1].respawn_timer;
+	else if(ent->client->resp.team == TEAM2 && teams[TEAM2].respawn_timer > -1)
+		spawntime = teams[TEAM2].respawn_timer;
+	else if((teamCount == 3) && ent->client->resp.team == TEAM3 && teams[TEAM3].respawn_timer > -1)
+		spawntime = teams[TEAM3].respawn_timer;
 
 	if (!IS_LEADER(ent)) {
-		gi.cprintf(ent, PRINT_LOW, "You will respawn in %d seconds\n", spawntime);
+		gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
 	}
 	return spawntime;
 }
@@ -860,21 +836,23 @@ void EspRespawnPlayer(edict_t *ent)
 		// Don't respawn until the current framenum is more than the respawn timer's framenum
 		gi.dprintf("\nLevel framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 		if (level.framenum > ent->client->respawn_framenum) {
-			// If your leader is alive, you can respawn
+			// gi.dprintf("\n\nLevel framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
+			// // If your leader is alive, you can respawn
 
-			gi.dprintf("%s is alive? %d\n", teams[ent->client->resp.team].leader->client->pers.netname, IS_ALIVE(teams[ent->client->resp.team].leader));
-			gi.dprintf("ETV mode: %f\n", etv->value);
-			if (teams[ent->client->resp.team].leader != NULL) {
-				if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
+			// gi.dprintf("Is it ETV mode? %f\n", etv->value);
+			// gi.dprintf("Is team 1 leader alive? %d\n", IS_ALIVE(teams[TEAM1].leader));
+			// gi.dprintf("Is team 1's leader NULL? %d\n", teams[TEAM1].leader == NULL);
+
+			if (atl->value) {
+				if (teams[ent->client->resp.team].leader != NULL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 					gi.centerprintf(ent, "ACTION!");
 					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 					respawn(ent);
 				}
 
-			// If TEAM1's leader is alive, you can respawn
-			} else if (teams[TEAM1].leader != NULL) { // NULL check
-				if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
-					gi.dprintf("\n\n RESPAWN \n\n");
+			} else if (etv->value) {
+				if (teams[TEAM1].leader != NULL && IS_ALIVE(teams[TEAM1].leader)) {
+					//gi.dprintf("\n\n\n RESPAWN \n\n\n");
 					gi.centerprintf(ent, "ACTION!");
 					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 					respawn(ent);
@@ -936,10 +914,12 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 		gi.dprintf("Warning: Invalid espmode returned from EspModeCheck()\n");
 		return false;
 	}
-	if (!leader || (etv->value && leader->client->resp.team == TEAM1)) {
-		gi.dprintf("Warning: Leader was NULL\n");
+
+	if (!leader){
+		gi.dprintf("Warning: Supplied ent was not the leader\n");
 		return false;
 	}
+
 	if (espmode == ESPMODE_ATL) {
 		if (teams[leader->client->resp.team].leader)
 			return true;
@@ -1048,8 +1028,12 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	Also run a NULL check on the leader entity, if it doesn't exist then safely respawn
 	at a map spawnpoint
 	*/
+	// gi.dprintf("\nIs team round going? %d\n", team_round_going);
+	// gi.dprintf("\nIs the leader alive? %d\n", _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()));
+	// gi.dprintf("\nWhat mode are we in? %d\n", EspModeCheck());
 
 	// Is this a respawn?
+	// The round must be going on, and the leader must be alive depending on the Espionage mode
 	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
 
 		//float angle = teamLeader->s.angles[YAW];
@@ -1066,7 +1050,7 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		spawn->nextthink = level.framenum + 1;
 		//ED_CallSpawn(spawn);
 
-		gi.dprintf("Respawn coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
+		//gi.dprintf("Respawn coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
 
 		return spawn;
 		// Copies the entity's coordinates

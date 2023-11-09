@@ -564,14 +564,9 @@ void InitGame( void )
 	esp_enhancedslippers = gi.cvar("esp_enhancedslippers", "0", 0);
 	esp_matchmode = gi.cvar("esp_matchmode", "0", 0);
 	esp_respawn_uvtime = gi.cvar("esp_respawn_uvtime", "10", 0);
-	if (esp_respawn_uvtime->value > 20) {
+	if (esp_respawn_uvtime->value > 2) {
 		gi.dprintf("esp_respawn_uvtime was set too high, setting to 2 seconds\n");
 		gi.cvar_forceset("esp_respawn_uvtime", "20");
-	}
-	esp_respawn_time = gi.cvar("esp_respawn_time", "8", 0);
-	if (esp_respawn_time->value < 1) {
-		gi.dprintf("esp_respawn_time was set too low, setting to 1\n");
-		gi.cvar_forceset("esp_respawn_time", "1");
 	}
 	// END AQ2 ETE
 
