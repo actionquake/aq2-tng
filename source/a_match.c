@@ -735,6 +735,6 @@ void MM_EspDefaultSettings(void)
 	gi.cvar_forceset("esp_leaderenhance", "1");
 	gi.cvar_forceset("medkit_max", "1");
 	gi.cvar_forceset("medkit_value", "25");
-	gi.cvar_forceset("esp_respawn_uvtime", "1");
+	gi.cvar_forceset("esp_respawn_uvtime", "10");
 	gi.dprintf("** Espionage default matchmode settings enforced **\n");
 }

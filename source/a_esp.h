@@ -21,6 +21,7 @@ extern cvar_t *etv;
 
 
 // Game default settings
+#define ESP_DEFAULT_RESPAWN_TIME	10
 #define ESP_RED_SKIN				"male/ctf_r"
 #define ESP_BLUE_SKIN				"male/ctf_b"
 #define ESP_GREEN_SKIN				"male/ctf_g"
