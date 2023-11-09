@@ -1487,8 +1487,8 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 			CTFFragBonuses(self, inflictor, attacker);
 
 		// TODO: Make this work
-		if (esp->value)
-			EspScoreBonuses(self, attacker);
+		// if (esp->value)
+		// 	EspScoreBonuses(self, attacker);
 
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
