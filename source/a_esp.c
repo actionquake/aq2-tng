@@ -198,26 +198,26 @@ void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 
 	// Indicator arrow
 	// somewhere you want to spawn the arrow ("ent" being the entity who the arrow is pointing to)
-	if (use_indicators->value && !flag->obj_arrow){
-		flag->obj_arrow = G_Spawn();
-		flag->obj_arrow->solid = SOLID_NOT;
-		flag->obj_arrow->movetype = MOVETYPE_NOCLIP;
-		flag->obj_arrow->classname = "ind_arrow_objective";
-		flag->obj_arrow->owner = flag;
-		flag->obj_arrow->s.effects |= RF_INDICATOR | EF_ROTATE;
-		flag->obj_arrow->s.modelindex = level.model_arrow;
+	// if (use_indicators->value && !flag->obj_arrow){
+	// 	flag->obj_arrow = G_Spawn();
+	// 	flag->obj_arrow->solid = SOLID_NOT;
+	// 	flag->obj_arrow->movetype = MOVETYPE_NOCLIP;
+	// 	flag->obj_arrow->classname = "ind_arrow_objective";
+	// 	flag->obj_arrow->owner = flag;
+	// 	flag->obj_arrow->s.effects |= RF_INDICATOR | EF_ROTATE;
+	// 	flag->obj_arrow->s.modelindex = level.model_arrow;
 
-		// float arrow above briefcase by 10 units
-		flag->obj_arrow->s.origin[2] += 10;
+	// 	// float arrow above briefcase by 10 units
+	// 	flag->obj_arrow->s.origin[2] += 10;
 
-		VectorCopy(flag->s.origin, flag->obj_arrow->s.origin);
-		gi.linkentity(flag->obj_arrow);
+	// 	VectorCopy(flag->s.origin, flag->obj_arrow->s.origin);
+	// 	gi.linkentity(flag->obj_arrow);
 
-		// if (use_indicators->value){
-		// 	gi.dprintf("** Indicator arrow spawned at <%d %d %d>\n", flag->obj_arrow->s.origin[0], flag->obj_arrow->s.origin[1], flag->obj_arrow->s.origin[2]);
-		// 	gi.dprintf("** Flag coordinates are: <%d %d %d>\n", flag->s.origin[0], flag->s.origin[1], flag->s.origin[2]);
-		// }
-	}
+	// 	// if (use_indicators->value){
+	// 	// 	gi.dprintf("** Indicator arrow spawned at <%d %d %d>\n", flag->obj_arrow->s.origin[0], flag->obj_arrow->s.origin[1], flag->obj_arrow->s.origin[2]);
+	// 	// 	gi.dprintf("** Flag coordinates are: <%d %d %d>\n", flag->s.origin[0], flag->s.origin[1], flag->s.origin[2]);
+	// 	// }
+	// }
 	
 	esp_flag_count ++;
 }
@@ -863,7 +863,7 @@ void EspRespawnPlayer(edict_t *ent)
 			// If your leader is alive, you can respawn
 
 			gi.dprintf("%s is alive? %d\n", teams[ent->client->resp.team].leader->client->pers.netname, IS_ALIVE(teams[ent->client->resp.team].leader));
-			gi.dprintf("ETV mode: %i\n", etv->value);
+			gi.dprintf("ETV mode: %f\n", etv->value);
 			if (teams[ent->client->resp.team].leader != NULL) {
 				if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 					gi.centerprintf(ent, "ACTION!");
