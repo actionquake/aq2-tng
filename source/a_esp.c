@@ -831,11 +831,11 @@ int EspRespawnLCA()
 		if (ent->client->resp.team && !IS_ALIVE(ent)){
 			int timercalc = ent->client->respawn_framenum - level.framenum;
 			// Subtract current framenum from respawn_timer to get a countdown
-			if (timercalc <= 2) {
+			if (timercalc <= 20) {
 				gi.centerprintf(ent, "CAMERA...");
 				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
 				return 0;
-			} else if (timercalc <= 4) {
+			} else if (timercalc <= 40) {
 				gi.centerprintf(ent, "LIGHTS...");
 				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
 				return 0;
@@ -858,9 +858,12 @@ void EspRespawnPlayer(edict_t *ent)
 	// Only respawn if the round is going
 	if (team_round_going) {
 		// Don't respawn until the current framenum is more than the respawn timer's framenum
+		gi.dprintf("\nLevel framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 		if (level.framenum > ent->client->respawn_framenum) {
-			//gi.dprintf("Level framenum is %d, respawn timer was %d for %s\n", level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 			// If your leader is alive, you can respawn
+
+			gi.dprintf("%s is alive? %d\n", teams[ent->client->resp.team].leader->client->pers.netname, IS_ALIVE(teams[ent->client->resp.team].leader));
+			gi.dprintf("ETV mode: %i\n", etv->value);
 			if (teams[ent->client->resp.team].leader != NULL) {
 				if (atl->value && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 					gi.centerprintf(ent, "ACTION!");
@@ -871,6 +874,7 @@ void EspRespawnPlayer(edict_t *ent)
 			// If TEAM1's leader is alive, you can respawn
 			} else if (teams[TEAM1].leader != NULL) { // NULL check
 				if (etv->value && IS_ALIVE(teams[TEAM1].leader)) {
+					gi.dprintf("\n\n RESPAWN \n\n");
 					gi.centerprintf(ent, "ACTION!");
 					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 					respawn(ent);
@@ -990,9 +994,10 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 
 	if (es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]])
 		return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
-	else
+	else {
 		gi.dprintf("%s: No spawnpoint found, safely return NULL so we can try another one\n", __FUNCTION__);
 		return NULL;
+	}
 }
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)

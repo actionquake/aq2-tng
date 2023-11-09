@@ -1959,9 +1959,13 @@ void respawn(edict_t *self)
 
 	self->client->respawn_framenum = level.framenum + 2 * HZ;
 
-	// Optional respawn invulnerability in Espionage
-	if (esp->value && team_round_going && esp_respawn_uvtime->value){
-		self->client->uvTime = (int)esp_respawn_uvtime->value;
+	
+	if (esp->value && team_round_going){
+		// Optional respawn invulnerability in Espionage
+		if (esp_respawn_uvtime->value){
+			gi.dprintf("\nInvuln activated\n");
+			self->client->uvTime = (int)esp_respawn_uvtime->value;
+		}
 	}
 }
 
@@ -2770,6 +2774,10 @@ void PutClientInServer(edict_t * ent)
 					}
 				}
 			}
+		}
+		// For respawn-on-leader, if leader is ducking, client should also be ducking
+		if (team_round_going && HAVE_LEADER(ent->client->resp.team)){
+			ent->client->ps.pmove.pm_flags |= (teams[ent->client->resp.team].leader->client->ps.pmove.pm_flags & PMF_DUCKED);
 		}
 	}
 
