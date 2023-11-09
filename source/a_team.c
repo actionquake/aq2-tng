@@ -2803,7 +2803,7 @@ int CheckTeamRules (void)
 				{
 					int warmup_length = max( warmup->value, round_begin->value );
 					char buf[64] = "";
-					if (esp->value) {
+					if (esp->value && BothTeamsHavePlayers()) {
 						sprintf( buf, "All teams have leaders!\nThe round will begin in %d seconds!", warmup_length );
 					} else {
 						sprintf( buf, "The round will begin in %d seconds!", warmup_length );
