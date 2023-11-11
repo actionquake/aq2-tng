@@ -72,7 +72,8 @@ extern gitem_t *team_flag[TEAM_TOP];
 
 // Individual score bonuses
 #define ESP_LEADER_FRAG_BONUS   	        5	// points player receives for fragging enemy leader
-#define ESP_LEADER_ESCORT_BONUS             5  // points player receives if they are leader and they successfully touch escort marker
+#define ESP_LEADER_CAPTURE_BONUS            5  // points player receives if they are leader and they successfully touch escort marker
+#define ESP_LEADER_ESCORT_BONUS				2  // points player receives if they are not the leader and they are near the leader when point is captured
 #define ESP_LEADER_DANGER_PROTECT_BONUS 	2	// bonus for fragging someone who has recently hurt your leader
 #define ESP_LEADER_PROTECT_BONUS    		1	// bonus for fragging someone while either you or your target are near your leader
 #define ESP_FLAG_DEFENSE_BONUS    		1	// bonus for fragging someone while either you or your target are near your flag

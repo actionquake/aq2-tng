@@ -75,6 +75,14 @@ int EspCapturePointOwner( edict_t *flag )
 	return NOTEAM;
 }
 
+
+int _EspDistanceFromEdict(edict_t *ent, edict_t *target)
+{
+	vec3_t dist;
+	VectorSubtract(ent->s.origin, target->s.origin, dist);
+	return VectorLength(dist);
+}
+
 void EspCapturePointThink( edict_t *flag )
 {
 	// If the flag was touched this frame, make it owned by that team.
@@ -117,8 +125,26 @@ void EspCapturePointThink( edict_t *flag )
 			// This is the game state, where the leader made it to the capture point
 			espsettings.escortcap = true;
 
-			// Bonus point awarded
-			flag->owner->client->resp.score += ESP_LEADER_ESCORT_BONUS;
+			// Bonus points awarded
+			flag->owner->client->resp.score += ESP_LEADER_CAPTURE_BONUS;
+
+			// Check if teammates are nearby, they deserve a bonus too
+			int i;
+			for (i = 0; i < game.maxclients; i++){
+				ent = &g_edicts[1 + i];
+				if( !(ent->inuse && ent->client && ent->client->resp.team) )
+					continue;
+				else if( ent == flag->owner )
+					continue;
+				else if( ent->client->resp.team != flag->owner->client->resp.team )
+					continue;
+				else if( _EspDistanceFromEdict(ent, flag) > ESP_TARGET_PROTECT_RADIUS )
+					continue;
+				else {
+					// Bonus point awarded
+					ent->client->resp.score += ESP_LEADER_ESCORT_BONUS;
+				}
+			}
 
 			// Escort point captured, end round and start again
 			gi.sound( &g_edicts[0], CHAN_BODY | CHAN_NO_PHS_ADD, gi.soundindex("aqdt/aqg_bosswin.wav"), 1.0, ATTN_NONE, 0.0 );
@@ -951,20 +977,26 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
     srand(time(NULL)); // Random seed
 	int random_index = 0;
 
-	int count = EspSpawnpointCount(teamNum);
-    if (count > 0) {
-        do {
-            random_index = rand() % count; // Generate a random index between 0 and the number of spawns
-        } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
-    } else {
-		// If we count zero custom spawns, then we need to safely return NULL so we can try another one
-		return NULL;
+	// An index has been set, so spawn there, else find a random one
+	if (esp_spawnpoint_index[teamNum] >= 0)
+		return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	
+	// fresh round, so pick a random spawn
+	else {
+		int count = EspSpawnpointCount(teamNum);
+		if (count > 0) {
+			do {
+				random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+			} while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
+		} else {
+			// If we count zero custom spawns, then we need to safely return NULL so we can try another one
+			return NULL;
+		}
+		// Keep track of which spawn was last chosen
+		esp_last_chosen_spawn = random_index;
+		esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
 	}
-	// Keep track of which spawn was last chosen
-	esp_last_chosen_spawn = random_index;
-	esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
-
-	// Everyone on each team spawns on the same spawnpoint index
+	// Everyone on each team spawns on the same spawnpoint index (spawn together)
 	edict_t *spawn_point = es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
 	// if (spawn_point != NULL) {
 	// 	gi.dprintf("For team %d, random index is %d, spawn coordinates were %f %f %f\n", teamNum, esp_spawnpoint_index[teamNum], spawn_point->s.origin[0], spawn_point->s.origin[1], spawn_point->s.origin[2]);
@@ -972,8 +1004,8 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 	// 	gi.dprintf("For team %d, random index is %d, but the spawn point is NULL\n", teamNum, esp_spawnpoint_index[teamNum]);
 	// }
 
-	if (es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]])
-		return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	if (spawn_point)
+		return spawn_point;
 	else {
 		gi.dprintf("%s: No spawnpoint found, safely return NULL so we can try another one\n", __FUNCTION__);
 		return NULL;
@@ -1109,6 +1141,18 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 	edict_t *ent, *flag, *leader;
 	vec3_t v1, v2;
 
+	/*
+	Multiple bonus points, for:
+	- Fragging the enemy leader
+	- Defending your leader
+	- Defending the capture point as TEAM2
+	- Successfully escorting your leader to the capture point
+	*/
+
+	// You don't get bonus points after the round is over
+	if (!team_round_going)
+		return;
+
 	if (IS_LEADER(targ))
 		leader = targ;
 
@@ -1126,8 +1170,9 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 	if (IS_LEADER(targ)){
 		attacker->client->resp.esp_lasthurtleader = level.framenum;
 		attacker->client->resp.score += ESP_LEADER_FRAG_BONUS;
-		gi.cprintf(attacker, PRINT_MEDIUM,
-			   "BONUS: %d points for killing the enemy leader!\n", ESP_LEADER_FRAG_BONUS);
+		gi.bprintf(PRINT_MEDIUM,
+			   "%s gets %d bonus points for eliminating the enemy leader!\n", 
+			   attacker->client->pers.netname, ESP_LEADER_FRAG_BONUS);
 
 		for (i = 1; i <= game.maxclients; i++) {
 			ent = g_edicts + i;
@@ -1141,87 +1186,63 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 	Leader defense bonus
 	*/
 
-	if (targ->client->resp.esp_lasthurtleader &&
-	    level.framenum - targ->client->resp.esp_lasthurtleader <
-	    ESP_LEADER_DANGER_PROTECT_TIMEOUT * HZ) {
-		// attacker is on the same team as the flag carrier and
-		// fragged a guy who hurt our flag carrier
-		attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
-		gi.bprintf(PRINT_MEDIUM,
-			   "%s defends %s's leader against an aggressive enemy\n",
-			   attacker->client->pers.netname, teams[attacker->client->resp.team].name);
-		IRC_printf(IRC_T_GAME,
-			   "%n defends %n's leader against an aggressive enemy\n",
-			   attacker->client->pers.netname,
-			   teams[attacker->client->resp.team].name);
-		return;
-	}
+	// Duplicate?
 
-	// flag and flag carrier area defense bonuses
-	// we have to find the flag and carrier entities
-	// find the flag
-	//flag = NULL;
-	// while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
-	// 	if (!(flag->spawnflags & DROPPED_ITEM))
-	// 		break;
+	// if (targ->client->resp.esp_lasthurtleader &&
+	//     level.framenum - targ->client->resp.esp_lasthurtleader <
+	//     ESP_LEADER_DANGER_PROTECT_TIMEOUT * HZ) {
+	// 	// attacker is on the same team as the flag carrier and
+	// 	// fragged a guy who hurt our flag carrier
+	// 	attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
+	// 	gi.bprintf(PRINT_MEDIUM,
+	// 		   "%s gets %d bonus points for defending %s's leader\n",
+	// 		   attacker->client->pers.netname, ESP_LEADER_DANGER_PROTECT_BONUS, teams[attacker->client->resp.team].name);
+	// 	return;
 	// }
-
-	//if (!flag)
-	//	return;		// can't find attacker's flag
-
-	// find attacker's team's flag carrier
-	// for (i = 1; i <= game.maxclients; i++) {
-	// 	leader = g_edicts + i;
-	// 	if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
-	// 		break;
-	// 	leader = NULL;
-	// }
-
-
-	// Get flag coordinates, calculate distance from attacker and targ,
-	// and award accordingly
-
-	/*
-	Capturepoint defense bonus
-	*/
-	espsettings_t *es = &espsettings;
-	flag = es->capturepoint;
-	VectorSubtract(targ->s.origin, flag->s.origin, v1);
-	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
-
-	if(attacker->client->resp.team == TEAM2) { // Only team2 can 'defend' the flag
-		if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
-			|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
-			// we defended the base flag
-			attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
-			if (flag->solid == SOLID_NOT) {
-				gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
-					attacker->client->pers.netname, espsettings.target_name);
-				IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
-					attacker->client->pers.netname,
-					espsettings.target_name);
-			}
-			return;
-		}
-	}
 
 	/*
 	Leader protection bonus
 	*/
 	if (leader && leader != attacker) {
-		VectorSubtract(targ->s.origin, leader->s.origin, v1);
-		VectorSubtract(attacker->s.origin, leader->s.origin, v1);
+		int attacker_leader_dist = _EspDistanceFromEdict(attacker, leader);
+		int defender_leader_dist = _EspDistanceFromEdict(targ, leader);
 
-		if (VectorLength(v1) < ESP_LEADER_DANGER_PROTECT_BONUS ||
-		    VectorLength(v2) < ESP_LEADER_DANGER_PROTECT_BONUS ||
+		/* If attacker or defender are within ESP_ATTACKER_PROTECT_RADIUS units of the leader
+			or the leader is visible to either player
+		*/
+		if (attacker_leader_dist < ESP_ATTACKER_PROTECT_RADIUS ||
+		    defender_leader_dist < ESP_ATTACKER_PROTECT_RADIUS ||
 			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
 			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
-			gi.bprintf(PRINT_MEDIUM, "%s thwarts an assassination attempt on %s\n",
-				   attacker->client->pers.netname, teams[attacker->client->resp.team].leader_name);
-			IRC_printf(IRC_T_GAME, "%n thwarts an assassination attempt on %n\n",
-				   attacker->client->pers.netname,
-				   teams[attacker->client->resp.team].leader_name);
+			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for defending %s in the field\n",
+				   attacker->client->pers.netname, ESP_LEADER_DANGER_PROTECT_BONUS, teams[attacker->client->resp.team].leader_name);
 			return;
+		}
+	}
+
+	/*
+	Capturepoint defense bonus (ETV mode)
+	*/
+	if (etv->value) {
+		edict_t *cap = espsettings.capturepoint;
+		int attacker_cap_dist = _EspDistanceFromEdict(attacker, cap);
+		int defender_cap_dust = _EspDistanceFromEdict(targ, cap);
+
+		if(attacker->client->resp.team == TEAM2) { // Only team2 can 'defend' the capture point
+			// If the attacker or defender are within 400 units of the capture point, or the capture point is visible to either player
+			if (attacker_cap_dist < ESP_ATTACKER_PROTECT_RADIUS || defender_cap_dust < ESP_ATTACKER_PROTECT_RADIUS
+				|| visible(cap, targ, MASK_SOLID) || visible(cap, attacker, MASK_SOLID)) {
+				// we defended the base flag
+				attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
+				if (cap->solid == SOLID_NOT) {
+					gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
+						attacker->client->pers.netname, espsettings.target_name);
+					IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
+						attacker->client->pers.netname,
+						espsettings.target_name);
+				}
+				return;
+			}
 		}
 	}
 }
