@@ -1683,6 +1683,8 @@ edict_t *SelectRandomDeathmatchSpawnPoint(void)
 	range1 = range2 = 99999;
 	spot1 = spot2 = NULL;
 
+	gi.dprintf("I was called %s\n", __FUNCTION__);
+
 	while ((spot = G_Find(spot, FOFS(classname), "info_player_deathmatch")) != NULL) {
 		count++;
 		range = PlayersRangeFromSpot(spot);

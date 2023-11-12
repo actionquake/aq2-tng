@@ -1167,8 +1167,10 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 				random_index = rand() % count; // Generate a random index between 0 and the number of spawns
 			} while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
 		} else {
-			// If we count zero custom spawns, then we need to safely return NULL so we can try another one
-			return NULL;
+			// If we count zero custom spawns, then we need to safely return a better function
+			// so we can spawn teams apart
+			gi.dprintf("With zero spawnpoints, I am calling SelectRandomDeathmatchSpawnPoint()\n");
+			return SelectRandomDeathmatchSpawnPoint();
 		}
 		// Keep track of which spawn was last chosen
 		esp_last_chosen_spawn = random_index;
@@ -1192,37 +1194,83 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 
 edict_t *SelectEspSpawnPoint(edict_t * ent)
 {
-	//edict_t 	*spot, *spot1, *spot2;
-	//int 		count = 0;
-	//int 		selection;
-	//float 	range, range1, range2;
-	
+	edict_t 	*spot, *spot1, *spot2;
+	int 		count = 0;
+	int 		selection;
+	float 		range, range1, range2;
+
 	edict_t		*teamLeader, *spawn;
 	char 		*cname;
 	vec3_t 		respawn_coords;
-
-	//gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
+	int			teamNum = ent->client->resp.team;
 
 	ent->client->resp.esp_state = ESP_STATE_PLAYING;
 
-	switch (ent->client->resp.team) {
-	case TEAM1:
-		cname = "info_player_team1";
-		break;
-	case TEAM2:
-		cname = "info_player_team2";
-		break;
-	case TEAM3:
-		cname = "info_player_team3";
-		break;
-	default:
-		/* FIXME: might return NULL when dm spawns are converted to team ones */
-		return SelectRandomDeathmatchSpawnPoint();
+	switch (teamNum) {
+		case TEAM1:
+			cname = "info_player_team1";
+			break;
+		case TEAM2:
+			cname = "info_player_team2";
+			break;
+		case TEAM3:
+			cname = "info_player_deathmatch";
+			break;
+		default:
+			cname = "info_player_deathmatch";
+			break;
 	}
-	//spot = NULL;
-	//range1 = range2 = 99999;
-	//spot1 = spot2 = NULL;
 
+	// Regular initial round spawn logic:
+	if (!(team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()))) {
+		if (EspSpawnpointCount(teamNum > 0)) {
+			return SelectEspCustomSpawnPoint(ent);
+		} else {
+			
+
+			spot = NULL;
+			range1 = range2 = 99999;
+			spot1 = spot2 = NULL;
+
+			while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+				count++;
+				range = PlayersRangeFromSpot(spot);
+				if (range < range1) {
+					if (range1 < range2) {
+						range2 = range1;
+						spot2 = spot1;
+					}
+					range1 = range;
+					spot1 = spot;
+				} else if (range < range2) {
+					range2 = range;
+					spot2 = spot;
+				}
+			}
+
+			if (!count)
+				return SelectRandomDeathmatchSpawnPoint();
+
+			if (count <= 2) {
+				spot1 = spot2 = NULL;
+			} else
+				count -= 2;
+
+			selection = rand() % count;
+
+			spot = NULL;
+			do {
+				spot = G_Find(spot, FOFS(classname), cname);
+				if (spot == spot1 || spot == spot2)
+					selection++;
+			}
+			while (selection--);
+
+			return spot;
+			}
+	
+	// I am a respawn during mid round
+	} else {
 	/*
 	Check if this is a respawn or a round start spawn
 	Respawn Logic: 
@@ -1245,7 +1293,6 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 
 	// Is this a respawn?
 	// The round must be going on, and the leader must be alive depending on the Espionage mode
-	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
 
 		//float angle = teamLeader->s.angles[YAW];
 		// Get the leader's coordinates
@@ -1269,49 +1316,9 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 		// respawn_coords[2] += 9;
 		// VectorCopy (spot->s.angles, angles);
 		// return spot;
-
-	// This is an initial round spawn
-	} else {
-		return SelectEspCustomSpawnPoint(ent);
-		// while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-		// 	gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
-		// 	count++;
-		// 	range = PlayersRangeFromSpot(spot);
-		// 	if (range < range1) {
-		// 		if (range1 < range2) {
-		// 			range2 = range1;
-		// 			spot2 = spot1;
-		// 		}
-		// 		range1 = range;
-		// 		spot1 = spot;
-		// 	} else if (range < range2) {
-		// 		range2 = range;
-		// 		spot2 = spot;
-		// 	}
-		// }
-
-		// //gi.dprintf("*********Found %i spawn points\n", count);
-
-		// if (!count)
-		// 	return SelectRandomDeathmatchSpawnPoint();
-
-		// if (count <= 2) {
-		// 	spot1 = spot2 = NULL;
-		// } else
-		// 	count -= 2;
-
-		// selection = rand() % count;
-
-		// spot = NULL;
-		// do {
-		// 	spot = G_Find(spot, FOFS(classname), cname);
-		// 	if (spot == spot1 || spot == spot2)
-		// 		selection++;
-		// }
-		// while (selection--);
-
-		// return spot;
 	}
+	// All else fails, just:
+	return SelectRandomDeathmatchSpawnPoint();
 }
 
 void SetEspStats( edict_t *ent )
