@@ -3707,10 +3707,10 @@ void TallyEndOfLevelTeamScores (void)
 edict_t *SelectTeamplaySpawnPoint (edict_t * ent)
 {
 	// Print all of the teamplay_spawns
-	//int i;
-	//for (i = 0; i < num_potential_spawns; i++)
-		//gi.dprintf ("teamplay_spawn %d: %s\n", i, potential_spawns[i]->classname);
-		//gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
+	// int i;
+	// for (i = 0; i < num_potential_spawns; i++)
+	// 	gi.dprintf ("teamplay_spawn %d: %s\n", i, potential_spawns[i]->classname);
+	// 	gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
   return teamplay_spawns[ent->client->resp.team - 1];
 }
 

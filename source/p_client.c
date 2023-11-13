@@ -1491,8 +1491,8 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 			CTFFragBonuses(self, inflictor, attacker);
 
 		// TODO: Make this work
-		// if (esp->value)
-		// 	EspScoreBonuses(self, attacker);
+		if (esp->value)
+			EspScoreBonuses(self, attacker);
 
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
@@ -1789,9 +1789,6 @@ void SelectSpawnPoint(edict_t * ent, vec3_t origin, vec3_t angles)
 	//FIREBLADE
 	if (ctf->value) {
 		spot = SelectCTFSpawnPoint(ent);
-	// } else if ((esp->value) && (team_round_going || ValidateEspionageCustomSpawnpoints(es))) {
-	// 	// SelectEspSpawnPoint handles respawns as well as initial spawnpoints
-	// 	spot = SelectEspSpawnPoint(ent);
 	} else if (esp->value) {
 	// SelectEspSpawnPoint handles respawns as well as initial spawnpoints
 		spot = SelectEspSpawnPoint(ent);
@@ -3794,11 +3791,12 @@ void ClientBeginServerFrame(edict_t * ent)
 					NextChaseMode( ent );
 				}
 
-				if (esp->value)
+				if (esp->value) {
 					// LCA countdown..
 					EspRespawnLCA(ent);
 					// then Action!
 					EspRespawnPlayer(ent);
+				}
 			}
 			else
 			{
