@@ -75,6 +75,216 @@ int EspCapturePointOwner( edict_t *flag )
 	return NOTEAM;
 }
 
+/*
+Supply two edicts, return distance between the two
+*/
+int _EspDistanceFromEdict(edict_t *ent, edict_t *target)
+{
+	vec3_t dist;
+	VectorSubtract(ent->s.origin, target->s.origin, dist);
+	return VectorLength(dist);
+}
+
+/*
+Espionage Defender Leader Bonus
+*/
+void _EspBonusDefendLeader(edict_t *targ, edict_t *attacker)
+{
+	edict_t *leader = NULL;
+
+	if (IS_LEADER(targ))
+		leader = targ;
+	/*
+	Leader protection bonus
+	*/
+	if (leader && leader != attacker) {
+		int attacker_leader_dist = _EspDistanceFromEdict(attacker, leader);
+		int defender_leader_dist = _EspDistanceFromEdict(targ, leader);
+
+		/* If attacker or defender are within ESP_ATTACKER_PROTECT_RADIUS units of the leader
+			or the leader is visible to either player
+		*/
+		if (attacker_leader_dist < ESP_ATTACKER_PROTECT_RADIUS ||
+		    defender_leader_dist < ESP_ATTACKER_PROTECT_RADIUS ||
+			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
+			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
+			attacker->client->resp.esp_leaderprotectcount++;
+			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for defending %s in the field\n",
+				   attacker->client->pers.netname, ESP_LEADER_DANGER_PROTECT_BONUS, teams[attacker->client->resp.team].leader_name);
+		}
+	}
+	// Set framenum to prevent multiple bonuses too quickly
+	attacker->client->resp.esp_lastprotectcap = level.realFramenum;
+	return;
+}
+
+/*
+Espionage Leader Frag Bonus
+*/
+void _EspBonusFragLeader(edict_t *targ, edict_t *attacker)
+{
+	int i, enemyteam;
+	edict_t *ent;
+
+	if (IS_LEADER(targ)){
+		attacker->client->resp.esp_lasthurtleader = level.framenum;
+		attacker->client->resp.score += ESP_LEADER_FRAG_BONUS;
+		gi.bprintf(PRINT_MEDIUM,
+			   "%s gets %d bonus points for eliminating the enemy leader!\n", 
+			   attacker->client->pers.netname, ESP_LEADER_FRAG_BONUS);
+
+		// Stats
+		attacker->client->resp.esp_leaderfragcount++;
+		
+		// NULL check
+		if (espsettings.lastkilledleader) {
+			/* If the killer of the leader was not the same as the last killer of the leader
+				then reset the lastkilledleader and set the new edict
+			*/
+			if (espsettings.lastkilledleader != attacker)
+				// Set high killstreak if it's higher than the current best
+				if (espsettings.lastkilledleader->client->resp.esp_leaderkillstreak > espsettings.lastkilledleader->client->resp.esp_leaderkillstreakbest)
+					espsettings.lastkilledleader->client->resp.esp_leaderkillstreakbest = espsettings.lastkilledleader->client->resp.esp_leaderkillstreak;
+				// Reset leader killstreak for that player
+				espsettings.lastkilledleader->client->resp.esp_leaderkillstreak = 0;
+				// Set the new player as the killer of the leader and award a streak start
+				espsettings.lastkilledleader = attacker;
+				attacker->client->resp.esp_leaderkillstreak++;
+			} else {  // Same killer of the leader, increase killstreak
+				attacker->client->resp.esp_leaderkillstreak++;
+			}
+		} else {
+			espsettings.lastkilledleader = attacker;
+		}
+
+		enemyteam = (targ->client->resp.team != attacker->client->resp.team);
+		for (i = 1; i <= game.maxclients; i++) {
+			ent = g_edicts + i;
+			if (ent->inuse && ent->client->resp.team == enemyteam)
+				ent->client->resp.esp_lasthurtleader = 0;
+		}
+
+	// Set framenum to prevent multiple bonuses too quickly
+	attacker->client->resp.esp_lasthurtleader = level.realFramenum;
+	return;
+}
+
+/*
+Espionage Capture Bonus
+*/
+void _EspBonusCapture(edict_t *attacker, edict_t *flag)
+{
+	edict_t *ent;
+
+	gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
+		flag->owner->client->pers.netname,
+		espsettings.target_name,
+		teams[ flag->owner->client->resp.team ].name );
+
+	// Stats
+	espsettings.capturestreak++;
+	flag->owner->client->resp.esp_capstreak++;
+	if (flag->owner->client->resp.esp_capstreak > flag->owner->client->resp.esp_capstreakbest)
+		flag->owner->client->resp.esp_capstreakbest = flag->owner->client->resp.esp_capstreak;
+
+	// Bonus points awarded
+	flag->owner->client->resp.score += ESP_LEADER_CAPTURE_BONUS;
+
+	// Check if teammates are nearby, they deserve a bonus too
+	int i;
+	for (i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		if( !(ent->inuse && ent->client && ent->client->resp.team) )
+			continue;
+		else if( ent == flag->owner )
+			continue;
+		else if( ent->client->resp.team != flag->owner->client->resp.team )
+			continue;
+		else if( _EspDistanceFromEdict(ent, flag) > ESP_TARGET_PROTECT_RADIUS )
+			continue;
+		else {
+			// Bonus point awarded
+			ent->client->resp.score += ESP_LEADER_ESCORT_BONUS;
+		}
+	}
+}
+
+/*
+Espionage Defender Capture Point Bonus
+*/
+void _EspBonusDefendCapture(edict_t *targ, edict_t *attacker)
+{
+	// Only ETV mode, and only for those on TEAM2
+	if (!etv->value)
+		return;
+	if (attacker->client->resp.team != TEAM2)
+		return;
+
+	edict_t *cap = espsettings.capturepoint;
+	int attacker_cap_dist = _EspDistanceFromEdict(attacker, cap);
+	int defender_cap_dust = _EspDistanceFromEdict(targ, cap);
+
+	// If the attacker or defender are within 400 units of the capture point, 
+	// or the capture point is visible to either player
+	if (attacker_cap_dist < ESP_ATTACKER_PROTECT_RADIUS || 
+	defender_cap_dust < ESP_ATTACKER_PROTECT_RADIUS ||
+	visible(cap, targ, MASK_SOLID) || 
+	visible(cap, attacker, MASK_SOLID)) {
+		// we defended the base flag
+		attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
+		if (cap->solid == SOLID_NOT) {
+			gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
+				attacker->client->pers.netname, espsettings.target_name);
+			IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
+				attacker->client->pers.netname,
+				espsettings.target_name);
+		}
+	}
+
+	// Stats
+	attacker->client->resp.esp_capdefendercount++;
+
+	// Set framenum to prevent multiple bonuses too quickly
+	attacker->client->resp.esp_lastprotectcap = level.realFramenum;
+	return;
+}
+
+void EspScoreBonuses(edict_t * targ, edict_t * attacker)
+{
+	/*
+	Multiple bonus points, for:
+	- Fragging the enemy leader
+	- Defending your leader
+	- Defending the capture point as TEAM2
+	*/
+
+	// You don't get bonus points after the round is over
+	if (!team_round_going)
+		return;
+
+	// no bonus for fragging yourself
+	if (!targ->client || !attacker->client || targ == attacker)
+		return;
+
+	int enemyteam;
+	enemyteam = (targ->client->resp.team != attacker->client->resp.team);
+	if (!enemyteam)
+		return;		// whoever died isn't on a team
+
+	// Is the attacker eligible for these bonuses?
+	int lpc = attacker->client->resp.esp_lastprotectcap;
+	int lpl = attacker->client->resp.esp_lastprotectleader;
+	int lhl = attacker->client->resp.esp_lasthurtleader;
+
+	// If the attacker has already received a bonus in the last ESP_BONUS_COOLDOWN frames
+	if (lpc > level.realFramenum - ESP_BONUS_COOLDOWN)
+		_EspBonusDefendCapture(targ, attacker);
+	if (lpl > level.realFramenum - ESP_BONUS_COOLDOWN)
+		_EspBonusDefendLeader(targ, attacker);
+	if (lhl > level.realFramenum - ESP_BONUS_COOLDOWN)
+		_EspBonusFragLeader(targ, attacker);
+}
+
 void EspCapturePointThink( edict_t *flag )
 {
 	// If the flag was touched this frame, make it owned by that team.
@@ -107,18 +317,10 @@ void EspCapturePointThink( edict_t *flag )
 				// else
 				// 	location[0] = '\0';
 
-			gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
-				flag->owner->client->pers.netname,
-				espsettings.target_name,
-				teams[ flag->owner->client->resp.team ].name );
-
-			espsettings.capturestreak++;
+			_EspBonusCapture(flag->owner, flag);
 
 			// This is the game state, where the leader made it to the capture point
 			espsettings.escortcap = true;
-
-			// Bonus point awarded
-			flag->owner->client->resp.score += ESP_LEADER_ESCORT_BONUS;
 
 			// Escort point captured, end round and start again
 			gi.sound( &g_edicts[0], CHAN_BODY | CHAN_NO_PHS_ADD, gi.soundindex("aqdt/aqg_bosswin.wav"), 1.0, ATTN_NONE, 0.0 );
@@ -787,38 +989,38 @@ int EspGetRespawnTime(edict_t *ent)
 }
 
 /*
-TODO: Fire this when there's 4 seconds left before a respawn, somehow
+TODO: Fire this when there's 4 seconds left before a respawn
 */
-int EspRespawnLCA()
+void EspRespawnLCA(edict_t *ent)
 {
-	edict_t *ent = NULL;
-	int i;
+	// Basically we just want real, dead players who are in the respawn waiting period
+	if (!ent->inuse ||
+	ent->client->resp.team == NOTEAM ||
+	ent->client->respawn_framenum <= 0 ||
+	IS_LEADER(ent) ||
+	ent->is_bot)
+		return;
 
-	for (i = 0; i < game.maxclients; i++){
-		ent = &g_edicts[1 + i];
-		// Basically we just want dead players who are in the respawn waiting period
-		if (!ent->inuse ||
-		game.clients[i].resp.team == NOTEAM ||
-		game.clients[i].respawn_framenum <= 0 ||
-		IS_LEADER(ent) ||
-		ent->client->pers.spectator ||
-		ent->is_bot)
-			continue;
-		if (ent->client->resp.team && !IS_ALIVE(ent)){
-			int timercalc = ent->client->respawn_framenum - level.framenum;
-			// Subtract current framenum from respawn_timer to get a countdown
-			if (timercalc <= 20) {
-				gi.centerprintf(ent, "CAMERA...");
-				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
-				return 0;
-			} else if (timercalc <= 40) {
-				gi.centerprintf(ent, "LIGHTS...");
-				gi.sound(ent, CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
-				return 0;
-			}
+	if (ent->client->resp.team && !IS_ALIVE(ent)){
+		int timercalc = ent->client->respawn_framenum - level.framenum;
+		// Subtract current framenum from respawn_timer to get a countdown
+		if (timercalc <= 0){
+			// Play no sound, they've respawned by now
+			return;
+		} else if (timercalc <= 23 && ent->client->resp.esp_respawn_sounds == 2) {
+			gi.centerprintf(ent, "CAMERA...");
+			gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_NONE, 0.0);
+			ent->client->resp.esp_respawn_sounds = 1;
+			return;
+		} else if (timercalc <= 43 && ent->client->resp.esp_respawn_sounds == 0) {
+			gi.centerprintf(ent, "LIGHTS...");
+			gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_NONE, 0.0);
+			ent->client->resp.esp_respawn_sounds = 2;
+			return;
 		}
+	} else {
+		return;
 	}
-	return 0;
 }
 
 /* 
@@ -847,6 +1049,7 @@ void EspRespawnPlayer(edict_t *ent)
 				if (teams[ent->client->resp.team].leader != NULL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 					gi.centerprintf(ent, "ACTION!");
 					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
+					ent->client->resp.esp_respawn_sounds = 0;
 					respawn(ent);
 				}
 
@@ -855,6 +1058,7 @@ void EspRespawnPlayer(edict_t *ent)
 					//gi.dprintf("\n\n\n RESPAWN \n\n\n");
 					gi.centerprintf(ent, "ACTION!");
 					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
+					ent->client->resp.esp_respawn_sounds = 0;
 					respawn(ent);
 				}
 			}
@@ -951,20 +1155,28 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
     srand(time(NULL)); // Random seed
 	int random_index = 0;
 
-	int count = EspSpawnpointCount(teamNum);
-    if (count > 0) {
-        do {
-            random_index = rand() % count; // Generate a random index between 0 and the number of spawns
-        } while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
-    } else {
-		// If we count zero custom spawns, then we need to safely return NULL so we can try another one
-		return NULL;
+	// An index has been set, so spawn there, else find a random one
+	if (esp_spawnpoint_index[teamNum] >= 0)
+		return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	
+	// fresh round, so pick a random spawn
+	else {
+		int count = EspSpawnpointCount(teamNum);
+		if (count > 0) {
+			do {
+				random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+			} while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
+		} else {
+			// If we count zero custom spawns, then we need to safely return a better function
+			// so we can spawn teams apart
+			gi.dprintf("With zero spawnpoints, I am calling SelectRandomDeathmatchSpawnPoint()\n");
+			return SelectRandomDeathmatchSpawnPoint();
+		}
+		// Keep track of which spawn was last chosen
+		esp_last_chosen_spawn = random_index;
+		esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
 	}
-	// Keep track of which spawn was last chosen
-	esp_last_chosen_spawn = random_index;
-	esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
-
-	// Everyone on each team spawns on the same spawnpoint index
+	// Everyone on each team spawns on the same spawnpoint index (spawn together)
 	edict_t *spawn_point = es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
 	// if (spawn_point != NULL) {
 	// 	gi.dprintf("For team %d, random index is %d, spawn coordinates were %f %f %f\n", teamNum, esp_spawnpoint_index[teamNum], spawn_point->s.origin[0], spawn_point->s.origin[1], spawn_point->s.origin[2]);
@@ -972,47 +1184,66 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 	// 	gi.dprintf("For team %d, random index is %d, but the spawn point is NULL\n", teamNum, esp_spawnpoint_index[teamNum]);
 	// }
 
-	if (es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]])
-		return es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
+	if (spawn_point)
+		return spawn_point;
 	else {
 		gi.dprintf("%s: No spawnpoint found, safely return NULL so we can try another one\n", __FUNCTION__);
 		return NULL;
 	}
 }
 
-edict_t *SelectEspSpawnPoint(edict_t * ent)
+edict_t *EspRespawnOnLeader(edict_t *ent, char *cname)
+{
+	edict_t		*teamLeader, *spawn;
+	vec3_t 		respawn_coords;
+
+	teamLeader = teams[ent->client->resp.team].leader;
+	VectorCopy(teamLeader->s.origin, respawn_coords);
+
+	spawn = G_Spawn();
+	respawn_coords[2] += 9; // So they don't spawn in the floor
+	VectorCopy(respawn_coords, spawn->s.origin);
+	spawn->s.angles[YAW] = teamLeader->s.angles[YAW]; // Facing the same direction as the leader on respawn
+	spawn->classname = ED_NewString(cname);
+	spawn->think = G_FreeEdict;
+	spawn->nextthink = level.framenum + 1;
+	//ED_CallSpawn(spawn);
+
+	//gi.dprintf("Respawn coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
+
+	return spawn;
+}
+
+edict_t *SelectEspSpawnPoint(edict_t *ent)
 {
 	edict_t 	*spot, *spot1, *spot2;
-	edict_t		*teamLeader, *spawn;
 	int 		count = 0;
 	int 		selection;
 	float 		range, range1, range2;
+
+	edict_t		*teamLeader, *spawn;
 	char 		*cname;
 	vec3_t 		respawn_coords;
-
-	//gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
+	int			teamNum = ent->client->resp.team;
 
 	ent->client->resp.esp_state = ESP_STATE_PLAYING;
 
-	switch (ent->client->resp.team) {
-	case TEAM1:
-		cname = "info_player_team1";
-		break;
-	case TEAM2:
-		cname = "info_player_team2";
-		break;
-	case TEAM3:
-		cname = "info_player_team3";
-		break;
-	default:
-		/* FIXME: might return NULL when dm spawns are converted to team ones */
-		return SelectRandomDeathmatchSpawnPoint();
+	switch (teamNum) {
+		case TEAM1:
+			cname = "info_player_team1";
+			break;
+		case TEAM2:
+			cname = "info_player_team2";
+			break;
+		case TEAM3:
+			cname = "info_player_deathmatch";
+			break;
+		default:
+			cname = "info_player_deathmatch";
+			break;
 	}
-	spot = NULL;
-	range1 = range2 = 99999;
-	spot1 = spot2 = NULL;
 
-	/*
+	/* Regular initial round spawn logic:
 	Check if this is a respawn or a round start spawn
 	Respawn Logic: 
 	1. It's ETV mode
@@ -1025,81 +1256,57 @@ edict_t *SelectEspSpawnPoint(edict_t * ent)
 	2. Your leader is alive
 	3. Then spawn at your leader's location
 
-	Also run a NULL check on the leader entity, if it doesn't exist then safely respawn
-	at a map spawnpoint
+	If none of this is true, it's a round start spawn
 	*/
-	// gi.dprintf("\nIs team round going? %d\n", team_round_going);
-	// gi.dprintf("\nIs the leader alive? %d\n", _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()));
-	// gi.dprintf("\nWhat mode are we in? %d\n", EspModeCheck());
-
-	// Is this a respawn?
-	// The round must be going on, and the leader must be alive depending on the Espionage mode
 	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
-
-		//float angle = teamLeader->s.angles[YAW];
-		// Get the leader's coordinates
-		teamLeader = teams[ent->client->resp.team].leader;
-		VectorCopy(teamLeader->s.origin, respawn_coords);
-
-		spawn = G_Spawn();
-		respawn_coords[2] += 9; // So they don't spawn in the floor
-		VectorCopy(respawn_coords, spawn->s.origin);
-		spawn->s.angles[YAW] = teamLeader->s.angles[YAW]; // Facing the same direction as the leader on respawn
-		spawn->classname = ED_NewString(cname);
-		spawn->think = G_FreeEdict;
-		spawn->nextthink = level.framenum + 1;
-		//ED_CallSpawn(spawn);
-
-		//gi.dprintf("Respawn coordinates are %f %f %f %f\n", teamLeader->s.origin[0], teamLeader->s.origin[1], teamLeader->s.origin[2], teamLeader->s.angles[YAW]);
-
-		return spawn;
-		// Copies the entity's coordinates
-		// VectorCopy (spot->s.origin, teamLeader->s.origin);
-		// respawn_coords[2] += 9;
-		// VectorCopy (spot->s.angles, angles);
-		// return spot;
-
-	// This is an initial round spawn
+		// Time to respawn on the leader!
+		EspRespawnOnLeader(ent, cname);
 	} else {
-		return SelectEspCustomSpawnPoint(ent);
-		// while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-		// 	gi.dprintf("Spawn coordinates are: %f %f %f\n", spot->s.origin[0], spot->s.origin[1], spot->s.origin[2], spot->s.angles[YAW]);
-		// 	count++;
-		// 	range = PlayersRangeFromSpot(spot);
-		// 	if (range < range1) {
-		// 		if (range1 < range2) {
-		// 			range2 = range1;
-		// 			spot2 = spot1;
-		// 		}
-		// 		range1 = range;
-		// 		spot1 = spot;
-		// 	} else if (range < range2) {
-		// 		range2 = range;
-		// 		spot2 = spot;
-		// 	}
-		// }
+		if (EspSpawnpointCount(teamNum > 0)) {
+			// Custom spawns take precedence over standard spawns
+			return SelectEspCustomSpawnPoint(ent);
+		} else {
+			// but if there are none, then we go back to old faithful
+			spot = NULL;
+			range1 = range2 = 99999;
+			spot1 = spot2 = NULL;
 
-		// //gi.dprintf("*********Found %i spawn points\n", count);
+			while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
+				count++;
+				range = PlayersRangeFromSpot(spot);
+				if (range < range1) {
+					if (range1 < range2) {
+						range2 = range1;
+						spot2 = spot1;
+					}
+					range1 = range;
+					spot1 = spot;
+				} else if (range < range2) {
+					range2 = range;
+					spot2 = spot;
+				}
+			}
 
-		// if (!count)
-		// 	return SelectRandomDeathmatchSpawnPoint();
+		if (!count)
+			return SelectRandomDeathmatchSpawnPoint();
 
-		// if (count <= 2) {
-		// 	spot1 = spot2 = NULL;
-		// } else
-		// 	count -= 2;
+		if (count <= 2) {
+			spot1 = spot2 = NULL;
+		} else
+			count -= 2;
 
-		// selection = rand() % count;
+		selection = rand() % count;
 
-		// spot = NULL;
-		// do {
-		// 	spot = G_Find(spot, FOFS(classname), cname);
-		// 	if (spot == spot1 || spot == spot2)
-		// 		selection++;
-		// }
-		// while (selection--);
+		spot = NULL;
+		do {
+			spot = G_Find(spot, FOFS(classname), cname);
+			if (spot == spot1 || spot == spot2)
+				selection++;
+		}
+		while (selection--);
 
-		// return spot;
+		return spot;
+		}
 	}
 }
 
@@ -1228,6 +1435,8 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 			return;
 		}
 	}
+	// All else fails, just:
+	return SelectRandomDeathmatchSpawnPoint();
 }
 
 void SetEspStats( edict_t *ent )
@@ -1703,6 +1912,12 @@ int EspReportLeaderDeath(edict_t *ent)
 	gi.sound(&g_edicts[0], CHAN_BODY | CHAN_NO_PHS_ADD, gi.soundindex("tng/leader_death.wav"), 1.0, ATTN_NONE, 0.0);
 	if (esp_punish->value)
 		EspPunishment(dead_leader_team);
+
+	// Stats Reset
+	espsettings.capturestreak = 0;
+	if (ent->client->resp.esp_capstreak > ent->client->resp.esp_capstreakbest)
+		ent->client->resp.esp_capstreakbest = ent->client->resp.esp_capstreak;
+	ent->client->resp.esp_capstreak = 0;
 	
 	return winner;
 }

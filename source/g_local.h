@@ -1805,13 +1805,19 @@ typedef struct
 #endif
 
   int esp_state;
-  int esp_capstreak;
-  int esp_leaderkillstreak;
-  int esp_leaderprotectcount;
-  int esp_leaderfragcount;
-  int esp_markerdefendercount;
-  int esp_lasthurtleader;
-  int esp_leadertime;
+  int esp_capstreak;				// As leader, how many caps in a row
+  int esp_capstreakbest;			// Best cap streak
+  int esp_leaderkillstreak;			// How many enemy leader kills a player has had in a row
+  int esp_leaderkillstreakbest;		// Best leader kill streak
+  int esp_leaderprotectcount;		// How many times a player has protected the leader
+  int esp_leaderfragcount;			// How many times this player has fragged a leader
+  int esp_capdefendercount;			// How many times a player has defended the capture point
+  
+  int esp_lastprotectcap;			// Last time this player protected the capture point (framenum)
+  int esp_lastprotectleader;		// Last time this player protected the leader (framenum)
+  int esp_lasthurtleader;			// Last time this player hurt the leader (framenum)
+  int esp_leadertime;				// Last time this player was leader (framenum) to prevent spamming
+  int esp_respawn_sounds;			// 3: Played Lights, 2: Played Camera, 1: Played Action, 0: Play nothing
   qboolean is_volunteer;
 
   int medkit_award_time;

@@ -59,6 +59,7 @@ typedef struct espsettings_s
 	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
 	edict_t *capturepoint;
+	edict_t *lastkilledleader;
 } espsettings_t;
 
 extern espsettings_t espsettings;
@@ -72,7 +73,8 @@ extern gitem_t *team_flag[TEAM_TOP];
 
 // Individual score bonuses
 #define ESP_LEADER_FRAG_BONUS   	        5	// points player receives for fragging enemy leader
-#define ESP_LEADER_ESCORT_BONUS             5  // points player receives if they are leader and they successfully touch escort marker
+#define ESP_LEADER_CAPTURE_BONUS            5  // points player receives if they are leader and they successfully touch escort marker
+#define ESP_LEADER_ESCORT_BONUS				2  // points player receives if they are not the leader and they are near the leader when point is captured
 #define ESP_LEADER_DANGER_PROTECT_BONUS 	2	// bonus for fragging someone who has recently hurt your leader
 #define ESP_LEADER_PROTECT_BONUS    		1	// bonus for fragging someone while either you or your target are near your leader
 #define ESP_FLAG_DEFENSE_BONUS    		1	// bonus for fragging someone while either you or your target are near your flag
@@ -81,9 +83,7 @@ extern gitem_t *team_flag[TEAM_TOP];
 // Score bonus critieria/limitations
 #define ESP_TARGET_PROTECT_RADIUS   		400	// the radius around an object being defended where a target will be worth extra frags
 #define ESP_ATTACKER_PROTECT_RADIUS 		400	// the radius around an object being defended where an attacker will get extra frags when making kills
-#define ESP_LEADER_DANGER_PROTECT_TIMEOUT	8   // time in seconds until player is eligible for the bonus points after receiving them
-#define ESP_LEADER_HARASS_TIMEOUT       	8
-#define ESP_FRAG_LEADER_ASSIST_TIMEOUT		10
+#define ESP_BONUS_COOLDOWN					500	// the number of frames after a bonus is awarded before another bonus can be awarded	
 
 void EspForceEspionage(int espmode);
 void EspSetTeamSpawns(int, char *);
@@ -116,6 +116,6 @@ void EspAnnounceDetails( qboolean timewarning );
 qboolean EspChooseRandomLeader(int teamNum);
 qboolean EspLeaderCheck();
 void EspEndOfRoundCleanup();
-int EspRespawnLCA();
+void EspRespawnLCA(edict_t *ent);
 void EspCleanUp();
 void EspDebug();
