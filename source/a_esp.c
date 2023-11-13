@@ -1109,6 +1109,10 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 	edict_t *ent, *flag, *leader;
 	vec3_t v1, v2;
 
+	// No one gets bonus points unless a round is ongoing
+	if (!team_round_going)
+		return;
+
 	if (IS_LEADER(targ))
 		leader = targ;
 

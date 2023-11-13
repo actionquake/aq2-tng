@@ -1325,6 +1325,10 @@ void TossItemsOnDeath(edict_t * ent)
 	qboolean quad = false;
 	int i;
 
+	// Don't drop items if leader, this is just a mess
+	if (esp->value && IS_LEADER(ent))
+		return;
+
 	// don't bother dropping stuff when allweapons/items is active
 	if (allitem->value) {
 		// remove the lasersight because then the observer might have it
