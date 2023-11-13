@@ -1414,6 +1414,7 @@ qboolean ai_visible( edict_t *self, edict_t *other );
 qboolean infront( edict_t *self, edict_t *other );
 #endif
 void disablecvar(cvar_t *cvar, char *msg);
+qboolean check_readable_file(const char *filepath);
 
 // Re-enabled for bots
 float *tv (float x, float y, float z);

@@ -610,6 +610,13 @@ qboolean EspLoadConfig(const char *mapname)
 	gi.dprintf("Trying to load Espionage configuration file\n", mapname);
 
 	sprintf (buf, "%s/tng/%s.esp", GAMEVERSION, mapname);
+
+	if (!check_readable_file(buf)){
+		gi.dprintf("ERROR: Espionage file %s is either unreadable or empty!\n", buf);
+		gi.cvar_forceset("esp", "0");
+		return false;
+	}
+
 	fh = fopen (buf, "r");
 	if (!fh) {
 		//Default to ATL mode in this case
