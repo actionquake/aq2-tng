@@ -86,7 +86,7 @@
 
 // AQ2:TNG Deathwatch - Updated the Version variables to show TNG Stuff
 #ifndef VERSION
-#define VERSION "2.82 git"
+#define VERSION "2.83 git"
 #endif
 #define TNG_TITLE "AQ2: The Next Generation"
 #define TNG_WEBSITE "https://www.aq2world.com"

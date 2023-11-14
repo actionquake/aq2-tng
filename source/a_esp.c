@@ -59,13 +59,15 @@ Toggles between the two game modes
 void EspForceEspionage(int espmode)
 {
 	gi.cvar_forceset("esp", "1");
-	if (espmode == 0) {
+	if (espmode == 0 || esp_atl->value) {
 		gi.cvar_forceset("atl", "1");
 		gi.cvar_forceset("etv", "0");
 	} else if (espmode == 1) {
 		gi.cvar_forceset("etv", "1");
 		gi.cvar_forceset("atl", "0");
 	}
+
+	//gi.dprintf("Espionage mode set to %s\n", (espmode == 0) ? "ATL" : "ETV");
 }
 
 int EspCapturePointOwner( edict_t *flag )
@@ -671,11 +673,10 @@ qboolean EspLoadConfig(const char *mapname)
 			gametypename = ESPMODE_ATL_NAME;
 		} else {
 			if(ptr) {
-				if(strcmp(ptr, ESPMODE_ETV_SNAME) == 0){
+				if((strcmp(ptr, ESPMODE_ETV_SNAME) == 0 && esp_atl->value == 0)){
 					EspForceEspionage(ESPMODE_ETV);
 					gametypename = ESPMODE_ETV_NAME;
-				}
-				if(strcmp(ptr, ESPMODE_ATL_SNAME) == 0){
+				} else {
 					EspForceEspionage(ESPMODE_ATL);
 					gametypename = ESPMODE_ATL_NAME;
 				}
@@ -761,9 +762,7 @@ qboolean EspLoadConfig(const char *mapname)
 					ptr = strchr( (end ? end : ptr) + 1, '<' );
 				}
 
-				if( esp_flag_count )
-					gi.dprintf("Espionage ETV mode: %i target generated.\n", esp_flag_count);
-				else {
+				if( !esp_flag_count ) {
 					gi.dprintf("Warning: Espionage needs 'escort' target coordinates in: tng/%s.esp\n", mapname);
 					gi.dprintf("* Forcing ATL mode to be safe\n");
 					EspForceEspionage(ESPMODE_ATL);
@@ -1225,10 +1224,10 @@ edict_t *EspRespawnOnLeader(edict_t *ent, char *cname)
 
 edict_t *SelectEspSpawnPoint(edict_t *ent)
 {
-	edict_t 	*spot, *spot1, *spot2;
-	int 		count = 0;
-	int 		selection;
-	float 		range, range1, range2;
+	//edict_t 	*spot, *spot1, *spot2;
+	//int 		count = 0;
+	//int 		selection;
+	//float 		range, range1, range2;
 
 	char 		*cname;
 	int			teamNum = ent->client->resp.team;
@@ -1280,7 +1279,7 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 			// but if there are none, then we go back to old faithful
 			//gi.dprintf("No custom spawns, defaulting to teamplay spawn\n");
 
-			// NULL check, if there are no teamplay spawns, then default to deathmatch spawns
+			// NULL check, if there are no teamplay (info_player_team...) spawns, then default to deathmatch spawns
 			if (SelectTeamplaySpawnPoint(ent))
 				return SelectTeamplaySpawnPoint(ent);
 			else

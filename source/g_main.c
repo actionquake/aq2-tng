@@ -485,6 +485,7 @@ cvar_t *jump;			// jumping mod
 cvar_t *esp;
 cvar_t *atl;
 cvar_t *etv;
+cvar_t *esp_atl;
 cvar_t *esp_punish;
 cvar_t *esp_etv_halftime;
 cvar_t *esp_showleader;

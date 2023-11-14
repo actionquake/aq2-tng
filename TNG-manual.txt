@@ -1,7 +1,8 @@
 Action Quake 2: The Next Generation
-Version 2.82 (May 14th, 2022)
+Version 2.83 (Nov 14th, 2023)
 http://www.aq2tng.barrysworld.net
 by Igor, JBravo, Slicer, Deathwatch, Freud, Elviz, Rektek
+additions and enhancements by darksaint and the AQ2World team
 
 --------------------------------------------------------------------------------------------------------------------
 Introduction
@@ -668,6 +669,9 @@ Features
 * Print rules
   printrules [0/1] - server cvar, default 0.  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes.
 
+* Espionage
+  See included Espionage.md file for details
+  
 --------------------------------------------------------------------------------------------------------------------
 Contact Information
   If you wish to contact the TNG team, to report a bug, suggest a new feature, or offer JBravo your

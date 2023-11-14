@@ -1216,6 +1216,7 @@ extern cvar_t *medkit_value;
 extern cvar_t *esp;
 extern cvar_t *atl;
 extern cvar_t *etv;
+extern cvar_t *esp_atl;
 extern cvar_t *esp_punish;
 extern cvar_t *esp_etv_halftime;
 extern cvar_t *esp_showleader;

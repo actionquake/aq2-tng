@@ -1,8 +1,12 @@
-Changes in TNG 2.82
+Changes in TNG 2.83
 
 + = new feature
 - = bug fix
 * = major bug fix
+
+From 2.83
++ esp: Value [0/1], default 0, enables Espionage mode (ETV and ATL).  Review Espionage.md for details
++ printrules: Value [0/1], default 0 (disabled).  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes
 
 From 2.82
 + mapvote_next_limit: Value in seconds, restricts players from voting for a map at the very end of the match while still enabling mapvote_next features
@@ -15,8 +19,6 @@ From 2.82
 + zoom_comp: Value [0/1], enables zoom ping compensation. Higher ping = lower delay frames on sniper zoom
 + warmup_bots: Value in number of bots to spawn in warmup mode.  Set to 0 to not add any bots (classic).  Default '0', suggested value if you want bots is '6'.
 + item_kit_mode: Value [0/1], default 0 (disabled).  If enabled, some items are combined into kits to boost their effectiveness without adjusting the item strength or features themselves
-+ esp: Value [0/1], default 0, enables Espionage mode (ETV and ATL).  Review Espionage.md for details
-+ printrules: Value [0/1], default 0 (disabled).  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes
 
 From 2.81
 * 3team mode: third team can not be locked forever anymore

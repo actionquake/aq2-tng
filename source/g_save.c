@@ -555,6 +555,7 @@ void InitGame( void )
 		atl = gi.cvar( "atl", "1", CVAR_LATCH );
 		etv = gi.cvar( "etv", "0", CVAR_LATCH );
 	};
+	esp_atl = gi.cvar( "esp_atl", "0", 0 ); // This forces ATL mode even if ETV mode is set in the .esp file
 	esp_punish = gi.cvar("esp_punish", "0", 0);
 	esp_etv_halftime = gi.cvar("esp_etv_halftime", "0", 0);
 	esp_showleader = gi.cvar("esp_showleader", "1", 0);
@@ -564,7 +565,7 @@ void InitGame( void )
 	esp_enhancedslippers = gi.cvar("esp_enhancedslippers", "0", 0);
 	esp_matchmode = gi.cvar("esp_matchmode", "0", 0);
 	esp_respawn_uvtime = gi.cvar("esp_respawn_uvtime", "10", 0);
-	if (esp_respawn_uvtime->value > 2) {
+	if (esp_respawn_uvtime->value > 20) {
 		gi.dprintf("esp_respawn_uvtime was set too high, setting to 2 seconds\n");
 		gi.cvar_forceset("esp_respawn_uvtime", "20");
 	}

@@ -439,7 +439,7 @@ void PrintMatchRules ()
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name,
 					teams[TEAM3].name, teams[TEAM3].leader->client->pers.netname, teams[TEAM3].leader_name );
 				}
-		} else if (etv->value) {
+		} else if (etv->value && teams[TEAM1].leader) {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!",
 				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name );
 		}
@@ -2791,7 +2791,7 @@ int CheckTeamRules (void)
 
 		if (!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers() || (esp->value && AllTeamsHaveLeaders()))
+			if (BothTeamsHavePlayers() || (esp->value && AllTeamsHaveLeaders() && BothTeamsHavePlayers()))
 			{
 				if (use_tourney->value)
 				{
@@ -2804,7 +2804,7 @@ int CheckTeamRules (void)
 					int warmup_length = max( warmup->value, round_begin->value );
 					char buf[64] = "";
 					if (esp->value && BothTeamsHavePlayers()) {
-						sprintf( buf, "All teams have leaders!\nThe round will begin in %d seconds!", warmup_length );
+						sprintf( buf, "All teams are ready!\nThe round will begin in %d seconds!", warmup_length );
 					} else {
 						sprintf( buf, "The round will begin in %d seconds!", warmup_length );
 					}
