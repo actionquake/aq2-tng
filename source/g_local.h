@@ -1583,6 +1583,7 @@ void generate_uuid();
 //
 edict_t* SelectRandomDeathmatchSpawnPoint(void);
 edict_t* SelectFarthestDeathmatchSpawnPoint(void);
+edict_t* SelectDeathmatchSpawnPoint(void);
 float PlayersRangeFromSpot(edict_t* spot);
 void ClientLegDamage(edict_t* ent);
 void ClientFixLegs(edict_t *ent);

@@ -1279,7 +1279,12 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 		} else {
 			// but if there are none, then we go back to old faithful
 			//gi.dprintf("No custom spawns, defaulting to teamplay spawn\n");
-			return SelectTeamplaySpawnPoint(ent);
+
+			// NULL check, if there are no teamplay spawns, then default to deathmatch spawns
+			if (SelectTeamplaySpawnPoint(ent))
+				return SelectTeamplaySpawnPoint(ent);
+			else
+				return SelectDeathmatchSpawnPoint();
 
 			// spot = NULL;
 			// range1 = range2 = 99999;
