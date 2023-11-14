@@ -56,6 +56,7 @@ There are some settings you need to setup to enable it:
     * The leader's bandage time is halved
     * The leader receives periodic medkits, if medkit_max is > 0, to be used when they bandage
 * **esp_enhancedslippers** [0/1] - to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances.  This used to be called `e_enhancedSlippers` from the original ETE, but was renamed to keep in with the naming convention of Espionage options
+* **esp_atl** [0/1] - default `0`, this forces ATL mode if `1`, even if the scenario loaded for the map is for ETV mode.  Has no effect on any map that is specifically setup for ATL mode or maps that load safe defaults, which are always ATL mode.
 * **esp_matchmode** [0/1] - toggles setting hard-coded defaults if matchmode is enabled, as posted below:
 
 ```

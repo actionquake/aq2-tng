@@ -609,15 +609,9 @@ qboolean EspLoadConfig(const char *mapname)
 
 	esp_flag = gi.modelindex("models/items/bcase/g_bc1.md2");
 
-	gi.dprintf("Trying to load Espionage configuration file\n", mapname);
+	gi.dprintf("** Trying to load Espionage configuration file for %s **\n", mapname);
 
 	sprintf (buf, "%s/tng/%s.esp", GAMEVERSION, mapname);
-
-	if (!check_readable_file(buf)){
-		gi.dprintf("ERROR: Espionage file %s is either unreadable or empty!\n", buf);
-		gi.cvar_forceset("esp", "0");
-		return false;
-	}
 
 	fh = fopen (buf, "r");
 	if (!fh) {
@@ -634,6 +628,15 @@ qboolean EspLoadConfig(const char *mapname)
 			gi.dprintf("Found %s, attempting to load it...\n", buf);
 			loaded_default_file = true;
 		}
+	} else {
+    // Check if the file is empty
+		fseek(fh, 0, SEEK_END);
+		long size;
+		size = ftell(fh);
+		if (size == 0) {
+			no_file = true;
+			gi.dprintf("ERROR: Espionage file %s is empty, loading safe defaults\n", buf);
+		}
 	}
 
 	// Hard-coded scenario settings so things don't break
@@ -649,7 +652,7 @@ qboolean EspLoadConfig(const char *mapname)
 		EspEnforceDefaultSettings("respawn");
 		EspEnforceDefaultSettings("team");
 
-	} else {
+	} else { // A valid file was found, load it
 
 		gi.dprintf("-------------------------------------\n");
 		gi.dprintf("Espionage configuration found at %s\n", buf);
