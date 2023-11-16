@@ -163,6 +163,7 @@
 
 typedef unsigned char byte;
 typedef enum { qfalse = 0, qtrue } qboolean;
+typedef int qhandle_t;
 #define true qtrue
 #define false qfalse
 

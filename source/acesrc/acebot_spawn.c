@@ -597,6 +597,26 @@ edict_t *ACESP_SpawnBot( char *team_str, char *name, char *skin, char *userinfo 
 		return NULL;
 	}
 	
+	void **list;
+	int i, total;
+
+	list = gix->ListFiles("players/male", NULL, FS_SEARCH_STRIPEXT, &total);
+
+	gi.dprintf("Ahha!\n");
+	if (!list) {
+        gi.dprintf("No skins found!\n");
+    } else {
+		gi.dprintf("Skins found!, %d of them\n", total);
+	}
+
+    // for (i = 0; i < total; i++) {
+    //     gi.dprintf("%p\n", (char *)list[i]);
+    // }
+
+	gi.dprintf("%i files listed\n", total);
+
+	gix->FreeFileList(list);
+
 	bot->is_bot = true;
 	bot->yaw_speed = 1000;  // deg/sec
 	

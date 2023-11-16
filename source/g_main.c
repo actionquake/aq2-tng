@@ -275,6 +275,7 @@ game_locals_t game;
 level_locals_t level;
 game_import_t gi;
 game_export_t globals;
+const game_import_ex_t *gix;
 spawn_temp_t st;
 
 int sm_meat_index;
@@ -534,6 +535,20 @@ void WriteLevel (char *filename);
 void ReadLevel (char *filename);
 void InitGame (void);
 void G_RunFrame (void);
+
+#ifdef USE_AQTION
+// GetExtendedGameAPI()
+void **FS_ListFiles(const char *path, const char *filter, unsigned flags, int *count_p);
+void FS_FreeList(void **list);
+int FS_ReadLine(qhandle_t f, char *buffer, size_t size);
+int FS_Seek(qhandle_t f, int64_t offset, int whence);
+int64_t FS_Tell(qhandle_t f);
+int FS_Flush(qhandle_t f);
+int FS_Write(const void *buf, size_t len, qhandle_t f);
+int FS_Read(void *buf, size_t len, qhandle_t f);
+int FS_CloseFile(qhandle_t f);
+int64_t FS_OpenFile(const char *name, qhandle_t *f, unsigned mode);
+#endif
 
 qboolean CheckTimelimit(void);
 int dosoft;
@@ -1251,3 +1266,21 @@ void CheckNeedPass (void)
 }
 
 //FROM 3.20 END
+
+// GetExtendedGameAPI()
+// https://github.com/skullernet/q2pro/commit/73ab2a2a7b23e793c519c07c0532ab16ce268052
+
+#ifdef USE_AQTION
+const game_export_ex_t gex = {
+    .apiversion = GAME_API_VERSION_EX,
+    .ListFiles = FS_ListFiles,
+    .FreeFileList = FS_FreeList,
+};
+
+const game_export_ex_t *GetExtendedGameAPI(const game_import_ex_t *import)
+{
+    gix = import;
+    return &gex;
+}
+
+#endif
