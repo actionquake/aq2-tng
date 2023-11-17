@@ -1703,7 +1703,7 @@ always owned, never in the world^M
    Drop_Special,
    NULL,
    "misc/veston.wav",		// sound
-   "models/items/slippers/slippers.md2",
+   "models/items/slippers/tris.md2",
    0,
    NULL,
 /* icon */ "slippers",
