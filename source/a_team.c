@@ -2426,9 +2426,8 @@ qboolean CheckTimelimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
-				if (esp->value){
+				if (esp->value)
 					EspAnnounceDetails(true);
-				}
 			}
 			else if( timewarning < 1 && (! ctf->value) && timelimit->value > 3 && level.matchTime >= (timelimit->value - 3) * 60 )
 			{
@@ -2479,9 +2478,8 @@ static qboolean CheckRoundTimeLimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
-				if (esp->value){
+				if (esp->value)
 					EspAnnounceDetails(true);
-				}
 			}
 			else if (roundLimitFrames <= 1800 && timewarning < 1 && roundtimelimit->value > 3)
 			{
@@ -2684,7 +2682,8 @@ int CheckTeamRules (void)
 			}
 			else if (esp->value && AllTeamsHaveLeaders() && BothTeamsHavePlayers())
 			{
-				gi.dprintf("Esp mode on, All teams have leaders, Both teams have players\n");
+				if (esp_debug->value)
+					gi.dprintf("%s: Esp mode on, All teams have leaders, Both teams have players\n", __FUNCTION__);
 				in_warmup = 0;
 				team_game_going = 1;
 				StartLCA();
@@ -2721,9 +2720,8 @@ int CheckTeamRules (void)
 			{
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
-				if (printrules->value) {
-				        PrintMatchRules();
-				}
+				if (printrules->value)
+					PrintMatchRules();
 
 				#ifdef USE_AQTION
 				// Cleanup and remove all bots, it's go time!

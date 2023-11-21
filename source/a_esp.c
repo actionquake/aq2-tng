@@ -1585,6 +1585,8 @@ qboolean EspCheckRules(void)
 			{
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
+				if (esp->value)
+					EspAnnounceDetails(true);
 			}
 			espsettings.halftime = 1;
 		}
@@ -2082,6 +2084,8 @@ void EspAnnounceDetails( qboolean timewarning )
 		}
 	}
 
+	// This is used at the beginning of the round to tell players what to do
+
 	if (!timewarning) {
 		for (i = 0; i < game.maxclients; i++){
 			ent = g_edicts + 1 + i;
@@ -2089,16 +2093,18 @@ void EspAnnounceDetails( qboolean timewarning )
 				continue;
 			if (IS_LEADER(ent)){
 				gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
-				gi.cprintf(ent, PRINT_HIGH, "Take cover, you're the leader!\n");
+				gi.centerprintf(ent, "Take cover, you're the leader!\n");
 			}
 			if (!IS_LEADER(ent)) {
 				if (atl->value){
-					gi.cprintf(ent, PRINT_HIGH, "Defend your leader and attack the other one to win!\n");
+					gi.centerprintf(ent, "Defend your leader and attack the other one to win!\n");
 				} else if (etv->value){
-					if (ent->client->resp.team == TEAM1)
-						gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
-					else
-						gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
+					CenterPrintTeam(TEAM1, "Escort your leader to the briefcase!\n");
+					CenterPrintTeam(TEAM2, "Defend your briefcase or kill the enemy leader to win!\n");
+					// if (ent->client->resp.team == TEAM1)
+					// 	gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
+					// else
+					// 	gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
 				}
 			}
 		}

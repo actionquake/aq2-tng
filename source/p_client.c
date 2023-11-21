@@ -1966,7 +1966,8 @@ void respawn(edict_t *self)
 	if (esp->value && team_round_going){
 		// Optional respawn invulnerability in Espionage
 		if (esp_respawn_uvtime->value){
-			gi.dprintf("\nInvuln activated\n");
+			if (esp_debug->value)
+				gi.dprintf("%s: Invuln activated\n", __FUNCTION__);
 			self->client->uvTime = (int)esp_respawn_uvtime->value;
 		}
 	}
