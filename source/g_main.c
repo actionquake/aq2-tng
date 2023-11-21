@@ -551,6 +551,7 @@ void ReadLevel (char *filename);
 void InitGame (void);
 void G_RunFrame (void);
 
+qboolean CheckCapturelimit(void);
 qboolean CheckTimelimit(void);
 int dosoft;
 int softquit = 0;

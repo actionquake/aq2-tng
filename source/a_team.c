@@ -1868,6 +1868,8 @@ void ResetScores (qboolean playerScores)
 	ctfgame.last_capture_team = 0;
 	ctfgame.halftime = 0;
 
+	espsettings.capturestreak = 0;
+
 	if(!playerScores)
 		return;
 
@@ -1913,8 +1915,6 @@ void CenterPrintTeam (int teamNum, const char *msg)
 {
 	int i;
 	edict_t *ent;
-
-	gi.dprintf("Team %d: %s\n", teamNum, msg);	// so it goes to the server console...
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -2379,6 +2379,25 @@ void PrintScores (void)
 	}
 }
 
+/*
+Similar to CheckTimelimit, this function is for Espionage ETV mode
+where it validates that the combined scores of TEAM1 and TEAM2 are
+half of the capturelimit, and to switch teams if so.
+*/
+qboolean CheckCapturelimit( void )
+{
+	int t1 = teams[TEAM1].score;
+	int t2 = teams[TEAM2].score;
+	int caplimit = (int)capturelimit->value;
+
+	if (!espsettings.halftime && (t1 + t2 == caplimit)){
+		gi.bprintf( PRINT_HIGH, "** HALFTIME! **\nHalf of the capture limit has been reached!\nSwitching sides!\n" );
+		espsettings.halftime = 1;
+		return true;
+	}
+	return false;
+}
+
 qboolean CheckTimelimit( void )
 {
 	if (timelimit->value > 0)
@@ -2412,11 +2431,11 @@ qboolean CheckTimelimit( void )
 			return true;
 		}
 		
-		// CTF with use_warnings should have the same warnings when the map is ending as it does for halftime (see CTFCheckRules).
+		// CTF or Espionage with use_warnings should have the same warnings when the map is ending as it does for halftime (see CTFCheckRules).
 		// Otherwise, use_warnings should warn about 3 minutes and 1 minute left, but only if there aren't round ending warnings.
 		if( use_warnings->value && (ctf->value || ! roundtimelimit->value) )
 		{
-			if( timewarning < 3 && ctf->value && level.matchTime >= timelimit->value * 60 - 10 )
+			if( timewarning < 3 && (ctf->value && level.matchTime >= timelimit->value * 60 - 10 ))
 			{
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 3;
@@ -2469,11 +2488,18 @@ static qboolean CheckRoundTimeLimit( void )
 			return true;
 		}
 
-		if (use_warnings->value && timewarning < 2)
+		if (use_warnings->value && timewarning < 3)
 		{
 			roundLimitFrames -= current_round_length;
 			
-			if (roundLimitFrames <= 600)
+			if (roundLimitFrames <= 100)
+			{
+				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "world/10_0.wav" ), 1.0, ATTN_NONE, 0.0 );
+				timewarning = 3;
+				if (esp->value)
+					EspAnnounceDetails(true);
+			} 
+			else if (roundLimitFrames <= 600)
 			{
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
@@ -2843,6 +2869,13 @@ int CheckTeamRules (void)
 			}
 
 			if (dom->value && DomCheckRules())
+			{
+				EndDMLevel();
+				team_round_going = team_round_countdown = team_game_going = 0;
+				return 1;
+			}
+
+			if (esp->value && EspCheckRules())
 			{
 				EndDMLevel();
 				team_round_going = team_round_countdown = team_game_going = 0;

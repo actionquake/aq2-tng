@@ -280,12 +280,19 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 	int lpl = attacker->client->resp.esp_lastprotectleader;
 	int lhl = attacker->client->resp.esp_lasthurtleader;
 
+	if (esp_debug->value){
+		int bonusEligible = (level.realFramenum - ESP_BONUS_COOLDOWN);
+		gi.dprintf("%s: lpc is %d, lpl is %d, lhl is %d\n", __FUNCTION__, lpc, lpl, lhl);
+		gi.dprintf("%s: attacker is %s, targ is %s\n", __FUNCTION__, attacker->client->pers.netname, targ->client->pers.netname);
+		gi.dprintf("%s: level.realFramenum is %i, subtracted ESP_BONUS_COOLDOWN is %i\n", __FUNCTION__, level.realFramenum, bonusEligible);
+	}
+
 	// If the attacker has already received a bonus in the last ESP_BONUS_COOLDOWN frames
-	if (lpc > level.realFramenum - ESP_BONUS_COOLDOWN)
+	if (lpc > (level.realFramenum - ESP_BONUS_COOLDOWN))
 		_EspBonusDefendCapture(targ, attacker);
-	if (lpl > level.realFramenum - ESP_BONUS_COOLDOWN)
+	if (lpl > (level.realFramenum - ESP_BONUS_COOLDOWN))
 		_EspBonusDefendLeader(targ, attacker);
-	if (lhl > level.realFramenum - ESP_BONUS_COOLDOWN)
+	if (lhl > (level.realFramenum - ESP_BONUS_COOLDOWN))
 		_EspBonusFragLeader(targ, attacker);
 }
 
@@ -403,28 +410,31 @@ void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 	flag->svflags &= ~SVF_NOCLIENT;
 	gi.linkentity( flag );
 
-	// Indicator arrow
-	// somewhere you want to spawn the arrow ("ent" being the entity who the arrow is pointing to)
-	// if (use_indicators->value && !flag->obj_arrow){
-	// 	flag->obj_arrow = G_Spawn();
-	// 	flag->obj_arrow->solid = SOLID_NOT;
-	// 	flag->obj_arrow->movetype = MOVETYPE_NOCLIP;
-	// 	flag->obj_arrow->classname = "ind_arrow_objective";
-	// 	flag->obj_arrow->owner = flag;
-	// 	flag->obj_arrow->s.effects |= RF_INDICATOR | EF_ROTATE;
-	// 	flag->obj_arrow->s.modelindex = level.model_arrow;
+	/* Indicator arrow
+	   
+	   somewhere you want to spawn the arrow ("ent" being the entity who the arrow is pointing to)
+	This appears regardless of indicator settings
+	*/ 
+    if (!flag->obj_arrow){
+		flag->obj_arrow = G_Spawn();
+		flag->obj_arrow->solid = SOLID_NOT;
+		flag->obj_arrow->movetype = MOVETYPE_NOCLIP;
+		flag->obj_arrow->classname = "ind_arrow_objective";
+		flag->obj_arrow->owner = flag;
+		flag->obj_arrow->s.effects |= RF_INDICATOR | EF_ROTATE;
+		flag->obj_arrow->s.modelindex = level.model_arrow;
 
-	// 	// float arrow above briefcase by 10 units
-	// 	flag->obj_arrow->s.origin[2] += 10;
+		// float arrow above briefcase by 50 units
+		flag->obj_arrow->s.origin[2] += 50;
 
-	// 	VectorCopy(flag->s.origin, flag->obj_arrow->s.origin);
-	// 	gi.linkentity(flag->obj_arrow);
+		VectorCopy(flag->s.origin, flag->obj_arrow->s.origin);
+		gi.linkentity(flag->obj_arrow);
 
-	// 	// if (use_indicators->value){
-	// 	// 	gi.dprintf("** Indicator arrow spawned at <%d %d %d>\n", flag->obj_arrow->s.origin[0], flag->obj_arrow->s.origin[1], flag->obj_arrow->s.origin[2]);
-	// 	// 	gi.dprintf("** Flag coordinates are: <%d %d %d>\n", flag->s.origin[0], flag->s.origin[1], flag->s.origin[2]);
-	// 	// }
-	// }
+		if (esp_debug->value){
+			gi.dprintf("%s: ** Indicator arrow spawned at <%d %d %d>\n", __FUNCTION__, flag->obj_arrow->s.origin[0], flag->obj_arrow->s.origin[1], flag->obj_arrow->s.origin[2]);
+			gi.dprintf("%s: ** Flag coordinates are: <%d %d %d>\n", __FUNCTION__, flag->s.origin[0], flag->s.origin[1], flag->s.origin[2]);
+		}
+	}
 	
 	esp_flag_count ++;
 }
@@ -1301,11 +1311,16 @@ void EspSwapTeams()
 	edict_t *ent;
 	int i;
 
+	// Swap members of both teams and strip leadership from TEAM1
 	for (i = 0; i < game.maxclients; i++) {
 		ent = &g_edicts[1 + i];
 		if (ent->inuse && ent->client->resp.team) {
 			ent->client->resp.team = OtherTeam(ent->client->resp.team);
 			AssignSkin(ent, teams[ent->client->resp.team].skin, false);
+		}
+		if (IS_LEADER(ent)) {
+			ent->client->resp.is_volunteer = false;
+			EspSetLeader( ent->client->resp.team, NULL );
 		}
 	}
 
@@ -1314,55 +1329,55 @@ void EspSwapTeams()
 	teams[TEAM1].score = teams[TEAM2].score;
 	teams[TEAM2].score = i;
 
-	// Swap matchmode team leaders.
-	ent = teams[TEAM1].leader;
-	teams[TEAM1].leader = teams[TEAM2].leader;
-	teams[TEAM2].leader = ent;
-
 	teams_changed = true;
 }
 
 qboolean EspCheckRules(void)
 {
-	// Espionage ETV uses the same capturelimit cvars as CTF
+	int t1 = teams[TEAM1].score;
+	int t2 = teams[TEAM2].score;
+	int roundlimitwarn = (((int)roundlimit->value / 2) - 1);
+
+	gi.dprintf("Halftime is %d\n", espsettings.halftime);
+
+	// Espionage ETV uses the same roundlimit cvars as CTF
 	if(etv->value) {
-		if( capturelimit->value && (teams[TEAM1].score >= capturelimit->value || teams[TEAM2].score >= capturelimit->value) )
-		{
-			gi.bprintf(PRINT_HIGH, "Capturelimit hit.\n");
-			IRC_printf(IRC_T_GAME, "Capturelimit hit.\n");
+		if(roundlimit->value && 
+		(teams[TEAM1].score >= roundlimit->value || 
+		teams[TEAM2].score >= roundlimit->value) ){
+			gi.bprintf(PRINT_HIGH, "Roundlimit hit.\n");
+			IRC_printf(IRC_T_GAME, "Roundlimit hit.\n");
 			return true;
 		}
 	}
 
-	if( timelimit->value > 0 && etv->value )
-	{
-		if( espsettings.halftime == 0 && level.matchTime >= (timelimit->value * 60) / 2 - 60 )
-		{
-			if( use_warnings->value )
-			{
-				CenterPrintAll( "1 MINUTE LEFT..." );
-				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
-				if (esp->value)
-					EspAnnounceDetails(true);
-			}
-			espsettings.halftime = 1;
+	// Must be etv mode, halftime must have not occured yet, and be enabled, and the roundlimit must be set
+	if(etv->value && 
+	!espsettings.halftime &&
+	esp_etv_halftime->value && 
+	(((int)roundlimit->value - roundlimitwarn <= 1) && ((int)roundlimit - roundlimitwarn > 0))){
+		if( use_warnings->value ){
+			CenterPrintAll( "1 ROUND LEFT BEFORE HALFTIME..." );
+			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/incoming.wav"), 1.0, ATTN_NONE, 0.0 );
+			if (esp->value)
+				EspAnnounceDetails(true);
 		}
-		else if( espsettings.halftime == 1 && level.matchTime >= (timelimit->value * 60) / 2 - 10 )
-		{
-			if( use_warnings->value )
-				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
-			espsettings.halftime = 2;
-		}
-		else if( espsettings.halftime < 3 && level.matchTime >= (timelimit->value * 60) / 2 + 1 && esp_etv_halftime->value && etv->value == 1)
+
+	else if(etv->value && 
+	!espsettings.halftime &&
+	esp_etv_halftime->value && 
+	(t1 + t2 >= ((int)roundlimitwarn) / 2)){
 		{
 			team_round_going = team_round_countdown = team_game_going = 0;
 			MakeAllLivePlayersObservers ();
 			EspSwapTeams();
-			CenterPrintAll("The teams have been switched!");
+			CenterPrintTeam(TEAM1, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
+			CenterPrintTeam(TEAM2, "The teams have been switched!\nYou are now defending!\n");
 			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
-				 gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
-			espsettings.halftime = 3;
+					gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
+			espsettings.halftime = 1;
 		}
+	}
 	}
 	
 	return false;

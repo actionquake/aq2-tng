@@ -13,7 +13,7 @@ blue=<2982 83 640 139>,<2436 2632 640 -74>,<2667 728 238 151>
 
 [target]
 escort=<2833 1288 682>
-name=The Grand Prize
+name=Grand Prize
 
 [red_team]
 name=maiJaw

@@ -615,8 +615,8 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
 	int vt = 0; //Default victim team is 0 (no team)
 	int kt = 0; //Default killer team is 0 (no team)
 	int ttk = 0; //Default TTK (time to kill) is 0
-	int vl = 0; //Placeholder victimleader until Espionage gets ported
-	int kl = 0; //Placeholder killerleader until Espionage gets ported
+	int vl = 0; //Default victimleader is 0, 1 if leader
+	int kl = 0; //Default killerleader is 0, 1 if leader
 	char msg[1024]; // Whole stat line in JSON format
 	char v[24]; // Victim's Steam ID
 	char vn[128]; // Victim's name
@@ -653,6 +653,13 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
         if (oc == 1) // Only one opponent active, so don't log kills
             return;
     }
+
+	if (esp->value){
+		if (IS_LEADER(self))
+			vl = 1;
+		if (IS_LEADER(attacker))
+			kl = 1;
+	}
 
 	if ((team_round_going && !in_warmup) || (gameSettings & GS_DEATHMATCH)) // If round is active OR if deathmatch
 	{
@@ -760,7 +767,7 @@ void LogWorldKill(edict_t *self)
 	int eventtime;
 	int vt = 0; //Default victim team is 0 (no team)
 	int ttk = 0; //Default TTK (time to kill) is 0
-	int vl = 0; //Placeholder victimleader until Espionage gets ported
+	int vl = 0; //Is victim leader? 0 = false, 1 = true
 	char msg[1024];
 	char v[24];
 	char vn[128];
@@ -791,6 +798,10 @@ void LogWorldKill(edict_t *self)
         if (oc == 1) // Only one opponent active, so don't log kills
             return;
     }
+
+	if (esp->value && IS_LEADER(self)){
+		vl = 1;
+	}
 
 	if ((team_round_going && !in_warmup) || (gameSettings & GS_DEATHMATCH)) // If round is active OR if deathmatch
 	{
@@ -1051,7 +1062,14 @@ void LogEndMatchStats()
 			cl->resp.gunstats[MOD_KNIFE_THROWN].damage,
 			cl->resp.gunstats[MOD_HG_SPLASH].damage,
 			cl->resp.gunstats[MOD_PUNCH].damage,
-			cl->resp.gunstats[MOD_KICK].damage
+			cl->resp.gunstats[MOD_KICK].damage,
+			cl->resp.esp_capdefendercount,
+			cl->resp.esp_capstreak,
+			cl->resp.esp_capstreakbest,
+			cl->resp.esp_leaderfragcount,
+			cl->resp.esp_leaderkillstreak,
+			cl->resp.esp_leaderkillstreakbest,
+			cl->resp.esp_leaderprotectcount
 		);
 		Write_Stats(msg);
 	}

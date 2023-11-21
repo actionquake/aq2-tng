@@ -1043,11 +1043,17 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Espionage Enabled - Forcing Friendly Fire off\n");
 			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
 		}
-		// Espionage respawns do not have uvtime
+		// uvtime is controlled via respawn logic
 		if (uvtime->value)
 		{
 			gi.cvar_forceset(uvtime->name, "0");
 		}
+		// Sane defaults for timelimit or roundlimit
+		// favoring a roundlimit over a timelimit, if not defined
+		if (!roundlimit->value)
+			gi.cvar_forceset(roundlimit->name, "20");
+		else if (!timelimit->value)
+			gi.cvar_forceset(timelimit->name, "20");
 	}
 	else if (dom->value)
 	{
