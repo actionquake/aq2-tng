@@ -816,48 +816,6 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		gi.dprintf("- Teams\n");
-
-		// char team_attrs[3][4][32];
-		// char* team_names[] = {"red_team", "blue_team", "green_team"};
-		// char* attr_names[] = {"name", "skin", "leader_name", "leader_skin"};
-
-		// // Use teamCount here to ignore the third element in team_names if only 2 teams
-		// for (int i = 0; i < teamCount; i++) {
-		// 	for (int j = 0; j < sizeof(attr_names); j++) {
-		// 		ptr = INI_Find(fh, team_names[i], attr_names[j]);
-		// 		Q_strncpyz(teams[i][j], ptr, sizeof(team_attrs[i][j]));
-		// 	}
-		// }
-
-		// ptr = INI_Find(fh, "red_team", "name");
-		// Q_strncpyz(teams[TEAM1].name, ptr, sizeof(teams[TEAM1].name));
-		// ptr = INI_Find(fh, "red_team", "skin");
-		// Q_strncpyz(teams[TEAM1].skin, ptr, sizeof(teams[TEAM1].skin));
-		// ptr = INI_Find(fh, "red_team", "leader_name");
-		// Q_strncpyz(teams[TEAM1].leader_name, ptr, sizeof(teams[TEAM1].leader_name));
-		// ptr = INI_Find(fh, "red_team", "leader_skin");
-		// Q_strncpyz(teams[TEAM1].leader_skin, ptr, sizeof(teams[TEAM1].leader_skin));
-
-		// ptr = INI_Find(fh, "blue_team", "name");
-		// Q_strncpyz(teams[TEAM2].name, ptr, sizeof(teams[TEAM2].name));
-		// ptr = INI_Find(fh, "blue_team", "skin");
-		// Q_strncpyz(teams[TEAM2].skin, ptr, sizeof(teams[TEAM2].skin));
-		// ptr = INI_Find(fh, "blue_team", "leader_name");
-		// Q_strncpyz(teams[TEAM2].leader_name, ptr, sizeof(teams[TEAM2].leader_name));
-		// ptr = INI_Find(fh, "blue_team", "leader_skin");
-		// Q_strncpyz(teams[TEAM2].leader_skin, ptr, sizeof(teams[TEAM2].leader_skin));
-
-		// if (teamCount == 3){
-		// 	ptr = INI_Find(fh, "green_team", "name");
-		// 	Q_strncpyz(teams[TEAM3].name, ptr, sizeof(teams[TEAM3].name));
-		// 	ptr = INI_Find(fh, "green_team", "skin");
-		// 	Q_strncpyz(teams[TEAM3].skin, ptr, sizeof(teams[TEAM3].skin));
-		// 	ptr = INI_Find(fh, "green_team", "leader_name");
-		// 	Q_strncpyz(teams[TEAM3].leader_name, ptr, sizeof(teams[TEAM3].leader_name));
-		// 	ptr = INI_Find(fh, "green_team", "leader_skin");
-		// 	Q_strncpyz(teams[TEAM3].leader_skin, ptr, sizeof(teams[TEAM3].leader_skin));
-		// }
-
 		for (i = TEAM1; i <= teamCount; i++) {
 			const char *team_color;
 			switch (i) {
@@ -934,40 +892,6 @@ qboolean EspLoadConfig(const char *mapname)
 				gi.dprintf("    %s Leader: %s, Skin: %s\n\n", team_color, teams[i].leader_name, teams[i].leader_skin);
 			}
 	}
-
-		// TODO: This will always resolve to true, maybe need to validate in another way
-	// 	if((!teams[TEAM1].skin || !teams[TEAM1].name || !teams[TEAM1].leader_name || !teams[TEAM1].leader_skin ||
-	// 	!teams[TEAM2].skin || !teams[TEAM2].name || !teams[TEAM2].leader_name || !teams[TEAM2].leader_skin) || 
-	// 	((teamCount == 3) && (!teams[TEAM3].skin || !teams[TEAM3].name || !teams[TEAM3].leader_name || !teams[TEAM3].leader_skin))){
-	// 		gi.dprintf("Warning: Could not read value for team skin, name, leader or leader_skin, review your file\n");
-	// 		gi.dprintf("Enforcing defaults\n");
-	// 		EspEnforceDefaultSettings("team");
-	// 		espsettings.custom_skins = false;
-	// 	} else {
-	// 		espsettings.custom_skins = true;
-
-	// 		gi.dprintf("    Red Team: %s, Skin: %s\n", 
-	// 		teams[TEAM1].name, teams[TEAM1].skin);
-	// 		gi.dprintf("    Red Leader: %s, Skin: %s\n\n", 
-	// 		teams[TEAM1].leader_name, teams[TEAM1].leader_skin);
-			
-	// 		gi.dprintf("    Blue Team: %s, Skin: %s\n", 
-	// 		teams[TEAM2].name, teams[TEAM2].skin);
-	// 		gi.dprintf("    Blue Leader: %s, Skin: %s\n\n", 
-	// 		teams[TEAM2].leader_name, teams[TEAM2].leader_skin);
-
-	// 		if(teamCount == 3) {
-	// 			gi.dprintf("    Green Team: %s, Skin: %s\n", 
-	// 			teams[TEAM3].name, teams[TEAM3].skin);
-	// 			gi.dprintf("    Green Leader: %s, Skin: %s\n", 
-	// 			teams[TEAM3].leader_name, teams[TEAM3].leader_skin);
-	// 		}
-	// 	}
-	// }
-
-	// automagically change spawns *only* when we do not have team spawns
-	// if(!espgame.custom_spawns)
-	// 	ChangePlayerSpawns();
 
 	gi.dprintf("-------------------------------------\n");
 
@@ -1276,9 +1200,10 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 	If none of this is true, it's a round start spawn
 	*/
 
-	//gi.dprintf("Is team round going? %d\n", team_round_going);
-	//gi.dprintf("Is the team leader alive? %d\n", _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()));
-
+	if (esp_debug->value){
+		gi.dprintf("%s: Is team round going? %d\n", __FUNCTION__, team_round_going);
+		gi.dprintf("%s: Is the team leader alive? %d\n", __FUNCTION__, _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()));
+	}
 	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
 		// Time to respawn on the leader!
 		return EspRespawnOnLeader(ent, cname);
@@ -1288,55 +1213,14 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 			return SelectEspCustomSpawnPoint(ent);
 		} else {
 			// but if there are none, then we go back to old faithful
-			//gi.dprintf("No custom spawns, defaulting to teamplay spawn\n");
+			if (esp_debug->value)
+				gi.dprintf("%s: No custom spawns, defaulting to teamplay spawn\n", __FUNCTION__);
 
 			// NULL check, if there are no teamplay (info_player_team...) spawns, then default to deathmatch spawns
 			if (SelectTeamplaySpawnPoint(ent))
 				return SelectTeamplaySpawnPoint(ent);
 			else
 				return SelectDeathmatchSpawnPoint();
-
-			// spot = NULL;
-			// range1 = range2 = 99999;
-			// spot1 = spot2 = NULL;
-
-			// while ((spot = G_Find(spot, FOFS(classname), cname)) != NULL) {
-			// 	count++;
-			// 	gi.dprintf("I counted %d spawns for team %d for classname %s\n", count, teamNum, cname);
-			// 	range = PlayersRangeFromSpot(spot);
-			// 	if (range < range1) {
-			// 		if (range1 < range2) {
-			// 			range2 = range1;
-			// 			spot2 = spot1;
-			// 		}
-			// 		range1 = range;
-			// 		spot1 = spot;
-			// 	} else if (range < range2) {
-			// 		range2 = range;
-			// 		spot2 = spot;
-			// 	}
-			// }
-
-			// if (!count)
-			// 	gi.dprintf("Count was zero, defaulting to deathmatch spawn\n");
-			// 	return SelectRandomDeathmatchSpawnPoint();
-
-			// if (count <= 2) {
-			// 	spot1 = spot2 = NULL;
-			// } else
-			// 	count -= 2;
-
-			// selection = rand() % count;
-
-			// spot = NULL;
-			// do {
-			// 	spot = G_Find(spot, FOFS(classname), cname);
-			// 	if (spot == spot1 || spot == spot2)
-			// 		selection++;
-			// }
-			// while (selection--);
-
-			// return spot;
 		}
 	}
 	// All else fails, use deathmatch spawn points
@@ -1344,133 +1228,6 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 		gi.dprintf("%s: Defaulted all the way down here\n", __FUNCTION__);
 	return SelectFarthestDeathmatchSpawnPoint();
 }
-
-// void EspScoreBonuses(edict_t * targ, edict_t * attacker)
-// {
-// 	int i, enemyteam;
-// 	edict_t *ent, *flag, *leader;
-// 	vec3_t v1, v2;
-
-// 	// No one gets bonus points unless a round is ongoing
-// 	if (!team_round_going)
-// 		return;
-
-// 	if (IS_LEADER(targ))
-// 		leader = targ;
-
-// 	// no bonus for fragging yourself
-// 	if (!targ->client || !attacker->client || targ == attacker)
-// 		return;
-
-// 	enemyteam = (targ->client->resp.team != attacker->client->resp.team);
-// 	if (!enemyteam)
-// 		return;		// whoever died isn't on a team
-
-// 	/*
-// 	Leader frag bonus
-// 	*/
-// 	if (IS_LEADER(targ)){
-// 		attacker->client->resp.esp_lasthurtleader = level.framenum;
-// 		attacker->client->resp.score += ESP_LEADER_FRAG_BONUS;
-// 		gi.cprintf(attacker, PRINT_MEDIUM,
-// 			   "BONUS: %d points for killing the enemy leader!\n", ESP_LEADER_FRAG_BONUS);
-
-// 		for (i = 1; i <= game.maxclients; i++) {
-// 			ent = g_edicts + i;
-// 			if (ent->inuse && ent->client->resp.team == enemyteam)
-// 				ent->client->resp.esp_lasthurtleader = 0;
-// 		}
-// 		return;
-// 	}
-
-// 	/*
-// 	Leader defense bonus
-// 	*/
-
-// 	if (targ->client->resp.esp_lasthurtleader &&
-// 	    level.framenum - targ->client->resp.esp_lasthurtleader <
-// 	    ESP_BONUS_COOLDOWN * HZ) {
-// 		// attacker is on the same team as the flag carrier and
-// 		// fragged a guy who hurt our flag carrier
-// 		attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
-// 		gi.bprintf(PRINT_MEDIUM,
-// 			   "%s defends %s's leader against an aggressive enemy\n",
-// 			   attacker->client->pers.netname, teams[attacker->client->resp.team].name);
-// 		IRC_printf(IRC_T_GAME,
-// 			   "%n defends %n's leader against an aggressive enemy\n",
-// 			   attacker->client->pers.netname,
-// 			   teams[attacker->client->resp.team].name);
-// 		return;
-// 	}
-
-// 	// flag and flag carrier area defense bonuses
-// 	// we have to find the flag and carrier entities
-// 	// find the flag
-// 	//flag = NULL;
-// 	// while ((flag = G_Find(flag, FOFS(classname), flag_item->classname)) != NULL) {
-// 	// 	if (!(flag->spawnflags & DROPPED_ITEM))
-// 	// 		break;
-// 	// }
-
-// 	//if (!flag)
-// 	//	return;		// can't find attacker's flag
-
-// 	// find attacker's team's flag carrier
-// 	// for (i = 1; i <= game.maxclients; i++) {
-// 	// 	leader = g_edicts + i;
-// 	// 	if (carrier->inuse && carrier->client->inventory[ITEM_INDEX(flag_item)])
-// 	// 		break;
-// 	// 	leader = NULL;
-// 	// }
-
-
-// 	// Get flag coordinates, calculate distance from attacker and targ,
-// 	// and award accordingly
-
-// 	/*
-// 	Capturepoint defense bonus
-// 	*/
-// 	espsettings_t *es = &espsettings;
-// 	flag = es->capturepoint;
-// 	VectorSubtract(targ->s.origin, flag->s.origin, v1);
-// 	VectorSubtract(attacker->s.origin, flag->s.origin, v2);
-
-// 	if(attacker->client->resp.team == TEAM2) { // Only team2 can 'defend' the flag
-// 		if (VectorLength(v1) < ESP_ATTACKER_PROTECT_RADIUS || VectorLength(v2) < ESP_ATTACKER_PROTECT_RADIUS
-// 			|| visible(flag, targ, MASK_SOLID) || visible(flag, attacker, MASK_SOLID)) {
-// 			// we defended the base flag
-// 			attacker->client->resp.score += ESP_FLAG_DEFENSE_BONUS;
-// 			if (flag->solid == SOLID_NOT) {
-// 				gi.bprintf(PRINT_MEDIUM, "%s defends the %s.\n",
-// 					attacker->client->pers.netname, espsettings.target_name);
-// 				IRC_printf(IRC_T_GAME, "%n defends the %n.\n",
-// 					attacker->client->pers.netname,
-// 					espsettings.target_name);
-// 			}
-// 			return;
-// 		}
-// 	}
-
-// 	/*
-// 	Leader protection bonus
-// 	*/
-// 	if (leader && leader != attacker) {
-// 		VectorSubtract(targ->s.origin, leader->s.origin, v1);
-// 		VectorSubtract(attacker->s.origin, leader->s.origin, v1);
-
-// 		if (VectorLength(v1) < ESP_LEADER_DANGER_PROTECT_BONUS ||
-// 		    VectorLength(v2) < ESP_LEADER_DANGER_PROTECT_BONUS ||
-// 			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
-// 			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
-// 			gi.bprintf(PRINT_MEDIUM, "%s thwarts an assassination attempt on %s\n",
-// 				   attacker->client->pers.netname, teams[attacker->client->resp.team].leader_name);
-// 			IRC_printf(IRC_T_GAME, "%n thwarts an assassination attempt on %n\n",
-// 				   attacker->client->pers.netname,
-// 				   teams[attacker->client->resp.team].leader_name);
-// 			return;
-// 		}
-// 	}
-// }
 
 void SetEspStats( edict_t *ent )
 {
@@ -1865,22 +1622,6 @@ qboolean EspLeaderCheck()
 			}
 		}
 	}
-
-	// Debugging:
-	// for (i = TEAM1; i <= teamCount; i++) {
-	// 	if (HAVE_LEADER(i)) {
-	// 		gi.dprintf("Team %i leader: %s\n", i, teams[i].leader->client->pers.netname);
-	// 	} else {
-	// 		gi.dprintf("Team %d does not have a leader\n", i);
-	// 	}
-	// }
-	// edict_t *ent;
-	// for (i = 0; i < game.maxclients; i++) {
-	// 	ent = g_edicts + 1 + i;
-	// 	if (ent->client->resp.is_volunteer) {
-	// 		gi.dprintf("%s is a volunteer for team %i\n", ent->client->pers.netname, ent->client->resp.team);
-	// 	}
-	// }
 	return false;
 }
 
@@ -2037,10 +1778,11 @@ void GenerateMedKit(qboolean instant)
 				ent->client->resp.medkit_award_time = roundseconds;
 				ent->client->medkit++;
 
-				// gi.dprintf("I generated a medkit for %s, %d seconds since the round started, %d frames in\n", ent->client->pers.netname, roundseconds, roundseconds);
-				// gi.dprintf("%s has %d medkits now\n", ent->client->pers.netname, ent->client->medkit);
+				if (esp_debug->value){
+					gi.dprintf("%s: I generated a medkit for %s, %d seconds since the round started, %d frames in\n", __FUNCTION__, ent->client->pers.netname, roundseconds, roundseconds);
+					gi.dprintf("%s: %s has %d medkits now\n", __FUNCTION__, ent->client->pers.netname, ent->client->medkit);
+				}
 			}
-			//gi.dprintf("Current seconds in round is %d\n", roundseconds);
 		}
 	}
 }
@@ -2085,7 +1827,6 @@ void EspAnnounceDetails( qboolean timewarning )
 	}
 
 	// This is used at the beginning of the round to tell players what to do
-
 	if (!timewarning) {
 		for (i = 0; i < game.maxclients; i++){
 			ent = g_edicts + 1 + i;
