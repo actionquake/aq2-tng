@@ -2049,7 +2049,7 @@ int CheckForWinner()
 		if (teamsWithPlayers)
 			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 
-		gi.dprintf("I was called somehow\n\n\n");
+		//gi.dprintf("I was called somehow\n\n\n");
 		return WINNER_TIE;
 	}
 	return WINNER_NONE;
@@ -2547,6 +2547,8 @@ int WonGame (int winner)
 
 		if(use_warnings->value)
 			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_teamwins[0], 1.0, ATTN_NONE, 0.0);
+		if (esp->value)
+			EspEndOfRoundCleanup();
 		PrintScores ();
 	}
 	else
@@ -2877,10 +2879,10 @@ int CheckTeamRules (void)
 		{
 			if (esp->value) {
 				GenerateMedKit(false);
-
 				EspCleanUp();
 				//Debugging
-				EspDebug();
+				if (esp_debug->value)
+					EspDebug();
 				
 				if (!AllTeamsHaveLeaders())
 					EspLeaderCheck();

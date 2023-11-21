@@ -569,6 +569,7 @@ void InitGame( void )
 		gi.dprintf("esp_respawn_uvtime was set too high, setting to 2 seconds\n");
 		gi.cvar_forceset("esp_respawn_uvtime", "20");
 	}
+	esp_debug = gi.cvar("esp_debug", "0", 0); // Set to 1 to enable debug messages for Espionage
 	// END AQ2 ETE
 
 	// 2022
