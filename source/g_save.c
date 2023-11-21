@@ -355,12 +355,14 @@ void InitGame( void )
 	deathmatch = gi.cvar( "deathmatch", "1", CVAR_LATCH );
 	if (!deathmatch->value) {
 		gi.dprintf( "Turning deathmatch on.\n" );
-		gi.cvar_forceset( "deathmatch", "1" );
+		enablecvar( deathmatch, GMN_DEATHMATCH);
+		//gi.cvar_forceset( "deathmatch", "1" );
 	}
 	cv = gi.cvar( "coop", "0", CVAR_LATCH );
 	if (cv->value) {
-		gi.dprintf( "Turning coop off.\n" );
-		gi.cvar_forceset( "coop", "0" );
+		disablecvar("coop", GMN_COOP);
+		//gi.dprintf( "Turning coop off.\n" );
+		//gi.cvar_forceset( "coop", "0" );
 	}
 
 	dmflags = gi.cvar( "dmflags", "0", CVAR_SERVERINFO );
@@ -381,7 +383,8 @@ void InitGame( void )
 	if (actionmaps->value && num_maps < 1)
 	{
 		gi.dprintf( "No maps were read from the config file, \"actionmaps\" won't be used.\n" );
-		gi.cvar_forceset( "actionmaps", "0" );
+		disablecvar( actionmaps, "Actionmaps" );
+		//gi.cvar_forceset( "actionmaps", "0" );
 	}
 	nohud = gi.cvar( "nohud", "0", CVAR_LATCH );
 	hud_team_icon = gi.cvar( "hud_team_icon", "0", 0 );
@@ -576,7 +579,8 @@ void InitGame( void )
 	am_newnames = gi.cvar("am_newnames", "1", 0);
 	am_botcount = gi.cvar("am_botcount", "6", CVAR_SERVERINFO);
 	if (am_botcount->value < 0){
-    	gi.cvar_forceset("am_botcount", "0");
+		disablecvar(am_botcount, "Attract mode botcount");
+    	//gi.cvar_forceset("am_botcount", "0");
 	}
 	am_delay = gi.cvar("am_delay", "30", 0);
 	am_team = gi.cvar("am_team", "0", 0);

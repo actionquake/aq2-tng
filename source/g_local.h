@@ -298,6 +298,8 @@
 #define		getEnt(entnum)	(edict_t *)((char *)globals.edicts + (globals.edict_size * entnum))	//AQ:TNG Slicer - This was missing
 #define		GAMEVERSION			"action"	// the "gameversion" client command will print this plus compile date
 
+#define BIT(n)          (1U << (n))
+#define BIT_ULL(n)      (1ULL << (n))
 
 #define GMF_CLIENTNUM				0x00000001
 #define GMF_PROPERINUSE             0x00000002
@@ -963,12 +965,13 @@ extern int sm_meat_index;
 #define EXCELLENT 2
 
 // Game Modes
-#define GM_TEAMPLAY 0
-#define GM_TEAMDM 1
-#define GM_CTF 2
-#define GM_TOURNEY 3
-#define GM_DEATHMATCH 4
-#define GM_DOMINATION 5
+// #define GM_TEAMPLAY 0
+// #define GM_TEAMDM 1
+// #define GM_CTF 2
+// #define GM_TOURNEY 3
+// #define GM_DEATHMATCH 4
+// #define GM_DOMINATION 5
+// #define GM_JUMP 8
 
 // Game Mode Flags
 #define GMF_NONE 0
@@ -977,7 +980,35 @@ extern int sm_meat_index;
 #define GMF_DARKMATCH 4
 #define GMF_MATCHMODE 8
 
+// Game Mode enum
+typedef enum
+{
+	GM_TEAMPLAY,
+	GM_TEAMDM,
+	GM_CTF,
+	GM_TOURNEY,
+	GM_DEATHMATCH,
+	GM_DOMINATION,
+	GM_ATL,
+	GM_ETV,
+	GM_JUMP,
+	GM_COOP
+}
+gamemode_t;
+
+// Experimental Game Mode Flags bitwise enum
+typedef enum
+{
+	GMF_NONE = BIT(0),
+	GMF_3TEAMS = BIT(1),
+	GMF_UNDEFINED = BIT(2), // Not used yet, but reserved for future use
+	GMF_DARKMATCH = BIT(3),
+	GMF_MATCHMODE = BIT(4),
+}
+gmf_t;
+
 // Game Mode Names
+#define GMN_COOP "Coop"
 #define GMN_TEAMPLAY "Teamplay"
 #define GMN_TEAMDM "TeamDM"
 #define GMN_CTF "CTF"
@@ -1386,6 +1417,7 @@ qboolean ai_visible( edict_t *self, edict_t *other );
 qboolean infront( edict_t *self, edict_t *other );
 #endif
 void disablecvar(cvar_t *cvar, char *msg);
+void enablecvar(cvar_t *cvar, char *msg);
 
 // Re-enabled for bots
 float *tv (float x, float y, float z);

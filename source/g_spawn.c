@@ -859,6 +859,95 @@ int Gamemodeflag(void)
 	return gamemodeflag;
 }
 
+
+/*
+==============
+Game Mode Settings
+
+This simplifies the old method of checking for game modes and game mode flags,
+and allows for more flexibility in the future.
+==============
+*/
+
+typedef struct {
+    char* gamemode;
+    char* cvarsToDisable[10];
+    char* cvarsToEnable[10];
+} GameMode;
+
+/* 	{Game mode name, 
+		{cvars to disable}, 
+		{cvars to enable}
+	}
+*/
+GameMode gameModes[] = {
+	{"teamplay", 
+		{"use_tourney"}, 
+		{"teamplay"}
+	},
+	{"teamdm", 
+		{"use_tourney"}, 
+		{"teamplay"}
+	},
+	{"ctf", 
+		{"use_tourney", "esp", "dom", "jump"}, 
+		{"teamplay"}
+	},
+	{"tourney", 
+		{"teamplay", "esp", "dom", "jump"}, 
+		{"teamplay"}
+	},
+	{"deathmatch", 
+		{"teamplay", "esp", "dom", "jump", "use_tourney"}, 
+		{}
+	},
+	{"dom", 
+		{"use_tourney", "teamdm", "use_tourney", "use_randoms"}, 
+		{"teamplay"}
+	},
+	// After Dom comes Assassinate the Leader, then Escort the VIP, then jump
+    {"jump", 
+		{"use_tourney", "esp", "dom", "ctf", "stat_logs", "dm_choose", "uvtime", "am", "ltk_loadbots"}, 
+		{"unique_items"}
+	},
+    
+    {"matchmode", 
+		{"use_tourney", "g_spawn_items", "jump"}, 
+		{"teamplay"}
+	},
+};
+
+void applyGameModeSettings(GameMode* gameMode) {
+    int i;
+
+    gi.cvar_forceset(gm->name, gameMode->gamemode);
+
+    for (i = 0; i < sizeof(gameMode->cvarsToDisable) / sizeof(gameMode->cvarsToDisable[0]); i++) {
+        if (gameMode->cvarsToDisable[i] != NULL) {
+            disablecvar(gameMode->cvarsToDisable[i], gameMode->gamemode);
+        }
+    }
+
+    for (i = 0; i < sizeof(gameMode->cvarsToEnable) / sizeof(gameMode->cvarsToEnable[0]); i++) {
+        if (gameMode->cvarsToEnable[i] != NULL) {
+            enablecvar(gameMode->cvarsToEnable[i], gameMode->gamemode);
+        }
+    }
+
+	// CTF and Dom have preset skins:
+	if (ctf->value || dom->value) {
+		Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
+		Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
+		Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
+		Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
+		Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
+		Q_strncpyz(teams[TEAM3].skin, "male/ctf_g", sizeof(teams[TEAM3].skin));
+		Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
+		Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
+		Q_strncpyz(teams[TEAM3].skin_index, "i_pack", sizeof(teams[TEAM3].skin_index));
+	}
+}
+
 /*
 ==============
 SpawnEntities
@@ -913,73 +1002,87 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	//
 		if (teamplay->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing teamplay ff\n");
-			gi.cvar_forceset(teamplay->name, "0");
+			disablecvar(teamplay->name, "Jump Enabled - Forcing teamplay ff");
+			//gi.dprintf ("Jump Enabled - Forcing teamplay ff\n");
+			//gi.cvar_forceset(teamplay->name, "0");
 		}
 		if (use_3teams->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing 3Teams off\n");
-			gi.cvar_forceset(use_3teams->name, "0");
+			disablecvar(use_3teams->name, "Jump Enabled - Forcing 3Teams off");
+			//gi.dprintf ("Jump Enabled - Forcing 3Teams off\n");
+			//gi.cvar_forceset(use_3teams->name, "0");
 		}
 		if (teamdm->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing Team DM off\n");
-			gi.cvar_forceset(teamdm->name, "0");
+			disablecvar(teamdm->name, "Jump Enabled - Forcing Team DM off");
+			//gi.dprintf ("Jump Enabled - Forcing Team DM off\n");
+			//gi.cvar_forceset(teamdm->name, "0");
 		}
 		if (use_tourney->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing Tourney off\n");
-			gi.cvar_forceset(use_tourney->name, "0");
+			disablecvar(use_tourney->name, "Jump Enabled - Forcing Tourney off");
+			//gi.dprintf ("Jump Enabled - Forcing Tourney off\n");
+			//gi.cvar_forceset(use_tourney->name, "0");
 		}
 		if (ctf->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing CTF off\n");
-			gi.cvar_forceset(ctf->name, "0");
+			disablecvar(ctf->name, "Jump Enabled - Forcing CTF off");
+			//gi.dprintf ("Jump Enabled - Forcing CTF off\n");
+			//gi.cvar_forceset(ctf->name, "0");
 		}
 		if (dom->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing Domination off\n");
-			gi.cvar_forceset(dom->name, "0");
+			disablecvar(dom->name, "Jump Enabled - Forcing Domination off");
+			//gi.dprintf ("Jump Enabled - Forcing Domination off\n");
+			//gi.cvar_forceset(dom->name, "0");
 		}
 		if (use_randoms->value)
 		{
-			gi.dprintf ("Jump Enabled - Forcing Random weapons and items off\n");
-			gi.cvar_forceset(use_randoms->name, "0");
+			disablecvar(use_randoms->name, "Jump Enabled - Forcing Random weapons and items off");
+			//gi.dprintf ("Jump Enabled - Forcing Random weapons and items off\n");
+			//gi.cvar_forceset(use_randoms->name, "0");
 		}
 	}
 	else if (ctf->value)
 	{
 	gi.cvar_forceset(gm->name, "ctf");
-		if (ctf->value == 2)
-			gi.cvar_forceset(ctf->name, "1"); //for now
-
+		// There isn't a CTF=2 yet..
+		if (ctf->value == 2) {
+			enablecvar(ctf->name, GMN_CTF);
+			//gi.cvar_forceset(ctf->name, "1"); //for now
+		}
 		gameSettings |= GS_WEAPONCHOOSE;
 
 		// Make sure teamplay is enabled
 		if (!teamplay->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing teamplay on\n");
-			gi.cvar_forceset(teamplay->name, "1");
+			enablecvar(teamplay->name, "CTF Enabled - Forcing teamplay on");
+			//gi.dprintf ("CTF Enabled - Forcing teamplay on\n");
+			//gi.cvar_forceset(teamplay->name, "1");
 		}
 		if (use_3teams->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing 3Teams off\n");
-			gi.cvar_forceset(use_3teams->name, "0");
+			disablecvar(use_3teams->name, "CTF Enabled - Forcing 3Teams off");
+			//gi.dprintf ("CTF Enabled - Forcing 3Teams off\n");
+			//gi.cvar_forceset(use_3teams->name, "0");
 		}
 		if(teamdm->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Team DM off\n");
-			gi.cvar_forceset(teamdm->name, "0");
+			disablecvar(teamdm->name, "CTF Enabled - Forcing Team DM off");
+			//gi.dprintf ("CTF Enabled - Forcing Team DM off\n");
+			//gi.cvar_forceset(teamdm->name, "0");
 		}
 		if (use_tourney->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Tourney off\n");
-			gi.cvar_forceset(use_tourney->name, "0");
+			disablecvar(use_tourney->name, "CTF Enabled - Forcing Tourney off");
+			//gi.dprintf ("CTF Enabled - Forcing Tourney off\n");
+			//gi.cvar_forceset(use_tourney->name, "0");
 		}
 		if (dom->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Domination off\n");
-			gi.cvar_forceset(dom->name, "0");
+			disablecvar(dom->name, "CTF Enabled - Forcing Domination off");
+			//gi.dprintf ("CTF Enabled - Forcing Domination off\n");
+			//gi.cvar_forceset(dom->name, "0");
 		}
 		if (!DMFLAGS(DF_NO_FRIENDLY_FIRE))
 		{
@@ -988,8 +1091,9 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		}
 		if (use_randoms->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Random weapons and items off\n");
-			gi.cvar_forceset(use_randoms->name, "0");
+			disablecvar(use_randoms->name, "CTF Enabled - Forcing Random weapons and items off");
+			//gi.dprintf ("CTF Enabled - Forcing Random weapons and items off\n");
+			//gi.cvar_forceset(use_randoms->name, "0");
 		}
 		Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
 		Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
@@ -1000,27 +1104,32 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	}
 	else if (dom->value)
 	{
-		gi.cvar_forceset(gm->name, "dom");
+		enablecvar(dom->name, GMN_DOMINATION);
+		//gi.cvar_forceset(gm->name, "dom");
 		gameSettings |= GS_WEAPONCHOOSE;
 		if (!teamplay->value)
 		{
-			gi.dprintf ("Domination Enabled - Forcing teamplay on\n");
-			gi.cvar_forceset(teamplay->name, "1");
+			enablecvar(teamplay->name, "Domination Enabled - Forcing teamplay on");
+			//gi.dprintf ("Domination Enabled - Forcing teamplay on\n");
+			//gi.cvar_forceset(teamplay->name, "1");
 		}
 		if (teamdm->value)
 		{
-			gi.dprintf ("Domination Enabled - Forcing Team DM off\n");
-			gi.cvar_forceset(teamdm->name, "0");
+			disablecvar(teamdm->name, "Domination Enabled - Forcing Team DM off");
+			//gi.dprintf ("Domination Enabled - Forcing Team DM off\n");
+			//gi.cvar_forceset(teamdm->name, "0");
 		}
 		if (use_tourney->value)
 		{
-			gi.dprintf ("Domination Enabled - Forcing Tourney off\n");
-			gi.cvar_forceset(use_tourney->name, "0");
+			disablecvar(use_tourney->name, "Domination Enabled - Forcing Tourney off");
+			//gi.dprintf ("Domination Enabled - Forcing Tourney off\n");
+			//gi.cvar_forceset(use_tourney->name, "0");
 		}
 		if (use_randoms->value)
 		{
-			gi.dprintf ("Domination Enabled - Forcing Random weapons and items off\n");
-			gi.cvar_forceset(use_randoms->name, "0");
+			disablecvar(use_randoms->name, "Domination Enabled - Forcing Random weapons and items off");
+			//gi.dprintf ("Domination Enabled - Forcing Random weapons and items off\n");
+			//gi.cvar_forceset(use_randoms->name, "0");
 		}
 		Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
 		Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
