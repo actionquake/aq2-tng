@@ -986,7 +986,8 @@ void EspRespawnLCA(edict_t *ent)
 {
 
 	// Print out all conditions below as debug prints
-	if (esp_debug->value)
+	// This is massively noisy so I'm setting it so that esp_debug must be > 1 to see it
+	if (esp_debug->value > 1)
 		gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
 		gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
 		gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
