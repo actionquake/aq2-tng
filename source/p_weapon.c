@@ -496,6 +496,13 @@ void ChangeWeapon(edict_t* ent)
 	if (ent->client->ctf_grapple)
 		CTFPlayerResetGrapple(ent);
 
+	// Prevent weapon switching to anything except knives, grenade or single MK23 if ctf->value is 2 and the player currently has the flag in their inventory
+	// if (ctf->value == 2 && 
+	// (ent->client->inventory[ITEM_INDEX(team_flag[TEAM1])] || ent->client->inventory[ITEM_INDEX(team_flag[TEAM2])]))
+	// {
+		
+	// }
+
 	// zucc - prevent reloading queue for previous weapon from doing anything
 	ent->client->reload_attempts = 0;
 

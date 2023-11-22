@@ -297,7 +297,7 @@ void PrintMOTD(edict_t * ent)
 		if(ctf->value) {
 			strcat(msg_buf, "\n");
 			lines++;
-
+			
 			if(ctfgame.type == 0)
 				sprintf(msg_buf + strlen(msg_buf), "CTF Type: Normal\n");
 			else if(ctfgame.type == 1)

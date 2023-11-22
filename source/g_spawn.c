@@ -950,45 +950,47 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	else if (ctf->value)
 	{
 	gi.cvar_forceset(gm->name, "ctf");
+	const char* CTFgameMode = (ctf->value == 2) ? "CTB" : "CTF";
 		if (ctf->value == 2)
-			gi.cvar_forceset(ctf->name, "1"); //for now
+			//gi.cvar_forceset(ctf->name, "1"); //for now
+			gi.cvar_forceset(ctb->name, "1"); // Enables CTB mode
 
 		gameSettings |= GS_WEAPONCHOOSE;
 
 		// Make sure teamplay is enabled
 		if (!teamplay->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing teamplay on\n");
+			gi.dprintf ("%s Enabled - Forcing teamplay on\n", CTFgameMode);
 			gi.cvar_forceset(teamplay->name, "1");
 		}
 		if (use_3teams->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing 3Teams off\n");
+			gi.dprintf ("%s Enabled - Forcing 3Teams off\n", CTFgameMode);
 			gi.cvar_forceset(use_3teams->name, "0");
 		}
 		if(teamdm->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Team DM off\n");
+			gi.dprintf ("%s Enabled - Forcing Team DM off\n", CTFgameMode);
 			gi.cvar_forceset(teamdm->name, "0");
 		}
 		if (use_tourney->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Tourney off\n");
+			gi.dprintf ("%s Enabled - Forcing Tourney off\n", CTFgameMode);
 			gi.cvar_forceset(use_tourney->name, "0");
 		}
 		if (dom->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Domination off\n");
+			gi.dprintf ("%s Enabled - Forcing Domination off\n", CTFgameMode);
 			gi.cvar_forceset(dom->name, "0");
 		}
 		if (!DMFLAGS(DF_NO_FRIENDLY_FIRE))
 		{
-			gi.dprintf ("CTF Enabled - Forcing Friendly Fire off\n");
+			gi.dprintf ("%s Enabled - Forcing Friendly Fire off\n", CTFgameMode);
 			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
 		}
 		if (use_randoms->value)
 		{
-			gi.dprintf ("CTF Enabled - Forcing Random weapons and items off\n");
+			gi.dprintf ("%s Enabled - Forcing Random weapons and items off\n", CTFgameMode);
 			gi.cvar_forceset(use_randoms->name, "0");
 		}
 		Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));

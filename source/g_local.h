@@ -1210,6 +1210,7 @@ extern cvar_t *am_delay;
 extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
+extern cvar_t *ctb;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);

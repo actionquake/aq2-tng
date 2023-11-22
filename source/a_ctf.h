@@ -107,6 +107,7 @@ edict_t *SelectCTFSpawnPoint (edict_t * ent);
 void CTFResetFlags(void);
 
 qboolean CTFPickup_Flag (edict_t * ent, edict_t * other);
+qboolean CTFPickup_Case (edict_t * ent, edict_t * other);
 void CTFDrop_Flag (edict_t * ent, gitem_t * item);
 void CTFEffects (edict_t * player);
 void CTFCalcScores (void);
