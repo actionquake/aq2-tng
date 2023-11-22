@@ -651,8 +651,12 @@ qboolean TimedMessageAtTimeAll()
     int crl = (current_round_length / 10);
     qboolean anyMessageFired = false;
     int i;
+
     for (i = 0; i < numMessages; i++) {
-        if (!timedMessages[i].fired && (crl == 0 || crl >= timedMessages[i].seconds) && timedMessages[i].teamNum != -1) {
+        if (!timedMessages[i].fired && 
+		team_round_going &&
+		crl >= timedMessages[i].seconds && 
+		timedMessages[i].teamNum != -1) {
             if(timedMessages[i].teamNum == NOTEAM)
                 CenterPrintAll(timedMessages[i].msg);
             else
@@ -671,7 +675,10 @@ qboolean TimedMessageAtTimeEnt()
     qboolean anyMessageFired = false;
     int i;
     for (i = 0; i < numMessages; i++) {
-        if (!timedMessages[i].fired && (crl == 0 || crl >= timedMessages[i].seconds) && timedMessages[i].ent != NULL) {
+        if (!timedMessages[i].fired && 
+		team_round_going &&
+		crl >= timedMessages[i].seconds && 
+		timedMessages[i].ent != NULL) {
             gi.centerprintf(timedMessages[i].ent, timedMessages[i].msg);
             timedMessages[i].fired = true;
             anyMessageFired = true;

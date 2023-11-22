@@ -2469,18 +2469,11 @@ static qboolean CheckRoundTimeLimit( void )
 			return true;
 		}
 
-		if (use_warnings->value && timewarning < 3)
+		if (use_warnings->value && timewarning < 2)
 		{
 			roundLimitFrames -= current_round_length;
 			
-			if (roundLimitFrames <= 100)
-			{
-				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "world/10_0.wav" ), 1.0, ATTN_NONE, 0.0 );
-				timewarning = 3;
-				if (esp->value)
-					EspAnnounceDetails(true);
-			} 
-			else if (roundLimitFrames <= 600)
+			if (roundLimitFrames <= 600)
 			{
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
@@ -2856,13 +2849,6 @@ int CheckTeamRules (void)
 				return 1;
 			}
 
-			if (esp->value && EspCheckRules())
-			{
-				EndDMLevel();
-				team_round_going = team_round_countdown = team_game_going = 0;
-				return 1;
-			}
-
 			if (vCheckVote()) {
 				EndDMLevel ();
 				team_round_going = team_round_countdown = team_game_going = 0;
@@ -2898,7 +2884,12 @@ int CheckTeamRules (void)
 				
 				if (!AllTeamsHaveLeaders())
 					EspLeaderCheck();
-				// Do something here about giving players stuff
+				
+				if (EspCheckRules()){
+					EndDMLevel();
+					team_round_going = team_round_countdown = team_game_going = 0;
+					return 1;
+				}
 			}
 		}
 

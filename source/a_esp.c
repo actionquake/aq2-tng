@@ -103,6 +103,9 @@ void EspTimedMessageHandler(int teamNum, edict_t *ent, int seconds, int timedMsg
 		gi.dprintf("%s: Invalid entity passed\n", __FUNCTION__);
 		return;
 	}
+	// Convert frames to seconds
+	//seconds = seconds * 10;
+
 	addTimedMessage(teamNum, ent, seconds, timedMessageStrings[timedMsgIndex]);
 }
 
@@ -1361,45 +1364,51 @@ void EspSwapTeams()
 	teams_changed = true;
 }
 
-qboolean EspCheckRules(void)
+qboolean EspCheckETVRules(void)
 {
 	int t1 = teams[TEAM1].score;
 	int t2 = teams[TEAM2].score;
 	int roundlimitwarn = (((int)roundlimit->value / 2) - 1);
 
-	if (esp_debug->value)
-		gi.dprintf("Halftime is %d\n", espsettings.halftime);
-
-	// Espionage ETV uses the same roundlimit cvars as CTF
-	if(etv->value) {
-		if(roundlimit->value && 
-		(teams[TEAM1].score >= roundlimit->value || 
-		teams[TEAM2].score >= roundlimit->value) ){
-			gi.bprintf(PRINT_HIGH, "Roundlimit hit.\n");
-			IRC_printf(IRC_T_GAME, "Roundlimit hit.\n");
-			return true;
-		}
+	// Espionage ETV uses the same roundlimit cvars as teamplay
+	if(roundlimit->value && 
+	(teams[TEAM1].score >= roundlimit->value || 
+	teams[TEAM2].score >= roundlimit->value) ){
+		gi.bprintf(PRINT_HIGH, "Roundlimit hit.\n");
+		IRC_printf(IRC_T_GAME, "Roundlimit hit.\n");
+		return true;
 	}
+	
 
 	// Must be etv mode, halftime must have not occured yet, and be enabled, and the roundlimit must be set
-	if(etv->value && 
-	!espsettings.halftime &&
-	esp_etv_halftime->value && 
-	(((int)roundlimit->value - roundlimitwarn <= 1) && ((int)roundlimit->value - roundlimitwarn > 0))){
+
+	// Print all condition states
+	if (esp_debug->value) {
+		gi.dprintf("Roundlimit is %f\n", roundlimit->value);
+		gi.dprintf("Team 1 score is %d\n", teams[TEAM1].score);
+		gi.dprintf("Team 2 score is %d\n", teams[TEAM2].score);
+		gi.dprintf("Team 1 + Team 2 score is %d\n", t1 + t2);
+		gi.dprintf("Roundlimit warning is %d\n", roundlimitwarn);
+		gi.dprintf("Halftime is %d\n", espsettings.halftime);
+		gi.dprintf("ETV is %f\n", etv->value);
+		gi.dprintf("Use warnings is %f\n", use_warnings->value);
+		gi.dprintf("ETV halftime is %f\n", esp_etv_halftime->value);
+	}
+
+	// This is checking for conditions involving halftime
+	if (!esp_etv_halftime->value)
+		return false;
+
+	if(!espsettings.halftime && (t1 + t2 == roundlimitwarn)){
 		if( use_warnings->value ){
 			EspTimedMessageHandler(TEAM1, NULL, 3, ESP_HALFTIME_WARNING);
 			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/incoming.wav"), 1.0, ATTN_NONE, 0.0 );
 			if (esp->value)
 				EspAnnounceDetails(true);
 		}
-
-	else if(etv->value && 
-	!espsettings.halftime &&
-	esp_etv_halftime->value && 
-	(t1 + t2 >= ((int)roundlimitwarn) / 2)){
-		{
+	else if(!espsettings.halftime && (t1 + t2 == (roundlimit->value / 2))){
 			team_round_going = team_round_countdown = team_game_going = 0;
-			MakeAllLivePlayersObservers ();
+			MakeAllLivePlayersObservers();
 			EspSwapTeams();
 			CenterPrintTeam(TEAM1, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
 			CenterPrintTeam(TEAM2, "The teams have been switched!\nYou are now defending!\n");
@@ -1408,7 +1417,14 @@ qboolean EspCheckRules(void)
 			espsettings.halftime = 1;
 		}
 	}
-	}
+	return false;
+}
+
+qboolean EspCheckRules(void)
+{
+	// Expand if we introduce other Espionage modes
+	if (etv->value)
+		return EspCheckETVRules();
 	
 	return false;
 }
@@ -1749,8 +1765,8 @@ int EspReportLeaderDeath(edict_t *ent)
 		ent->client->resp.esp_capstreakbest = ent->client->resp.esp_capstreak;
 	ent->client->resp.esp_capstreak = 0;
 	
-	gi.dprintf("\n\nAdded message handler\n");
-	EspTimedMessageHandler(0, NULL, 3, ESP_LEADER_DIED);
+	// gi.dprintf("\n\nAdded message handler\n\n");
+	// EspTimedMessageHandler(0, NULL, 15, ESP_LEADER_DIED);
 
 	return winner;
 }
@@ -1888,12 +1904,10 @@ void EspAnnounceDetails( qboolean timewarning )
 				if (atl->value){
 					gi.centerprintf(ent, "Defend your leader and attack the other one to win!\n");
 				} else if (etv->value){
-					CenterPrintTeam(TEAM1, "Escort your leader to the briefcase!\n");
-					CenterPrintTeam(TEAM2, "Defend your briefcase or kill the enemy leader to win!\n");
-					// if (ent->client->resp.team == TEAM1)
-					// 	gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
-					// else
-					// 	gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
+					if (ent->client->resp.team == TEAM1)
+						gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
+					else
+						gi.cprintf(ent, PRINT_HIGH, "Kill the enemy leader to win!\n");
 				}
 			}
 		}
