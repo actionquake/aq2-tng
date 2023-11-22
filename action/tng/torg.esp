@@ -8,8 +8,8 @@ red=7
 blue=7
 
 [spawns]
-red=<560 1210 238 -11>,<419 1059 446 0>,<471 107 410 73>
-blue=<2982 83 640 139>,<2436 2632 640 -74>,<2667 728 238 151>
+red=<443 1547 578 -28>,<419 1059 446 0>,<471 107 410 73>
+blue=<2982 83 640 139>,<2436 2632 640 -74>,<2927 386 457 175>
 
 [target]
 escort=<2833 1288 682>
@@ -17,7 +17,7 @@ name=Grand Prize
 
 [red_team]
 name=maiJaw
-leader_name=The Grand Champion
+leader_name=Grand Champion
 skin=male/ctf_r
 leader_skin=male/chow
 

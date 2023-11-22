@@ -1906,6 +1906,8 @@ void CenterPrintAll (const char *msg)
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
+		if (ent->is_bot)
+			continue;
 		if (ent->inuse)
 			gi.centerprintf (ent, "%s", msg);
 	}
@@ -2441,9 +2443,11 @@ qboolean CheckTimelimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
-				if (esp->value)
-					gi.dprintf("%s: level.matchTime = %f\n", __FUNCTION__, level.matchTime);
+				if (esp->value){
+					if (esp_debug->value)
+						gi.dprintf("%s: level.matchTime = %f\n", __FUNCTION__, level.matchTime);
 					EspAnnounceDetails(true);
+				}
 			}
 			else if( timewarning < 1 && (! ctf->value) && timelimit->value > 3 && level.matchTime >= (timelimit->value - 3) * 60 )
 			{
@@ -2494,9 +2498,11 @@ static qboolean CheckRoundTimeLimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
-				if (esp->value)
-					gi.dprintf("%s: roundLimitFrames = %d\n", __FUNCTION__, roundLimitFrames);
+				if (esp->value) {
+					if (esp_debug->value)
+						gi.dprintf("%s: roundLimitFrames = %d\n", __FUNCTION__, roundLimitFrames);
 					EspAnnounceDetails(true);
+				}
 			}
 			else if (roundLimitFrames <= 1800 && timewarning < 1 && roundtimelimit->value > 3)
 			{
@@ -2709,9 +2715,10 @@ int CheckTeamRules (void)
 			{
 				if (esp->value && !AllTeamsHaveLeaders()) {
 					if (atl->value){
-						CenterPrintAll ("All Teams Must Have a Leader!");
+						CenterPrintAll ("All Teams Must Have a Leader!\nType 'leader' in console to volunteer!");
 					} else if (etv->value) {
-						CenterPrintAll ("Team 1 Must Have a Leader!");
+						CenterPrintTeam(TEAM1, "Team 1 Must Have a Leader!\nType 'leader' in console to volunteer!");
+						CenterPrintTeam(TEAM2, "Waiting on Team 1 to select a leader...");
 					}
 					EspEndOfRoundCleanup();
 				} else if (!matchmode->value || TeamsReady()) {
@@ -2877,7 +2884,7 @@ int CheckTeamRules (void)
 				if (!matchmode->value || TeamsReady())
 					CenterPrintAll( "Not enough players to play!" );
 				else if (esp->value && !AllTeamsHaveLeaders())
-					CenterPrintAll ("Both Teams Must Have a Leader!");
+					CenterPrintAll ("Both Teams Must Have a Leader!\nType 'leader' in console to volunteer!");
 				else
 					CenterPrintAll( "Both Teams Must Be Ready!" );
 

@@ -3791,8 +3791,7 @@ void ClientBeginServerFrame(edict_t * ent)
 				}
 
 				if (esp->value) {
-					// LCA countdown..
-					EspRespawnLCA(ent);
+					// LCA countdown occurs below in EspRespawnLCA()
 					// then Action!
 					EspRespawnPlayer(ent);
 				}
@@ -3806,6 +3805,9 @@ void ClientBeginServerFrame(edict_t * ent)
 					client->latched_buttons = 0;
 				}
 			}
+		} else { // !(level.framenum > client->respawn_framenum)
+			if (esp->value)
+				EspRespawnLCA(ent);
 		}
 		return;
 	}

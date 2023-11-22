@@ -694,7 +694,7 @@ void FireTimedMessages()
 	TimedMessageAtTimeEnt();
 }
 
-void addTimedMessage(int teamNum, edict_t *ent, int seconds, const char *msg) {
+void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg) {
     timedMessages = realloc(timedMessages, sizeof(Message) * (numMessages + 1));
     timedMessages[numMessages].teamNum = teamNum;
     timedMessages[numMessages].ent = ent;

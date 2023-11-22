@@ -78,7 +78,7 @@ int EspCapturePointOwner( edict_t *flag )
 }
 
 
-const char *timedMessageStrings[NUM_MESSAGES] = {
+char *timedMessageStrings[NUM_MESSAGES] = {
     "LAST ROUND BEFORE HALFTIME...",
     "LOL HE DIED",
     "This is message three",
@@ -950,9 +950,10 @@ qboolean EspLoadConfig(const char *mapname)
 	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
 	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
 	Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
-	if (atl->value)
+	if (atl->value) {
 		Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
 		Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
+	}
 
 	if((etv->value) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
@@ -983,26 +984,42 @@ TODO: Fire this when there's 4 seconds left before a respawn
 */
 void EspRespawnLCA(edict_t *ent)
 {
+
+	// Print out all conditions below as debug prints
+	if (esp_debug->value)
+		gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
+		gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
+		gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
+		gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
+		gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
+		gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
+
 	// Basically we just want real, dead players who are in the respawn waiting period
 	if (!ent->inuse ||
 	ent->client->resp.team == NOTEAM ||
 	ent->client->respawn_framenum <= 0 ||
 	IS_LEADER(ent) ||
-	ent->is_bot)
+	ent->is_bot ||
+	!team_round_going)
 		return;
 
 	if (ent->client->resp.team && !IS_ALIVE(ent)){
 		int timercalc = ent->client->respawn_framenum - level.framenum;
+
+		if (esp_debug->value)
+			gi.dprintf("%s: Level framenum is %d, respawn timer was %d for %s, timercalc is %i, esp_respawn_sounds was %i\n", 
+			__FUNCTION__, level.framenum, ent->client->respawn_framenum, ent->client->pers.netname, timercalc, ent->client->resp.esp_respawn_sounds);
+
 		// Subtract current framenum from respawn_timer to get a countdown
 		if (timercalc <= 0){
 			// Play no sound, they've respawned by now
 			return;
-		} else if (timercalc <= 23 && ent->client->resp.esp_respawn_sounds == 2) {
+		} else if (timercalc <= 20 && ent->client->resp.esp_respawn_sounds == 2) {
 			gi.centerprintf(ent, "CAMERA...");
 			gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_NONE, 0.0);
 			ent->client->resp.esp_respawn_sounds = 1;
 			return;
-		} else if (timercalc <= 43 && ent->client->resp.esp_respawn_sounds == 0) {
+		} else if (timercalc <= 40 && ent->client->resp.esp_respawn_sounds == 0) {
 			gi.centerprintf(ent, "LIGHTS...");
 			gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_NONE, 0.0);
 			ent->client->resp.esp_respawn_sounds = 2;
@@ -1028,6 +1045,7 @@ void EspRespawnPlayer(edict_t *ent)
 		// Don't respawn until the current framenum is more than the respawn timer's framenum
 		if (esp_debug->value)
 			gi.dprintf("%s: Level framenum is %d, respawn timer was %d for %s\n", __FUNCTION__, level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
+
 		if (level.framenum > ent->client->respawn_framenum) {
 			// // If your leader is alive, you can respawn
 
@@ -1110,10 +1128,8 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 		return false;
 	}
 
-	if (!leader){
-		gi.dprintf("Warning: Supplied ent was not the leader\n");
+	if (!leader)
 		return false;
-	}
 
 	if (espmode == ESPMODE_ATL) {
 		if (teams[leader->client->resp.team].leader)
@@ -1129,6 +1145,7 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 		else
 			return false;
 	}
+
 	return false;
 }
 
@@ -1692,7 +1709,7 @@ qboolean EspLeaderCheck()
 				// If we still don't have a leader, then the next round can't begin
 				if (!newLeader) {
 					teams[i].leader = NULL; // Clear this in case some strange things happen
-					gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'volunteer' to apply for duty\n", teams[i].name );
+					gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'leader' to apply for duty\n", teams[i].name );
 				}
 			}
 		}

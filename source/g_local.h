@@ -2484,10 +2484,10 @@ typedef struct {
     int teamNum;
     edict_t *ent;
     int seconds;
-    const char *msg;
+    char *msg;
     qboolean fired;
 } Message;
 extern Message *timedMessages;
 
-void addTimedMessage(int teamNum, edict_t *ent, int seconds, const char *msg);
+void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg);
 void FireTimedMessages();
