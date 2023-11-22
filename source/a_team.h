@@ -91,6 +91,7 @@ qboolean OnTransparentList( const edict_t *ent );
 void PrintTransparentList ();
 void CenterPrintAll (const char *msg);
 void CenterPrintTeam (int teamNum, const char *msg);
+void CenterPrintLevelTeam (int teamNum, int printlvl, const char *msg);
 int TeamHasPlayers( int team );
 
 //TNG:Freud - new spawning system

@@ -1915,7 +1915,7 @@ void CenterPrintTeam (int teamNum, const char *msg)
 {
 	int i;
 	edict_t *ent;
-
+	
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
@@ -1923,6 +1923,21 @@ void CenterPrintTeam (int teamNum, const char *msg)
 			continue;
 		if (ent->inuse && ent->client->resp.team == teamNum)
 			gi.centerprintf (ent, "%s", msg);
+	}
+}
+
+void CenterPrintLevelTeam (int teamNum, int printlvl, const char *msg)
+{
+	int i;
+	edict_t *ent;
+	
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (ent->is_bot)
+			continue;
+		if (ent->inuse && ent->client->resp.team == teamNum)
+			gi.cprintf(ent, printlvl, "%s", msg);
 	}
 }
 
@@ -2427,6 +2442,7 @@ qboolean CheckTimelimit( void )
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
 				if (esp->value)
+					gi.dprintf("%s: level.matchTime = %f\n", __FUNCTION__, level.matchTime);
 					EspAnnounceDetails(true);
 			}
 			else if( timewarning < 1 && (! ctf->value) && timelimit->value > 3 && level.matchTime >= (timelimit->value - 3) * 60 )
@@ -2479,6 +2495,7 @@ static qboolean CheckRoundTimeLimit( void )
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
 				if (esp->value)
+					gi.dprintf("%s: roundLimitFrames = %d\n", __FUNCTION__, roundLimitFrames);
 					EspAnnounceDetails(true);
 			}
 			else if (roundLimitFrames <= 1800 && timewarning < 1 && roundtimelimit->value > 3)
@@ -2876,6 +2893,12 @@ int CheckTeamRules (void)
 		// Team round is going, and it's GS_ROUNDBASED
 		{
 			if (esp->value) {
+				if (EspCheckRules()){
+					EndDMLevel();
+					team_round_going = team_round_countdown = team_game_going = 0;
+					return 1;
+				}
+
 				GenerateMedKit(false);
 				EspCleanUp();
 				//Debugging
@@ -2884,12 +2907,6 @@ int CheckTeamRules (void)
 				
 				if (!AllTeamsHaveLeaders())
 					EspLeaderCheck();
-				
-				if (EspCheckRules()){
-					EndDMLevel();
-					team_round_going = team_round_countdown = team_game_going = 0;
-					return 1;
-				}
 			}
 		}
 

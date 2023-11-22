@@ -79,7 +79,7 @@ int EspCapturePointOwner( edict_t *flag )
 
 
 const char *timedMessageStrings[NUM_MESSAGES] = {
-    "1 ROUND LEFT BEFORE HALFTIME...",
+    "LAST ROUND BEFORE HALFTIME...",
     "LOL HE DIED",
     "This is message three",
     // Add more messages as needed
@@ -616,6 +616,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 		Q_strncpyz(teams[TEAM1].leader_name, ESP_RED_LEADER_NAME, sizeof(teams[TEAM1].leader_name));
 		Q_strncpyz(teams[TEAM1].leader_skin, ESP_RED_LEADER_SKIN, sizeof(teams[TEAM1].leader_skin));
 		Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+		Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
 
 		/// Default skin/team/names - blue team
 		Q_strncpyz(teams[TEAM2].name, ESP_BLUE_TEAM, sizeof(teams[TEAM2].name));
@@ -623,6 +624,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 		Q_strncpyz(teams[TEAM2].leader_name, ESP_BLUE_LEADER_NAME, sizeof(teams[TEAM2].leader_name));
 		Q_strncpyz(teams[TEAM2].leader_skin, ESP_BLUE_LEADER_SKIN, sizeof(teams[TEAM2].leader_skin));
 		Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
+		Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
 		if(teamCount == 3) {
 			/// Default skin/team/names - green team
 			Q_strncpyz(teams[TEAM3].name, ESP_GREEN_TEAM, sizeof(teams[TEAM3].name));
@@ -630,6 +632,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 			Q_strncpyz(teams[TEAM3].leader_name, ESP_GREEN_LEADER_NAME, sizeof(teams[TEAM3].leader_name));
 			Q_strncpyz(teams[TEAM3].leader_skin, ESP_GREEN_LEADER_SKIN, sizeof(teams[TEAM3].leader_skin));
 			Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
+			Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
 		}
 		gi.dprintf("  Red Team: %s -- Skin: %s\n", ESP_RED_TEAM, ESP_RED_SKIN);
 		gi.dprintf("  Red Leader: %s -- Skin: %s\n", ESP_RED_LEADER_NAME, ESP_RED_LEADER_SKIN);
@@ -946,6 +949,10 @@ qboolean EspLoadConfig(const char *mapname)
 	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
 	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
 	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
+	Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
+	if (atl->value)
+		Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
+		Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
 
 	if((etv->value) && teamCount == 3){
 		gi.dprintf("Warning: ETV mode requested with use_3teams enabled, forcing ATL mode");
@@ -1273,6 +1280,15 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 
 void SetEspStats( edict_t *ent )
 {
+	int i;
+
+	// GHUD team icons, ATL gets leader skin indexes, ETV gets team skin indexes
+	for(i = TEAM1; i <= teamCount; i++)
+		if (etv->value)
+			level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
+		else if (atl->value)
+			level.pic_teamskin[i] = gi.imageindex(teams[i].leader_skin_index);
+
 	// Load scoreboard images
 	level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
 	level.pic_esp_teamicon[TEAM1] = gi.imageindex(teams[TEAM1].skin_index);
@@ -1347,12 +1363,10 @@ void EspSwapTeams()
 	for (i = 0; i < game.maxclients; i++) {
 		ent = &g_edicts[1 + i];
 		if (ent->inuse && ent->client->resp.team) {
+			EspLeaderLeftTeam(ent);
+			ent->client->resp.is_volunteer = false;
 			ent->client->resp.team = OtherTeam(ent->client->resp.team);
 			AssignSkin(ent, teams[ent->client->resp.team].skin, false);
-		}
-		if (IS_LEADER(ent)) {
-			ent->client->resp.is_volunteer = false;
-			EspSetLeader( ent->client->resp.team, NULL );
 		}
 	}
 
@@ -1399,23 +1413,23 @@ qboolean EspCheckETVRules(void)
 	if (!esp_etv_halftime->value)
 		return false;
 
+	static qboolean halftimeMessageAdded = false;
+
 	if(!espsettings.halftime && (t1 + t2 == roundlimitwarn)){
-		if( use_warnings->value ){
+		if( use_warnings->value && !halftimeMessageAdded ){
 			EspTimedMessageHandler(TEAM1, NULL, 3, ESP_HALFTIME_WARNING);
 			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/incoming.wav"), 1.0, ATTN_NONE, 0.0 );
-			if (esp->value)
-				EspAnnounceDetails(true);
+			halftimeMessageAdded = true;
 		}
-	else if(!espsettings.halftime && (t1 + t2 == (roundlimit->value / 2))){
-			team_round_going = team_round_countdown = team_game_going = 0;
-			MakeAllLivePlayersObservers();
-			EspSwapTeams();
-			CenterPrintTeam(TEAM1, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
-			CenterPrintTeam(TEAM2, "The teams have been switched!\nYou are now defending!\n");
-			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
-					gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
-			espsettings.halftime = 1;
-		}
+	} else if(!espsettings.halftime && (t1 + t2 == (roundlimit->value / 2))){
+		team_round_going = team_round_countdown = team_game_going = 0;
+		MakeAllLivePlayersObservers();
+		EspSwapTeams();
+		CenterPrintLevelTeam(TEAM1, PRINT_MEDIUM, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
+		CenterPrintLevelTeam(TEAM2, PRINT_MEDIUM, "The teams have been switched!\nYou are now defending!\n");
+		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
+				gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
+		espsettings.halftime = 1;
 	}
 	return false;
 }
