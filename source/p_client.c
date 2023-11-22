@@ -1687,8 +1687,6 @@ edict_t *SelectRandomDeathmatchSpawnPoint(void)
 	range1 = range2 = 99999;
 	spot1 = spot2 = NULL;
 
-	gi.dprintf("I was called %s\n", __FUNCTION__);
-
 	while ((spot = G_Find(spot, FOFS(classname), "info_player_deathmatch")) != NULL) {
 		count++;
 		range = PlayersRangeFromSpot(spot);
@@ -1966,7 +1964,8 @@ void respawn(edict_t *self)
 	if (esp->value && team_round_going){
 		// Optional respawn invulnerability in Espionage
 		if (esp_respawn_uvtime->value){
-			gi.dprintf("\nInvuln activated\n");
+			if (esp_debug->value)
+				gi.dprintf("%s: Invuln activated\n", __FUNCTION__);
 			self->client->uvTime = (int)esp_respawn_uvtime->value;
 		}
 	}

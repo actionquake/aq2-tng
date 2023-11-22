@@ -1868,6 +1868,8 @@ void ResetScores (qboolean playerScores)
 	ctfgame.last_capture_team = 0;
 	ctfgame.halftime = 0;
 
+	espsettings.capturestreak = 0;
+
 	if(!playerScores)
 		return;
 
@@ -1913,8 +1915,6 @@ void CenterPrintTeam (int teamNum, const char *msg)
 {
 	int i;
 	edict_t *ent;
-
-	gi.dprintf("Team %d: %s\n", teamNum, msg);	// so it goes to the server console...
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -2049,7 +2049,7 @@ int CheckForWinner()
 		if (teamsWithPlayers)
 			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 
-		gi.dprintf("I was called somehow\n\n\n");
+		//gi.dprintf("I was called somehow\n\n\n");
 		return WINNER_TIE;
 	}
 	return WINNER_NONE;
@@ -2412,11 +2412,11 @@ qboolean CheckTimelimit( void )
 			return true;
 		}
 		
-		// CTF with use_warnings should have the same warnings when the map is ending as it does for halftime (see CTFCheckRules).
+		// CTF or Espionage with use_warnings should have the same warnings when the map is ending as it does for halftime (see CTFCheckRules).
 		// Otherwise, use_warnings should warn about 3 minutes and 1 minute left, but only if there aren't round ending warnings.
 		if( use_warnings->value && (ctf->value || ! roundtimelimit->value) )
 		{
-			if( timewarning < 3 && ctf->value && level.matchTime >= timelimit->value * 60 - 10 )
+			if( timewarning < 3 && (ctf->value && level.matchTime >= timelimit->value * 60 - 10 ))
 			{
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 3;
@@ -2426,9 +2426,8 @@ qboolean CheckTimelimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
-				if (esp->value){
+				if (esp->value)
 					EspAnnounceDetails(true);
-				}
 			}
 			else if( timewarning < 1 && (! ctf->value) && timelimit->value > 3 && level.matchTime >= (timelimit->value - 3) * 60 )
 			{
@@ -2470,18 +2469,24 @@ static qboolean CheckRoundTimeLimit( void )
 			return true;
 		}
 
-		if (use_warnings->value && timewarning < 2)
+		if (use_warnings->value && timewarning < 3)
 		{
 			roundLimitFrames -= current_round_length;
 			
-			if (roundLimitFrames <= 600)
+			if (roundLimitFrames <= 100)
+			{
+				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "world/10_0.wav" ), 1.0, ATTN_NONE, 0.0 );
+				timewarning = 3;
+				if (esp->value)
+					EspAnnounceDetails(true);
+			} 
+			else if (roundLimitFrames <= 600)
 			{
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
-				if (esp->value){
+				if (esp->value)
 					EspAnnounceDetails(true);
-				}
 			}
 			else if (roundLimitFrames <= 1800 && timewarning < 1 && roundtimelimit->value > 3)
 			{
@@ -2547,6 +2552,8 @@ int WonGame (int winner)
 
 		if(use_warnings->value)
 			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_teamwins[0], 1.0, ATTN_NONE, 0.0);
+		if (esp->value)
+			EspEndOfRoundCleanup();
 		PrintScores ();
 	}
 	else
@@ -2682,7 +2689,8 @@ int CheckTeamRules (void)
 			}
 			else if (esp->value && AllTeamsHaveLeaders() && BothTeamsHavePlayers())
 			{
-				gi.dprintf("Esp mode on, All teams have leaders, Both teams have players\n");
+				if (esp_debug->value)
+					gi.dprintf("%s: Esp mode on, All teams have leaders, Both teams have players\n", __FUNCTION__);
 				in_warmup = 0;
 				team_game_going = 1;
 				StartLCA();
@@ -2719,9 +2727,8 @@ int CheckTeamRules (void)
 			{
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
-				if (printrules->value) {
-				        PrintMatchRules();
-				}
+				if (printrules->value)
+					PrintMatchRules();
 
 				#ifdef USE_AQTION
 				// Cleanup and remove all bots, it's go time!
@@ -2849,6 +2856,13 @@ int CheckTeamRules (void)
 				return 1;
 			}
 
+			if (esp->value && EspCheckRules())
+			{
+				EndDMLevel();
+				team_round_going = team_round_countdown = team_game_going = 0;
+				return 1;
+			}
+
 			if (vCheckVote()) {
 				EndDMLevel ();
 				team_round_going = team_round_countdown = team_game_going = 0;
@@ -2877,10 +2891,10 @@ int CheckTeamRules (void)
 		{
 			if (esp->value) {
 				GenerateMedKit(false);
-
 				EspCleanUp();
 				//Debugging
-				EspDebug();
+				if (esp_debug->value)
+					EspDebug();
 				
 				if (!AllTeamsHaveLeaders())
 					EspLeaderCheck();

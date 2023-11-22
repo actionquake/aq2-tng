@@ -66,6 +66,14 @@ extern espsettings_t espsettings;
 
 extern gitem_t *team_flag[TEAM_TOP];
 
+typedef enum {
+    ESP_HALFTIME_WARNING,
+    ESP_LEADER_DIED,
+    MESSAGE_THREE,
+    // Add more messages as needed
+    NUM_MESSAGES
+} EspTimedMessageIndex;
+
 #define DF_ESP_FORCEJOIN	131072
 
 // Team score bonuses

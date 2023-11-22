@@ -119,6 +119,9 @@ void BeginIntermission(edict_t *targ)
 	int i;
 	edict_t *ent;
 
+	// Clear all timed messages
+	free(timedMessages);
+
 	if (level.intermission_framenum)
 		return;			// already activated
 

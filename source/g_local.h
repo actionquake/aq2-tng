@@ -1226,6 +1226,7 @@ extern cvar_t *esp_leaderenhance;
 extern cvar_t *esp_enhancedslippers;
 extern cvar_t *esp_matchmode;
 extern cvar_t *esp_respawn_uvtime;
+extern cvar_t *esp_debug;
 
 // END AQ2 ETE
 
@@ -1239,6 +1240,8 @@ extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
 extern cvar_t *printrules;
+extern cvar_t *timedmsgs;
+
 
 
 #ifdef AQTION_EXTENSION
@@ -2476,3 +2479,15 @@ typedef enum {
 #ifndef NO_BOTS
 #include "acesrc/acebot.h"
 #endif
+
+typedef struct {
+    int teamNum;
+    edict_t *ent;
+    int seconds;
+    const char *msg;
+    qboolean fired;
+} Message;
+extern Message *timedMessages;
+
+void addTimedMessage(int teamNum, edict_t *ent, int seconds, const char *msg);
+void FireTimedMessages();

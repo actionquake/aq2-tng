@@ -639,3 +639,60 @@ void VideoCheckClient(edict_t *ent)
 		}
 	}
 }
+
+/*
+	Sends a specified message to all clients at a specified time in the round
+*/
+Message *timedMessages = NULL;
+int numMessages = 0;
+
+qboolean TimedMessageAtTimeAll()
+{
+    int crl = (current_round_length / 10);
+    qboolean anyMessageFired = false;
+    int i;
+    for (i = 0; i < numMessages; i++) {
+        if (!timedMessages[i].fired && (crl == 0 || crl >= timedMessages[i].seconds) && timedMessages[i].teamNum != -1) {
+            if(timedMessages[i].teamNum == NOTEAM)
+                CenterPrintAll(timedMessages[i].msg);
+            else
+                CenterPrintTeam(timedMessages[i].teamNum, timedMessages[i].msg);
+            timedMessages[i].fired = true;
+            anyMessageFired = true;
+        }
+    }
+
+    return anyMessageFired;
+}
+
+qboolean TimedMessageAtTimeEnt()
+{
+    int crl = (current_round_length / 10);
+    qboolean anyMessageFired = false;
+    int i;
+    for (i = 0; i < numMessages; i++) {
+        if (!timedMessages[i].fired && (crl == 0 || crl >= timedMessages[i].seconds) && timedMessages[i].ent != NULL) {
+            gi.centerprintf(timedMessages[i].ent, timedMessages[i].msg);
+            timedMessages[i].fired = true;
+            anyMessageFired = true;
+        }
+    }
+
+    return anyMessageFired;
+}
+
+void FireTimedMessages()
+{
+	TimedMessageAtTimeAll();
+	TimedMessageAtTimeEnt();
+}
+
+void addTimedMessage(int teamNum, edict_t *ent, int seconds, const char *msg) {
+    timedMessages = realloc(timedMessages, sizeof(Message) * (numMessages + 1));
+    timedMessages[numMessages].teamNum = teamNum;
+    timedMessages[numMessages].ent = ent;
+    timedMessages[numMessages].seconds = seconds;
+    timedMessages[numMessages].msg = msg;
+    timedMessages[numMessages].fired = false;
+    numMessages++;
+}

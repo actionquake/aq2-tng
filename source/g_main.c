@@ -495,6 +495,7 @@ cvar_t *esp_leaderenhance;
 cvar_t *esp_enhancedslippers;
 cvar_t *esp_matchmode;
 cvar_t *esp_respawn_uvtime;
+cvar_t *esp_debug;
 // END AQ2 ETE
 
 // 2022
@@ -520,6 +521,7 @@ cvar_t *am_team;  // Attract mode team, which team do you want the bots to join
 cvar_t *zoom_comp; // Compensates zoom-in frames with ping (high ping = fewer frames)
 cvar_t *item_kit_mode;  // Toggles item kit mode
 cvar_t *printrules;  // Centerprint game rules when the countdown begins
+cvar_t *timedmsgs; // Toggles timed messages
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;
@@ -757,6 +759,9 @@ void ClientEndServerFrames (void)
 		if (ent->client->chase_target)
 			UpdateChaseCam(ent);
 	}
+
+	if (timedmsgs->value)
+		FireTimedMessages();
 }
 
 /*

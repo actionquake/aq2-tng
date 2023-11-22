@@ -912,17 +912,12 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	gi.cvar_forceset(gm->name, "jump");
 
 	// Force disable settings for jump mode
-	disablecvar(stat_logs, GMN_JUMP);
-	disablecvar(dm_choose, GMN_JUMP);
-	disablecvar(uvtime, GMN_JUMP);
-	disablecvar(am, GMN_JUMP);
-	disablecvar(ltk_loadbots, GMN_JUMP);
-	// gi.cvar_forceset(stat_logs->name, "0"); // Turn off stat logs for jump mode
-	// gi.cvar_forceset(dm_choose->name, "0"); // Turn off dm_choose for jump mode
-	// gi.cvar_forceset(uvtime->name, "0"); // Turn off uvtime in jump mode
+	gi.cvar_forceset(stat_logs->name, "0"); // Turn off stat logs for jump mode
+	gi.cvar_forceset(dm_choose->name, "0"); // Turn off dm_choose for jump mode
+	gi.cvar_forceset(uvtime->name, "0"); // Turn off uvtime in jump mode
 	gi.cvar_forceset(unique_items->name, "6"); // Enables holding all items at once, if toggled
-	// gi.cvar_forceset(am->name, "0"); // Turns off attract mode
-	// gi.cvar_forceset(ltk_loadbots->name, "0"); // Turns off bots
+	gi.cvar_forceset(am->name, "0"); // Turns off attract mode
+	gi.cvar_forceset(ltk_loadbots->name, "0"); // Turns off bots
 	//
 		if (teamplay->value)
 		{
@@ -1048,11 +1043,17 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Espionage Enabled - Forcing Friendly Fire off\n");
 			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
 		}
-		// Espionage respawns do not have uvtime
+		// uvtime is controlled via respawn logic
 		if (uvtime->value)
 		{
 			gi.cvar_forceset(uvtime->name, "0");
 		}
+		// Sane defaults for timelimit or roundlimit
+		// favoring a roundlimit over a timelimit, if not defined
+		if (!roundlimit->value)
+			gi.cvar_forceset(roundlimit->name, "20");
+		else if (!timelimit->value)
+			gi.cvar_forceset(timelimit->name, "20");
 	}
 	else if (dom->value)
 	{
