@@ -93,6 +93,7 @@ void CenterPrintAll (const char *msg);
 void CenterPrintTeam (int teamNum, const char *msg);
 void CenterPrintLevelTeam (int teamNum, int printlvl, const char *msg);
 int TeamHasPlayers( int team );
+char* PrintMatchRules(void);
 
 //TNG:Freud - new spawning system
 void NS_GetSpawnPoints ();

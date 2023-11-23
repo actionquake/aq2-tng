@@ -1510,9 +1510,10 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		Updated chase cam calls
 		*/
 		if (limchasecam->value < 2 && attacker && attacker->client) {
-			if (esp->value)
-				EspionageChaseCam(self, attacker);
-			else if (teamplay->value)
+			// if (esp->value)
+			// 	EspionageChaseCam(self, attacker);
+			// else 
+			if (teamplay->value)
 				TeamplayChaseCam(self, attacker);
 		}
 	}
@@ -3704,6 +3705,12 @@ void ClientBeginServerFrame(edict_t * ent)
 			client->resp.last_motd_refresh = level.realFramenum;
 			client->resp.motd_refreshes++;
 			PrintMOTD( ent );
+		}
+	// This next message appears perpetually until the conditions to make the message go away are met
+	} else if (ent->client->layout != LAYOUT_MENU) {
+		if (PrintGameMessage(ent)) {
+			client->resp.last_gamemsg_refresh = level.realFramenum;
+			client->resp.gamemsg_refreshes++;
 		}
 	}
 

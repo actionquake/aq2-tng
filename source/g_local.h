@@ -1754,6 +1754,8 @@ typedef struct
  
   int motd_refreshes;
   int last_motd_refresh;
+  int gamemsg_refreshes;
+  int last_gamemsg_refresh;
   edict_t *last_chase_target;	// last person they chased, to resume at the same place later...
 
   // Number of team kills this game

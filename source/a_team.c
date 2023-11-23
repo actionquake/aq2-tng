@@ -422,9 +422,13 @@ void ReprintMOTD (edict_t * ent, pmenu_t * p)
 	PrintMOTD (ent);
 }
 
-void PrintMatchRules ()
+char* PrintMatchRules(void)
 {
-	char rulesmsg[256];
+	char* rulesmsg = (char*) malloc(1024 * sizeof(char));
+    if (rulesmsg == NULL) {
+        // Handle error
+        return NULL;
+    }
 
 	// Espionage rules
 	if (esp->value) {
@@ -471,7 +475,8 @@ void PrintMatchRules ()
 		// If nothing else matches, just say glhf
 		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "Frag 'em all!  Good luck and have fun!\n");
 	}
-	CenterPrintAll(rulesmsg);
+	
+	return rulesmsg;
 }
 
 void JoinTeamAuto (edict_t * ent, pmenu_t * p)
@@ -2744,8 +2749,8 @@ int CheckTeamRules (void)
 			{
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
-				if (printrules->value)
-					PrintMatchRules();
+				// if (printrules->value)
+				// 	PrintMatchRules();
 
 				#ifdef USE_AQTION
 				// Cleanup and remove all bots, it's go time!
@@ -2900,20 +2905,18 @@ int CheckTeamRules (void)
 		// Team round is going, and it's GS_ROUNDBASED
 		{
 			if (esp->value) {
+				//Debugging
+				if (esp_debug->value)
+					EspDebug();
+
 				if (EspCheckRules()){
 					EndDMLevel();
 					team_round_going = team_round_countdown = team_game_going = 0;
 					return 1;
 				}
-
 				GenerateMedKit(false);
 				EspCleanUp();
-				//Debugging
-				if (esp_debug->value)
-					EspDebug();
-				
-				if (!AllTeamsHaveLeaders())
-					EspLeaderCheck();
+				EspLeaderCheck();
 			}
 		}
 

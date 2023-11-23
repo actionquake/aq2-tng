@@ -102,6 +102,7 @@ extern int num_maps, cur_map, rand_map, num_allvotes;	// num_allvotes added by I
 
 void ReadConfigFile ();
 void ReadMOTDFile ();
+qboolean PrintGameMessage(edict_t *ent);
 void PrintMOTD (edict_t *ent);
 void stuffcmd (edict_t *ent, char *s);
 void unicastSound(edict_t *ent, int soundIndex, float volume);

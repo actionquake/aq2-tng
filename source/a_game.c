@@ -215,6 +215,65 @@ void ReadMOTDFile()
 	fclose(motd_file);
 }
 
+/*
+Take great care with this function.  It will continuously print
+a message to players after the MOTD, so it should be something
+that has a condition where it would stop printing.  Otherwise,
+you'll have a lot of pissed off players who will complain about
+text.  Only return true if conditions are met, else return false.
+*/
+
+qboolean PrintGameMessage(edict_t *ent)
+{
+	// Each condition is checked in order, and the first one that is true
+	// will be the message that is sent.  If none are true, then no message
+	// will be sent (return false)
+
+	char msg_buf[1024];
+	qboolean msg_ready = false;
+	//char* matchRules = PrintMatchRules();
+
+	if (esp->value) {
+		if (!team_round_going && !AllTeamsHaveLeaders()) {
+			if (atl->value)
+				Com_sprintf(msg_buf, sizeof(msg_buf), "Waiting for each team to have a leader\nType 'leader' in console to volunteer for duty.\n");
+			else if (etv->value) {
+				if (ent->client->resp.team == TEAM1)
+					Com_sprintf(msg_buf, sizeof(msg_buf), "Your team needs a leader!\nType 'leader' in console to volunteer for duty.");
+				else
+					Com_sprintf(msg_buf, sizeof(msg_buf), "Waiting for team 1 to have a leader...\n");
+				msg_ready = true;
+			}
+		}
+	}
+
+	if (!team_game_going && (team_round_countdown > 10 && team_round_countdown < 101)) {
+		Com_sprintf(msg_buf, sizeof(msg_buf), "%s", PrintMatchRules());
+	}
+		// if (cachedMatchRules == NULL) {
+		// 	cachedMatchRules = PrintMatchRules();
+		// }
+		// if (cachedMatchRules != NULL) {
+		// 	gi.dprintf("Sending match rules to client\n");
+		// 	Com_sprintf(msg_buf, sizeof(msg_buf), "%s", cachedMatchRules);
+		// }
+
+	// All messages eventually reach this point
+	if (msg_ready) {
+		// Same logic as PrintMOTD
+		if (!auto_menu->value || ent->client->pers.menu_shown) {
+			gi.centerprintf(ent, "%s", msg_buf);
+		} else {
+			gi.cprintf(ent, PRINT_LOW, "%s", msg_buf);
+		}
+		return true;
+	}
+	//free(matchRules);  // Don't forget to free the memory!
+
+	// By default, return false to save our eyes
+	return false;
+}
+
 // AQ2:TNG Deathwatch - Ohh, lovely MOTD - edited it
 void PrintMOTD(edict_t * ent)
 {
@@ -264,12 +323,7 @@ void PrintMOTD(edict_t * ent)
 			}
 			else if (esp->value) // Is it Espionage?
 			{
-				if (teamCount == 3)
-					server_type = "3 Team Espionage: Assassinate the Leader";
-				else if (teamCount == 2 && etv->value)
-					server_type = "Espionage: Escort the VIP";
-				else
-					server_type = "Espionage: Assassinate the Leader";
+				server_type = "Espionage";
 			}
 			else if (use_tourney->value) // Is it Tourney?
 				server_type = "Tourney";

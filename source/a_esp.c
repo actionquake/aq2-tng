@@ -840,6 +840,13 @@ qboolean EspLoadConfig(const char *mapname)
 		}
 
 		// No custom spawns in default file
+		if (loaded_default_file){
+			// Clear custom spawns
+			for (i = TEAM1; i <= teamCount; i++) {
+				memset(es->custom_spawns[i], 0, sizeof(es->custom_spawns[i]));
+			}
+		}
+
 		if (!loaded_default_file) {
 			ptr = INI_Find(fh, "spawns", "red");
 			if(ptr) {
@@ -987,13 +994,13 @@ void EspRespawnLCA(edict_t *ent)
 
 	// Print out all conditions below as debug prints
 	// This is massively noisy so I'm setting it so that esp_debug must be > 1 to see it
-	if (esp_debug->value > 1)
-		gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
-		gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
-		gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
-		gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
-		gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
-		gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
+	// if (esp_debug->value > 1)
+	// 	gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
+	// 	gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
+	// 	gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
+	// 	gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
+	// 	gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
+	// 	gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
 
 	// Basically we just want real, dead players who are in the respawn waiting period
 	if (!ent->inuse ||
@@ -1396,6 +1403,25 @@ void EspSwapTeams()
 	teams_changed = true;
 }
 
+void KillEveryone(int teamNum)
+{
+	edict_t *ent;
+	int i;
+
+	for (i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse)
+			continue;
+		if(ent->solid == SOLID_NOT && !ent->deadflag)
+			continue;
+		if(IS_LEADER(ent)) // Don't kill a dead leader
+			continue;
+		if (ent->client->resp.team == teamNum){
+			killPlayer(ent, false);
+		}
+	}
+}
+
 qboolean EspCheckETVRules(void)
 {
 	int t1 = teams[TEAM1].score;
@@ -1640,9 +1666,9 @@ qboolean EspChooseRandomLeader(int teamNum)
 
 		// Set the selected player as the leader
 		EspSetLeader(teamNum, ent);
-	} // The else here is that the only players here are bots and non-volunteers.  Halt the game
-
-    return true;
+		return true;
+	} // If we get this far, that the only players here are bots and non-volunteers.  Halt the game
+	return false;
 }
 
 /*
@@ -1673,6 +1699,14 @@ qboolean EspLeaderCheck()
 	int i = 0;
 	edict_t *newLeader;
 	qboolean athl = AllTeamsHaveLeaders();
+
+	// Quick sanity check in case this ever occurs as I've seen it on rare occasions
+	for (i = TEAM1; i <= teamCount; i++) {
+		if (teams[i].leader && !IS_ALIVE(teams[i].leader) && team_round_going && !holding_on_tie_check) {
+			gi.dprintf("%s: Team %i leader is dead, but the round is still going...?\n", __FUNCTION__, teams[i].leader->client->resp.team);
+			athl = false;
+		}
+	}
 
 	// Bot scan, rotate leaders if a leader is a bot and it died last round
 	for (i = TEAM1; i <= teamCount; i++) {
@@ -1709,6 +1743,11 @@ qboolean EspLeaderCheck()
 
 				// If we still don't have a leader, then the next round can't begin
 				if (!newLeader) {
+					if (team_round_going){
+						gi.bprintf( PRINT_HIGH, "%s no longer has a leader, they can not win this round\n", teams[i].name );
+						teams[i].leader_dead = true; // This should trigger round end
+						KillEveryone(i);
+					}
 					teams[i].leader = NULL; // Clear this in case some strange things happen
 					gi.bprintf( PRINT_HIGH, "%s needs a new leader!  Enter 'leader' to apply for duty\n", teams[i].name );
 				}
@@ -1801,25 +1840,6 @@ int EspReportLeaderDeath(edict_t *ent)
 	// EspTimedMessageHandler(0, NULL, 15, ESP_LEADER_DIED);
 
 	return winner;
-}
-
-void KillEveryone(int teamNum)
-{
-	edict_t *ent;
-	int i;
-
-	for (i = 0; i < game.maxclients; i++){
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse)
-			continue;
-		if(ent->solid == SOLID_NOT && !ent->deadflag)
-			continue;
-		if(IS_LEADER(ent)) // Don't kill a dead leader
-			continue;
-		if (ent->client->resp.team == teamNum){
-			killPlayer(ent, false);
-		}
-	}
 }
 
 void MakeTeamInvulnerable(int winner, int uvtime)
