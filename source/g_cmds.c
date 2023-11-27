@@ -1937,6 +1937,7 @@ static cmdList_t commandList[] =
 	{ "voteconfig", Cmd_Voteconfig_f, 0 },
 	{ "configlist", Cmd_Configlist_f, 0 },
 	{ "votescramble", Cmd_Votescramble_f, 0 },
+	{ "printrules", Cmd_PrintRules_f, 0},
 	// JumpMod / jmod -- all commands are prefaced with 'jmod' ex: 'jmod spawnc'
 	{ "jmod", Cmd_Jmod_f, 0 },
 	// Espionage, aliased command so it's easy to remember

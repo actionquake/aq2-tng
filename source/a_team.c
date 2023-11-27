@@ -428,20 +428,24 @@ char* PrintMatchRules(void)
 
 	// Espionage rules
 	if (esp->value) {
+		int rndlimit = (int)roundlimit->value;
 		if (atl->value) {
 			if (teamCount == TEAM2) {
 				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leader to win, but don't forget to protect your own!\n",
 					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name );
-				} else if (teamCount == TEAM3) {
+				} else {
 					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leaders to win, but don't forget to protect your own!\n",
 					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name,
 					teams[TEAM3].name, teams[TEAM3].leader->client->pers.netname, teams[TEAM3].leader_name );
 				}
-		} else if (etv->value && teams[TEAM1].leader) {
-			int rndlimit = (int)roundlimit->value;
+				// Roundlimit info
+				static char addmsg[64];
+				Com_sprintf(addmsg, sizeof(addmsg), "\nThe first team to %i points wins!", (int)rndlimit);
+				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
 
+		} else if (etv->value && teams[TEAM1].leader) {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!\n\nTeam 1 Respawn Timer: %i seconds\nTeam 2 Respawn Timer: %i seconds\n\nThe first team to %i points wins!\n",
 				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
 				teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 

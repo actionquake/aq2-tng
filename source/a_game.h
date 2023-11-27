@@ -147,3 +147,4 @@ void MakeAllLivePlayersObservers( void );
 
 //a_cmds.c
 void Cmd_NextMap_f( edict_t * ent );
+void Cmd_PrintRules_f(edict_t *ent);

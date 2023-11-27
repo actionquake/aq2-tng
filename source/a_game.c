@@ -240,6 +240,11 @@ qboolean PrintGameMessage(edict_t *ent)
 		Each condition is checked in order, and the first one that is true
 		will be the message that is sent.  If none are true, then no message
 		will be sent (return false)
+
+		Always always ALWAYS remember to add
+			msg_ready = true;
+		if you add a new message, else the condition check will not work and the
+		function will return false.
 	*/
 
 	char msg_buf[1024];
@@ -251,9 +256,10 @@ qboolean PrintGameMessage(edict_t *ent)
 	*/
 	if (esp->value) {
 		if (!team_round_going && !AllTeamsHaveLeaders()) {
-			if (atl->value)
+			if (atl->value) {
 				Com_sprintf(msg_buf, sizeof(msg_buf), "Waiting for each team to have a leader\nType 'leader' in console to volunteer for duty.\n");
-			else if (etv->value) {
+				msg_ready = true;
+			} else if (etv->value) {
 				if (ent->client->resp.team == TEAM1)
 					Com_sprintf(msg_buf, sizeof(msg_buf), "Your team needs a leader!\nType 'leader' in console to volunteer for duty.");
 				else
@@ -263,8 +269,6 @@ qboolean PrintGameMessage(edict_t *ent)
 		}
 	}
 
-
-
 	// ****
 	/* Add all other messages before this one */
 	// ****
@@ -273,17 +277,12 @@ qboolean PrintGameMessage(edict_t *ent)
 		present the game rules to the players for a given game type during the countdown, and disappear when the countdown ends
 	*/
 
-	if (!team_game_going && (team_round_countdown > 10 && team_round_countdown < 101)) {
+	if (!team_game_going && (team_round_countdown > 20 && team_round_countdown < 101)) {
 		char* matchRules = PrintMatchRules();
 		if (matchRules != NULL && matchRules[0] != '\0') {
 			Com_sprintf(msg_buf, sizeof(msg_buf), "%s", matchRules);
 			msg_ready = true;
 		}
-		// } else if (matchRules == NULL) {
-		// 	gi.dprintf("matchRules is NULL\n");
-		// } else if (matchRules[0] == '\0') {
-		// 	gi.dprintf("matchRules is empty\n");
-		// }
 	}
 
 	// ----- No more messages after this point ----- //
@@ -291,8 +290,20 @@ qboolean PrintGameMessage(edict_t *ent)
 		_PrintGameMsgToClient(msg_buf, ent);
 		return true;
 	}
-	// By default, return false to save our eyes
+	// By default, return false to stop printing
 	return false;
+}
+
+void Cmd_PrintRules_f(edict_t *ent)
+{
+	char msg_buf[1024];
+
+	char* matchRules = PrintMatchRules();
+	if (matchRules != NULL && matchRules[0] != '\0') {
+		Com_sprintf(msg_buf, sizeof(msg_buf), "%s", matchRules);
+	}
+
+	_PrintGameMsgToClient(msg_buf, ent);
 }
 
 // AQ2:TNG Deathwatch - Ohh, lovely MOTD - edited it
