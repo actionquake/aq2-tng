@@ -215,24 +215,40 @@ void ReadMOTDFile()
 	fclose(motd_file);
 }
 
+void _PrintGameMsgToClient(char* msg, edict_t* ent)
+{
+	if (!auto_menu->value || ent->client->pers.menu_shown) {
+		gi.centerprintf(ent, "%s", msg);
+	} else {
+		gi.cprintf(ent, PRINT_LOW, "%s", msg);
+	}
+}
+
 /*
 Take great care with this function.  It will continuously print
 a message to players after the MOTD, so it should be something
 that has a condition where it would stop printing.  Otherwise,
 you'll have a lot of pissed off players who will complain about
-text.  Only return true if conditions are met, else return false.
+text on their screen.
+
+Only return true if conditions are met, else return false.
 */
 
 qboolean PrintGameMessage(edict_t *ent)
 {
-	// Each condition is checked in order, and the first one that is true
-	// will be the message that is sent.  If none are true, then no message
-	// will be sent (return false)
+	/* 
+		Each condition is checked in order, and the first one that is true
+		will be the message that is sent.  If none are true, then no message
+		will be sent (return false)
+	*/
 
 	char msg_buf[1024];
 	qboolean msg_ready = false;
-	//char* matchRules = PrintMatchRules();
 
+	/*
+		This message is printed before a game starts in Espionage, and tells players what they need to do
+		in order to begin the match.  Once both teams have leaders, this message will no longer be printed.
+	*/
 	if (esp->value) {
 		if (!team_round_going && !AllTeamsHaveLeaders()) {
 			if (atl->value)
@@ -247,29 +263,34 @@ qboolean PrintGameMessage(edict_t *ent)
 		}
 	}
 
-	if (!team_game_going && (team_round_countdown > 10 && team_round_countdown < 101)) {
-		Com_sprintf(msg_buf, sizeof(msg_buf), "%s", PrintMatchRules());
-	}
-		// if (cachedMatchRules == NULL) {
-		// 	cachedMatchRules = PrintMatchRules();
-		// }
-		// if (cachedMatchRules != NULL) {
-		// 	gi.dprintf("Sending match rules to client\n");
-		// 	Com_sprintf(msg_buf, sizeof(msg_buf), "%s", cachedMatchRules);
-		// }
 
-	// All messages eventually reach this point
-	if (msg_ready) {
-		// Same logic as PrintMOTD
-		if (!auto_menu->value || ent->client->pers.menu_shown) {
-			gi.centerprintf(ent, "%s", msg_buf);
-		} else {
-			gi.cprintf(ent, PRINT_LOW, "%s", msg_buf);
+
+	// ****
+	/* Add all other messages before this one */
+	// ****
+	/*
+		This should be the last message to be evaluated, and will only be printed if the match is about to start.  It will
+		present the game rules to the players for a given game type during the countdown, and disappear when the countdown ends
+	*/
+
+	if (!team_game_going && (team_round_countdown > 10 && team_round_countdown < 101)) {
+		char* matchRules = PrintMatchRules();
+		if (matchRules != NULL && matchRules[0] != '\0') {
+			Com_sprintf(msg_buf, sizeof(msg_buf), "%s", matchRules);
+			msg_ready = true;
 		}
+		// } else if (matchRules == NULL) {
+		// 	gi.dprintf("matchRules is NULL\n");
+		// } else if (matchRules[0] == '\0') {
+		// 	gi.dprintf("matchRules is empty\n");
+		// }
+	}
+
+	// ----- No more messages after this point ----- //
+	if (msg_ready) {
+		_PrintGameMsgToClient(msg_buf, ent);
 		return true;
 	}
-	//free(matchRules);  // Don't forget to free the memory!
-
 	// By default, return false to save our eyes
 	return false;
 }

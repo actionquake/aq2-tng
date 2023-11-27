@@ -424,58 +424,80 @@ void ReprintMOTD (edict_t * ent, pmenu_t * p)
 
 char* PrintMatchRules(void)
 {
-	char* rulesmsg = (char*) malloc(1024 * sizeof(char));
-    if (rulesmsg == NULL) {
-        // Handle error
-        return NULL;
-    }
+	static char rulesmsg[1024];
 
 	// Espionage rules
 	if (esp->value) {
 		if (atl->value) {
 			if (teamCount == TEAM2) {
-				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leader to win!\n",
+				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leader to win, but don't forget to protect your own!\n",
 					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name );
 				} else if (teamCount == TEAM3) {
-					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leaders to win!\n",
+					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leaders to win, but don't forget to protect your own!\n",
 					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name,
 					teams[TEAM3].name, teams[TEAM3].leader->client->pers.netname, teams[TEAM3].leader_name );
 				}
 		} else if (etv->value && teams[TEAM1].leader) {
-			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!",
-				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name );
+			int rndlimit = (int)roundlimit->value;
+
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!\n\nTeam 1 Respawn Timer: %i seconds\nTeam 2 Respawn Timer: %i seconds\n\nThe first team to %i points wins!\n",
+				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
+				teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
+				(int)teams[TEAM1].respawn_timer, (int)teams[TEAM2].respawn_timer,
+				rndlimit );
+			// Append a little extra if halftime is enabled
+			if(esp_etv_halftime->value){
+				static char addmsg[64];
+				Com_sprintf(addmsg, sizeof(addmsg), "Halftime is enabled: Teams switch at round %i", (int)rndlimit/2);
+				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
+			}
 		}
 	}
 	// CTF rules
-	else if (ctf->value) {
-		if (capturelimit->value) {
-			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture the other team's flag!\nNo capturelimit set!\n",
+	else if (ctf->value)
+	{
+		if (!capturelimit->value) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nCapture the other team's flag!\nNo capturelimit set!\n",
 			teams[TEAM1].name, teams[TEAM2].name );
 		} else {
-			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture the other team's flag!\nThe first team to %s captures wins!\n",
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nCapture the other team's flag!\nThe first team to %s captures wins!\n",
 			teams[TEAM1].name, teams[TEAM2].name, capturelimit->string );
 		}
 	}
-	else if (dom->value) {
-		// I'll fill this in later
-		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nCapture all of the checkpoints!\nNo capturelimit set!\n",
-			teams[TEAM1].name, teams[TEAM2].name );
-	}
-	else if (!deathmatch->value) {
+	// Domination rules
+	else if (dom->value)
+	{
 		if (teamCount == TEAM2) {
-			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus: %s\n\nFrag the other team!\n",
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nCapture all of the checkpoints!\n",
 				teams[TEAM1].name, teams[TEAM2].name );
-		} else if (teamCount == TEAM3) {
-			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s versus %s versus %s\n\nFrag the other team!\n",
+		} else {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\nvs\n%s\n\nCapture all of the checkpoints!\n",
 				teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
 		}
-	} else {
-		// If nothing else matches, just say glhf
+	}
+	// This covers both Teamplay and TeamDM
+	else if (!deathmatch->value) 
+	{
+		if (teamCount == TEAM2) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nFrag the other team!\n",
+				teams[TEAM1].name, teams[TEAM2].name );
+		} else if (teamCount == TEAM3) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\nvs\n%s\n\nFrag the other teams!\n",
+				teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
+		}
+	}
+	else // If nothing else matches, just say glhf
+	{
 		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "Frag 'em all!  Good luck and have fun!\n");
 	}
-	
+
+    if (rulesmsg[0] == '\0') {
+        // Handle empty
+        return "";
+    }
+
 	return rulesmsg;
 }
 

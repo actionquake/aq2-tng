@@ -1574,7 +1574,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 	}
 
 	if (etv->value && teamNum != TEAM1) {
-		gi.centerprintf(ent, "Only the Red team (team 1) has a leader in ETV mode\n");
+		gi.cprintf(ent, PRINT_CHAT, "** Only the Red team (team 1) has a leader in ETV mode **\n");
 		return false;
 	}
 
@@ -1582,7 +1582,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 	if ((ent && ent->client->resp.esp_leadertime > 0) && 
 	(level.realFramenum - ent->client->resp.esp_leadertime < 10 * HZ)){
 		if (IS_CAPTAIN(ent)){ // This is to avoid printing this message when becoming captain
-			gi.cprintf(ent, PRINT_HIGH, "You must wait 10 seconds between toggling your leader role!\n");
+			gi.cprintf(ent, PRINT_HIGH, "** You must wait 10 seconds between toggling your leader role! **\n");
 		}
 		return false;
 	}
@@ -1950,11 +1950,11 @@ void EspAnnounceDetails( qboolean timewarning )
 				continue;
 			if (IS_LEADER(ent)){
 				gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
-				gi.centerprintf(ent, "Take cover, you're the leader!\n");
+				gi.cprintf(ent, PRINT_MEDIUM, "Take cover, you're the leader!\n");
 			}
 			if (!IS_LEADER(ent)) {
 				if (atl->value){
-					gi.centerprintf(ent, "Defend your leader and attack the other one to win!\n");
+					gi.cprintf(ent, PRINT_MEDIUM, "Defend your leader and attack the other one to win!\n");
 				} else if (etv->value){
 					if (ent->client->resp.team == TEAM1)
 						gi.cprintf(ent, PRINT_HIGH, "Escort your leader to the briefcase!\n");
