@@ -2888,8 +2888,10 @@ void ClientBeginDeathmatch(edict_t * ent)
 	IRC_printf(IRC_T_SERVER, "%n entered the game", ent->client->pers.netname);
 
 	// TNG:Freud Automaticly join saved teams.
-	if (saved_team && auto_join->value && teamplay->value)
+	if (saved_team && auto_join->value == 1 && teamplay->value)
 		JoinTeam(ent, saved_team, 1);
+	else if (auto_join->value == 2 && teamplay->value)
+		JoinTeamAutobalance(ent);
 
 
 	if (!level.intermission_framenum) {

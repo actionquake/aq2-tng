@@ -1233,7 +1233,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		{
 			client->clientNum = i;
 
-			if( auto_join->value )
+			if( auto_join->value == 1 )
 				client->resp.team = saved_team;
 
 			// combine name and skin into a configstring

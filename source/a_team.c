@@ -551,6 +551,11 @@ void JoinTeamAuto (edict_t * ent, pmenu_t * p)
 	JoinTeam(ent, team, 0);
 }
 
+void JoinTeamAutobalance (edict_t * ent)
+{
+	JoinTeamAuto(ent, NULL);
+}
+
 void JoinTeam1 (edict_t * ent, pmenu_t * p)
 {
 	JoinTeam(ent, TEAM1, 0);
@@ -1505,6 +1510,8 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 	{
 		SelectRandomWeaponAndItem(ent, weapmenu);
 	}
+
+	gi.cprintf(ent, PRINT_CHAT, "You joined Team %i (%s).\n", desired_team, TeamName(desired_team));
 
 	teams_changed = true;
 }
@@ -2775,8 +2782,6 @@ int CheckTeamRules (void)
 			{
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
-				// if (printrules->value)
-				// 	PrintMatchRules();
 
 				#ifdef USE_AQTION
 				// Cleanup and remove all bots, it's go time!

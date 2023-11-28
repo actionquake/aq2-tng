@@ -104,6 +104,9 @@ int OtherTeam(int teamNum);
 //PaTMaN - Menu support
 void OpenPMItemMenu (edict_t * ent);
 
+//Expose auto-join functionality
+void JoinTeamAutobalance (edict_t * ent);
+
 typedef struct spawn_distances_s
 {
   float distance;
