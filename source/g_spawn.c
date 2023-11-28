@@ -1142,6 +1142,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Matchmode Enabled - Forcing Espionage defaults\n");
 			MM_EspDefaultSettings();
 		}
+		if (auto_join->value == 2)
+		{
+			gi.dprintf ("Matchmode Enabled - Forcing auto_join off\n");
+			gi.cvar_forceset(auto_join->name, "0");
+		}
 	}
 	else if (use_tourney->value)
 	{

@@ -510,7 +510,8 @@ Features
   For the lazy players under us, we have created two new client commands to make things easier.
 
   Commands:
-  auto_join [0/1] - when on (1), the players will automatically join the team he was in during the last map.
+  auto_join [0/1/2] - when on (1), the players will automatically join the team he was in during the last map.
+    If set to 2, it will automatically join the team with the least players, or randomly if equal.
   auto_equip [0/1] - when on (1), the players will automatically be given the equipment he had during the last map.
 
 * Automatic Demo Recording

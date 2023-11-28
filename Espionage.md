@@ -54,9 +54,6 @@ There are some settings you need to setup to enable it:
 * **esp_showleader** [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
     * 0 disables the indicator hovering over your leader
     * 1 enables the indicator hovering over your leader, making him easy to keep track of
-* **esp_forcejoin** [0/1] Forces joining a team, following autobalancing rules
-    * 0 disables force joining, so players can choose a team
-    * 1 enables force joining, so games get going quickly
 * **esp_leaderequip** [0/1/2/3] - This determines the loadout of equipment for a team's leader
     * 0 means that the leaders do not get any special loadout, one item and one weapon of their choosing
     * 1 (default) means that the leaders can choose their weapon, and have all items available at once when they spawn
@@ -67,12 +64,14 @@ There are some settings you need to setup to enable it:
     * The leader receives periodic medkits, if medkit_max is > 0, to be used when they bandage
 * **esp_enhancedslippers** [0/1] - to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances.  This used to be called `e_enhancedSlippers` from the original ETE, but was renamed to keep in with the naming convention of Espionage options
 * **esp_atl** [0/1] - default `0`, this forces ATL mode if `1`, even if the scenario loaded for the map is for ETV mode.  Has no effect on any map that is specifically setup for ATL mode or maps that load safe defaults, which are always ATL mode.
-* **esp_matchmode** [0/1] - toggles setting hard-coded defaults if matchmode is enabled, as posted below:
+
 * **ETV-Specific Cvars**:
   * **esp_etv_halftime** [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the roundlimit has passed.  A `roundlimit` of `0` automatically disables halftime.
   * **esp_showtarget** [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
     * 0 disables the indicator pointing at your escort target location
     * 1 enables the indicator to assist your team in escorting your leader
+
+* **esp_matchmode** [0/1] - toggles setting hard-coded defaults if matchmode is enabled, as posted below:
 
 ```
 * Normal Slippers
