@@ -1453,6 +1453,12 @@ qboolean EspCheckETVRules(void)
 		gi.dprintf("ETV halftime is %f\n", esp_etv_halftime->value);
 	}
 
+	if (!roundlimit->value && esp_etv_halftime->value){
+		// No roundlimit means no halftime either
+		disablecvar(esp_etv_halftime, "No Roundlimit");
+		return false;
+	}
+
 	// This is checking for conditions involving halftime
 	if (!esp_etv_halftime->value)
 		return false;

@@ -33,12 +33,22 @@ The first sub-mode that we're looking at porting is Assassinate the Leader.  Thi
 
 Teams only gain points and rounds end when a leader gets fragged.  Getting fragged in the defense of your leader is an honorable act and is awarded with extra points and recognition, as well is assaulting the opposing team's leader.
 
+### Escort the VIP
+The second sub-mode is Escort the VIP.  It's a mixture of Assassinate the Leader sprinkled in with some CTF, except there's no need to return the flag, merely touching the capture point is enough to win the round.
+1. Team 1 is the only team that has a Leader.
+2. Team 1's goal is to have their Leader touch the capture point (briefcase) on the map.  If this is achieved, they win the round.
+3. Team 2's goal is to prevent Team 1's Leader from touching the capture point.  This can be achieved in two ways:
+   1. Killing Team 1's Leader before he reaches the capture point
+   2. Waiting for the `roundtimelimit` to expire (if set), causing a Team 2 win by default.  Suggested `roundtimelimit` for most maps is 2 minutes.
+4. Halftime, if enabled and a `roundlimit`` is set, will swap teams when half of the roundlimit is reached.  This is so that the experience is fair to both teams for the map.
+
+
 ### Sounds great, how do I enable Espionage mode on my servers?
 There are some settings you need to setup to enable it:
 
 * **esp** [0/1] - Activates Espionage mode.  Default 0.
 * **esp_punish** [0/1/2] - Sets punishment mode for losing team when their leader dies.  This occurs instantly.  A value of 2 is only compatible with 2 Team Assassinate the Leader mode.  In 3 Team mode, only 0 and 1 are available.
-    * 0 is normal post-round teamplay with FF on.
+    * 0 (default) is normal post-round teamplay with FF on.
     * 1 immediately kills all remaining members of the losing team.
     * 2 generates an invunerability shield on the remaining winning team members for the duration of post-round celebrations, so they can deal with the remaining losing team members in style
 * **esp_showleader** [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
@@ -58,6 +68,11 @@ There are some settings you need to setup to enable it:
 * **esp_enhancedslippers** [0/1] - to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances.  This used to be called `e_enhancedSlippers` from the original ETE, but was renamed to keep in with the naming convention of Espionage options
 * **esp_atl** [0/1] - default `0`, this forces ATL mode if `1`, even if the scenario loaded for the map is for ETV mode.  Has no effect on any map that is specifically setup for ATL mode or maps that load safe defaults, which are always ATL mode.
 * **esp_matchmode** [0/1] - toggles setting hard-coded defaults if matchmode is enabled, as posted below:
+* **ETV-Specific Cvars**:
+  * **esp_etv_halftime** [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the roundlimit has passed.  A `roundlimit` of `0` automatically disables halftime.
+  * **esp_showtarget** [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
+    * 0 disables the indicator pointing at your escort target location
+    * 1 enables the indicator to assist your team in escorting your leader
 
 ```
 * Normal Slippers
@@ -127,24 +142,18 @@ leader_skin=male/hulk2
     * `leader_name` - The name of that team's leader
     * `leader_skin` - The skin that the leader will use
     * The keys and values here are case-sensitive, but the `name` and `leader_name` can have uppercase, spaces and _some_ special characters.
+* Tips:
+  * When creating spawn points, the `z` value should be at least 10 units higher than what viewpos returns, to avoid potentially getting stuck in the floor.  This means if your `viewpos` value is `24` then it should be `34` in the file.  For negative values (`-24`), you must add 10, so it's not `-34`, it's `-14`.
+  * Double check your scenario file before committing it in case your spawn points don't work (stuck in a tree/wall, accidentially set a negative value instead of a positive, etc)
+  * Reference skins that are in the AQtion distrib, so players don't see the default `male/resdog` skin if they don't have it.  If you want to suggest a new skin to use in your killer scenario, contact the AQ2World team in Discord.
+  * Err on the side of shorter respawn times rather than longer ones -- it's more fun to play than to watch.  Some playtesting to get the perfect timings down may be needed, especially on maps where it's easy to defend a capture point, perhaps Team 2's respawn timer is a tad longer than Team 1's, for example.
 
 Save your map-specific file with the name of the map to `action/tng/mapname.esp`.  If you formatted it correctly, it should load those values in the next time the map is loaded.
 
 If something is malformatted or wrong, the game will do its best to handle it gracefully.  If it is having a problem finding values or other things are wrong with the file, it should ignore the file entirely and load `default.esp` values instead.  If this file is missing or also malformatted, there are some safe defaults that the gamelib has hard-coded that will work for any map, as it does not use custom spawn points.
 
-
-
 ---
-## Soon to come:
-### Escort the VIP
-
-* **esp_etv_halftime** [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the timelimit has passed
-* **esp_showtarget** [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
-    * 0 disables the indicator pointing at your escort target location
-    * 1 enables the indicator to assist your team in escorting your leader
-
-
 ### Some little-known features in Espionage mode
 * In ETE mode, it would calculate pings and average across both teams.  This calculcation would be used to determine if the words "FAIR" or "NOT FAIR" would appear on the scoreboard.
 * You could ignore a player, which is something we only recently added to TNG thanks to ReKTeK!
-* Enhanced stealth slippers that stopped limping and increased the height that fall damage would occur.  These are now also in TNG but slightly modified in that you take 50% damage from falling rather than the increased height.
+* Enhanced stealth slippers that stopped limping and increased the height that fall damage would occur.  These are now also in TNG but slightly modified in that you take 50% damage from falling rather than the increased height.  Imagine all of the cool jumps you can do now with little damage!

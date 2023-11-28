@@ -452,7 +452,7 @@ char* PrintMatchRules(void)
 				(int)teams[TEAM1].respawn_timer, (int)teams[TEAM2].respawn_timer,
 				rndlimit );
 			// Append a little extra if halftime is enabled
-			if(esp_etv_halftime->value){
+			if(esp_etv_halftime->value && roundlimit->value > 1){
 				static char addmsg[64];
 				Com_sprintf(addmsg, sizeof(addmsg), "Halftime is enabled: Teams switch at round %i", (int)rndlimit/2);
 				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
