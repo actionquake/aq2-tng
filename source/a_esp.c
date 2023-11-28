@@ -615,7 +615,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 		Q_strncpyz(teams[TEAM1].skin, ESP_RED_SKIN, sizeof(teams[TEAM1].skin));
 		Q_strncpyz(teams[TEAM1].leader_name, ESP_RED_LEADER_NAME, sizeof(teams[TEAM1].leader_name));
 		Q_strncpyz(teams[TEAM1].leader_skin, ESP_RED_LEADER_SKIN, sizeof(teams[TEAM1].leader_skin));
-		Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+		Q_strncpyz(teams[TEAM1].skin_index, "../pics/ctf_r_i", sizeof(teams[TEAM1].skin_index));
 		Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
 
 		/// Default skin/team/names - blue team
@@ -623,7 +623,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 		Q_strncpyz(teams[TEAM2].skin, ESP_BLUE_SKIN, sizeof(teams[TEAM2].skin));
 		Q_strncpyz(teams[TEAM2].leader_name, ESP_BLUE_LEADER_NAME, sizeof(teams[TEAM2].leader_name));
 		Q_strncpyz(teams[TEAM2].leader_skin, ESP_BLUE_LEADER_SKIN, sizeof(teams[TEAM2].leader_skin));
-		Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
+		Q_strncpyz(teams[TEAM2].skin_index, "../pics/ctf_b_i", sizeof(teams[TEAM2].skin_index));
 		Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
 		if(teamCount == 3) {
 			/// Default skin/team/names - green team
@@ -631,7 +631,7 @@ void EspEnforceDefaultSettings(char *defaulttype)
 			Q_strncpyz(teams[TEAM3].skin, ESP_GREEN_SKIN, sizeof(teams[TEAM3].skin));
 			Q_strncpyz(teams[TEAM3].leader_name, ESP_GREEN_LEADER_NAME, sizeof(teams[TEAM3].leader_name));
 			Q_strncpyz(teams[TEAM3].leader_skin, ESP_GREEN_LEADER_SKIN, sizeof(teams[TEAM3].leader_skin));
-			Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
+			Q_strncpyz(teams[TEAM3].skin_index, "../pics/ctf_g_i", sizeof(teams[TEAM3].skin_index));
 			Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
 		}
 		gi.dprintf("  Red Team: %s -- Skin: %s\n", ESP_RED_TEAM, ESP_RED_SKIN);
@@ -951,15 +951,17 @@ qboolean EspLoadConfig(const char *mapname)
 		fclose(fh);
 
 	// Load skin indexes
-	if (esp_debug->value)
-		gi.dprintf("%s: *** Loading skin indexes\n", __FUNCTION__);
-	Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
-	Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
-	Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
-	Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
-	if (atl->value) {
-		Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
-		Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
+	if (!no_file || !loaded_default_file) {
+		if (esp_debug->value)
+			gi.dprintf("%s: *** Loading skin indexes\n", __FUNCTION__);
+		Com_sprintf(teams[TEAM1].skin_index, sizeof(teams[TEAM1].skin_index), "../players/%s_i", teams[TEAM1].skin);
+		Com_sprintf(teams[TEAM2].skin_index, sizeof(teams[TEAM2].skin_index), "../players/%s_i", teams[TEAM2].skin);
+		Com_sprintf(teams[TEAM3].skin_index, sizeof(teams[TEAM3].skin_index), "../players/%s_i", teams[TEAM3].skin);
+		Com_sprintf(teams[TEAM1].leader_skin_index, sizeof(teams[TEAM1].leader_skin_index), "../players/%s_i", teams[TEAM1].leader_skin);
+		if (atl->value) {
+			Com_sprintf(teams[TEAM2].leader_skin_index, sizeof(teams[TEAM2].leader_skin_index), "../players/%s_i", teams[TEAM2].leader_skin);
+			Com_sprintf(teams[TEAM3].leader_skin_index, sizeof(teams[TEAM3].leader_skin_index), "../players/%s_i", teams[TEAM3].leader_skin);
+		}
 	}
 
 	if((etv->value) && teamCount == 3){
@@ -1303,6 +1305,38 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 	return SelectFarthestDeathmatchSpawnPoint();
 }
 
+// void SetEspStats( edict_t *ent )
+// {
+// 	// Team scores for the score display and HUD.
+// 	ent->client->ps.stats[ STAT_TEAM1_SCORE ] = teams[ TEAM1 ].score;
+// 	ent->client->ps.stats[ STAT_TEAM2_SCORE ] = teams[ TEAM2 ].score;
+// 	ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
+
+// 	// Team icons for the score display and HUD.
+// 	ent->client->ps.stats[ STAT_TEAM1_PIC ] = level.pic_esp_teamicon[ TEAM1 ];
+// 	ent->client->ps.stats[ STAT_TEAM2_PIC ] = level.pic_esp_teamicon[ TEAM2 ];
+// 	ent->client->ps.stats[ STAT_TEAM3_PIC ] = level.pic_esp_teamicon[ TEAM3 ];
+
+// 	int i;
+// 	for(i = TEAM1; i <= teamCount; i++)
+// 		if (etv->value)
+// 			level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
+// 		else if (atl->value)
+// 			level.pic_teamskin[i] = gi.imageindex(teams[i].leader_skin_index);
+
+// 	// During intermission, blink the team icon of the winning team.
+// 	if( level.intermission_framenum && ((level.realFramenum / FRAMEDIV) & 8) )
+// 	{
+// 		if (esp_winner == TEAM1)
+// 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
+// 		else if (esp_winner == TEAM2)
+// 			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
+// 		else if (esp_winner == TEAM3)
+// 			ent->client->ps.stats[ STAT_TEAM3_PIC ] = 0;
+// 	}
+// }
+
+
 void SetEspStats( edict_t *ent )
 {
 	int i;
@@ -1315,26 +1349,26 @@ void SetEspStats( edict_t *ent )
 			level.pic_teamskin[i] = gi.imageindex(teams[i].leader_skin_index);
 
 	// Load scoreboard images
-	level.pic_esp_teamtag[TEAM1] = gi.imageindex("ctfsb1");
+	level.pic_esp_teamtag[TEAM1] = gi.imageindex(teams[TEAM1].skin_index);
 	level.pic_esp_teamicon[TEAM1] = gi.imageindex(teams[TEAM1].skin_index);
 	level.pic_esp_leadericon[TEAM1] = gi.imageindex(teams[TEAM1].leader_skin_index);
 	gi.imageindex("sbfctf1");
 
-	level.pic_esp_teamtag[TEAM2] = gi.imageindex("ctfsb2");
+	level.pic_esp_teamtag[TEAM2] = gi.imageindex(teams[TEAM2].skin_index);
 	level.pic_esp_teamicon[TEAM2] = gi.imageindex(teams[TEAM2].skin_index);
 	level.pic_esp_leadericon[TEAM2] = gi.imageindex(teams[TEAM2].leader_skin_index);
 	gi.imageindex("sbfctf2");
 
 	if (atl->value && teamCount == 3) {
-		level.pic_esp_teamtag[TEAM3] = gi.imageindex("ctfsb3");
+		level.pic_esp_teamtag[TEAM3] = gi.imageindex(teams[TEAM3].skin_index);
 		level.pic_esp_teamicon[TEAM3] = gi.imageindex(teams[TEAM3].skin_index);
 		level.pic_esp_leadericon[TEAM3] = gi.imageindex(teams[TEAM3].leader_skin_index);
 		gi.imageindex("sbfctf3");
 	}
 
 	// Now set the HUD
-	ent->client->ps.stats[STAT_TEAM1_HEADER] = level.pic_esp_teamtag[TEAM1];
-	ent->client->ps.stats[STAT_TEAM2_HEADER] = level.pic_esp_teamtag[TEAM2];
+	ent->client->ps.stats[ STAT_TEAM1_HEADER ] = level.pic_esp_teamtag[ TEAM1 ];
+	ent->client->ps.stats[ STAT_TEAM2_HEADER ] = level.pic_esp_teamtag[ TEAM2 ];
 
 	// Team scores for the score display and HUD.
 	ent->client->ps.stats[ STAT_TEAM1_SCORE ] = teams[ TEAM1 ].score;
@@ -1349,11 +1383,26 @@ void SetEspStats( edict_t *ent )
 	if (teamCount == 3) {
 		ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
 		ent->client->ps.stats[ STAT_TEAM3_PIC ] = level.pic_esp_teamicon[ TEAM3 ];
-		// ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
+		//ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
 	}
 
+	for(i = TEAM1; i <= teamCount; i++) {
+    gi.dprintf("teams[%d].skin_index: %s\n", i, teams[i].skin_index);
+    gi.dprintf("teams[%d].leader_skin_index: %s\n", i, teams[i].leader_skin_index);
+    
+    if (etv->value) {
+        int index = gi.imageindex(teams[i].skin_index);
+        gi.dprintf("gi.imageindex(teams[%d].skin_index): %d\n", i, index);
+        level.pic_teamskin[i] = index;
+    } else if (atl->value) {
+        int index = gi.imageindex(teams[i].leader_skin_index);
+        gi.dprintf("gi.imageindex(teams[%d].leader_skin_index): %d\n", i, index);
+        level.pic_teamskin[i] = index;
+    }
+}
+
 	// During gameplay, flash your team's icon
-	if( team_round_going && ((level.realFramenum / FRAMEDIV) & 8) )
+	if( team_round_going && ((level.realFramenum / FRAMEDIV) & 4) )
 	{
 		if (ent->client->resp.team == TEAM1)
 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;

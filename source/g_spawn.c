@@ -1003,8 +1003,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
 		Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
 		Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
-		Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
-		Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
+		Q_strncpyz(teams[TEAM1].skin_index, "ctf_r", sizeof(teams[TEAM1].skin_index));
+		Q_strncpyz(teams[TEAM2].skin_index, "ctf_b", sizeof(teams[TEAM2].skin_index));
 	}
 	else if (esp->value)
 	{
@@ -1019,7 +1019,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.cvar_forceset(teamplay->name, "1");
 		}
 		// ETV mode doesn't support 3 teams, but ATL does
-		if ((etv->value) && (use_3teams->value)) {
+		if (etv->value && use_3teams->value) {
 			gi.dprintf ("Espionage ETV Enabled - Incompatible with 3 Teams, reverting to ATL mode\n");
 			EspForceEspionage(ESPMODE_ATL);
 		}
@@ -1084,10 +1084,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
 		Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
 		Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
-		Q_strncpyz(teams[TEAM3].skin, "male/commando", sizeof(teams[TEAM3].skin));
-		Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
-		Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
-		Q_strncpyz(teams[TEAM3].skin_index, "i_pack", sizeof(teams[TEAM3].skin_index));
+		Q_strncpyz(teams[TEAM3].skin, "male/ctf_g", sizeof(teams[TEAM3].skin));
+		Q_strncpyz(teams[TEAM1].skin_index, "ctf_r_i", sizeof(teams[TEAM1].skin_index));
+		Q_strncpyz(teams[TEAM2].skin_index, "ctf_b_i", sizeof(teams[TEAM2].skin_index));
+		Q_strncpyz(teams[TEAM3].skin_index, "ctf_g_i", sizeof(teams[TEAM3].skin_index));
 	}
 	else if(teamdm->value)
 	{
@@ -1704,26 +1704,27 @@ void SP_worldspawn (edict_t * ent)
 		}
 
 		// Espionage HUD is setup in SetEspStats()
-
-		for(i = TEAM1; i <= teamCount; i++)
-		{
-			if (teams[i].skin_index[0] == 0 && !esp->value) {
-				// If the action.ini file isn't found, set default skins rather than kill the server
-				// Espionage has its own defaults
-				gi.dprintf("WARNING: No skin was specified for team %i in config file, server either could not find it or is does not exist.\n", i);
-				gi.dprintf("Setting default team names, skins and skin indexes.\n", i);
-				Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
-				Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
-				Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
-				Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
-				Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
-				Q_strncpyz(teams[TEAM3].skin, "male/commando", sizeof(teams[TEAM3].skin));
-				Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
-				Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
-				Q_strncpyz(teams[TEAM3].skin_index, "i_pack", sizeof(teams[TEAM3].skin_index));
-				//exit(1);
+		if (!esp->value) {
+			for(i = TEAM1; i <= teamCount; i++)
+			{
+				if (teams[i].skin_index[0] == 0) {
+					// If the action.ini file isn't found, set default skins rather than kill the server
+					// Espionage has its own defaults
+					gi.dprintf("WARNING: No skin was specified for team %i in config file, server either could not find it or is does not exist.\n", i);
+					gi.dprintf("Setting default team names, skins and skin indexes.\n", i);
+					Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
+					Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
+					Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
+					Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
+					Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
+					Q_strncpyz(teams[TEAM3].skin, "male/ctf_g", sizeof(teams[TEAM3].skin));
+					Q_strncpyz(teams[TEAM1].skin_index, "ctf_r", sizeof(teams[TEAM1].skin_index));
+					Q_strncpyz(teams[TEAM2].skin_index, "ctf_b", sizeof(teams[TEAM2].skin_index));
+					Q_strncpyz(teams[TEAM3].skin_index, "ctf_g", sizeof(teams[TEAM3].skin_index));
+					//exit(1);
+				}
+				level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
 			}
-			level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
 		}
 
 		level.snd_lights = gi.soundindex("atl/lights.wav");
