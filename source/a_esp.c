@@ -486,10 +486,9 @@ void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 	gi.linkentity( flag );
 
 	/* Indicator arrow
-	   
-	   somewhere you want to spawn the arrow ("ent" being the entity who the arrow is pointing to)
-	This appears regardless of indicator settings
-	*/ 
+    	This appears regardless of indicator settings
+	*/
+	#ifdef AQTION_EXTENSION
     if (!flag->obj_arrow){
 		flag->obj_arrow = G_Spawn();
 		flag->obj_arrow->solid = SOLID_NOT;
@@ -499,10 +498,10 @@ void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 		flag->obj_arrow->s.effects |= RF_INDICATOR | RF_GLOW;
 		flag->obj_arrow->s.modelindex = level.model_arrow;
 
-		// float arrow above briefcase by 50 units
-		flag->obj_arrow->s.origin[2] += (flag->s.origin[2] + 300);
-
 		VectorCopy(flag->s.origin, flag->obj_arrow->s.origin);
+		// float arrow above briefcase
+		flag->obj_arrow->s.origin[2] += 75;
+
 		gi.linkentity(flag->obj_arrow);
 
 		if (esp_debug->value){
@@ -510,6 +509,7 @@ void EspMakeCapturePoint(edict_t *flag, qboolean reset)
 			gi.dprintf("%s: ** Flag coordinates are: <%d %d %d>\n", __FUNCTION__, flag->s.origin[0], flag->s.origin[1], flag->s.origin[2]);
 		}
 	}
+	#endif
 	
 	esp_flag_count ++;
 }
@@ -520,8 +520,6 @@ void EspResetCapturePoint()
 {
 	edict_t *ent = NULL;
 	edict_t *flag = NULL;
-	// vec3_t origin;
-	// vec3_t angles;
 
 	// Reset escortcap value
 	espsettings.escortcap = false;	
@@ -544,27 +542,6 @@ void EspResetCapturePoint()
 		flag->svflags &= ~SVF_NOCLIENT;
 		gi.linkentity( flag );
 	}
-
-	// if (flag == NULL){
-	// 	gi.dprintf("Warning: No flag found, aborting reset\n");
-	// 	return;
-	// }
-
-	// // Save the flag's origin and angles
-	// VectorCopy(newflag->s.origin, flag->s.origin);
-	// VectorCopy(newflag->s.angles, flag->s.angles);
-
-	// Remove the flag
-	// G_FreeEdict(flag);
-
-	// // Create a new flag
-	// capturepoint = G_Spawn();
-	// EspMakeCapturePoint(capturepoint, true);
-
-	// Restore the flag's origin and angles
-// 	VectorCopy(origin, flag->s.origin);
-// 	VectorCopy(angles, flag->s.angles);
-//
 }
 
 void EspSetTeamSpawns(int team, char *str)
@@ -610,15 +587,6 @@ void EspSetTeamSpawns(int team, char *str)
 				gi.dprintf("%s: Warning: MAX_SPAWNS exceeded\n", __FUNCTION__);
 			break;
 		}
-		
-		// spawn = G_Spawn();
-		// VectorCopy(pos, spawn->s.origin);
-		// spawn->s.angles[YAW] = angle;
-		// spawn->classname = ED_NewString (team_spawn_name);
-		// ED_CallSpawn(spawn);
-
-
-		// es->custom_spawns[team][esp_potential_spawns] = spawn;
 
 		next = strtok(NULL, ",");
 	} while(next != NULL);
@@ -700,7 +668,8 @@ qboolean EspLoadConfig(const char *mapname)
 
 	memset(&espsettings, 0, sizeof(espsettings));
 
-	esp_flag = gi.modelindex("models/items/bcase/g_bc1.md2");
+	//esp_flag = gi.modelindex("models/items/bcase/g_bc1.md2");
+	esp_flag = gi.modelindex("models/cases/b_case.md3");
 
 	gi.dprintf("** Trying to load Espionage configuration file for %s **\n", mapname);
 

@@ -146,6 +146,7 @@ leader_skin=male/hulk2
   * Double check your scenario file before committing it in case your spawn points don't work (stuck in a tree/wall, accidentially set a negative value instead of a positive, etc)
   * Reference skins that are in the AQtion distrib, so players don't see the default `male/resdog` skin if they don't have it.  If you want to suggest a new skin to use in your killer scenario, contact the AQ2World team in Discord.
   * Err on the side of shorter respawn times rather than longer ones -- it's more fun to play than to watch.  Some playtesting to get the perfect timings down may be needed, especially on maps where it's easy to defend a capture point, perhaps Team 2's respawn timer is a tad longer than Team 1's, for example.
+  * When creating an ETV target, ensure that not only is it in a good spot, but keep in mind that the indicator arrow is 75 quake units floating above it -- this may clip into low ceilings and not look good.  The value of 75 units is so that the arrow doesn't interfere with visibility from the player's view.
 
 Save your map-specific file with the name of the map to `action/tng/mapname.esp`.  If you formatted it correctly, it should load those values in the next time the map is loaded.
 
