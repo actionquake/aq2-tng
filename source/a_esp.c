@@ -1386,21 +1386,6 @@ void SetEspStats( edict_t *ent )
 		//ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
 	}
 
-	for(i = TEAM1; i <= teamCount; i++) {
-    gi.dprintf("teams[%d].skin_index: %s\n", i, teams[i].skin_index);
-    gi.dprintf("teams[%d].leader_skin_index: %s\n", i, teams[i].leader_skin_index);
-    
-    if (etv->value) {
-        int index = gi.imageindex(teams[i].skin_index);
-        gi.dprintf("gi.imageindex(teams[%d].skin_index): %d\n", i, index);
-        level.pic_teamskin[i] = index;
-    } else if (atl->value) {
-        int index = gi.imageindex(teams[i].leader_skin_index);
-        gi.dprintf("gi.imageindex(teams[%d].leader_skin_index): %d\n", i, index);
-        level.pic_teamskin[i] = index;
-    }
-}
-
 	// During gameplay, flash your team's icon
 	if( team_round_going && ((level.realFramenum / FRAMEDIV) & 4) )
 	{
