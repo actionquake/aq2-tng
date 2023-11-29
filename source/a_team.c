@@ -3243,13 +3243,18 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 		
 		base_x = 160 - ((rowWidth + rowGap) * teamCount) / 2 + rowGap / 2;
 
-		if(ctf->value || esp->value)
+		if(ctf->value)
 		{
 			base_x += 8;
 			tpic[TEAM1][0] = 30;
 			tpic[TEAM2][0] = 31;
-			if(teamCount == 3)
-				tpic[TEAM3][0] = 32;
+		}
+		else if(esp->value)
+		{
+			base_x += 8;
+			tpic[TEAM1][0] = STAT_TEAM1_PIC;
+			tpic[TEAM2][0] = STAT_TEAM2_PIC;
+			tpic[TEAM3][0] = STAT_TEAM3_PIC;
 		}
 		else if(teamdm->value)
 		{

@@ -1258,10 +1258,10 @@ temp_event_t;
 
 // If we ever get more stats, we need these for Espionage, SetEspStats():
 /*
-#define STAT_TEAM1_LEADERPIC
-#define STAT_TEAM2_LEADERPIC
-#define STAT_TEAM3_LEADERPIC
-#define STAT_TEAM3_HEADER
+#define STAT_TEAM1_LEADERPIC        32
+#define STAT_TEAM2_LEADERPIC        33
+#define STAT_TEAM3_LEADERPIC        34
+#define STAT_TEAM3_HEADER           35
 */
 
 #define MAX_STATS                       32
