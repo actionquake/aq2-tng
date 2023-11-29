@@ -147,7 +147,7 @@ void _EspBonusDefendLeader(edict_t *targ, edict_t *attacker)
 			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
 			attacker->client->resp.score += ESP_LEADER_DANGER_PROTECT_BONUS;
 			attacker->client->resp.esp_leaderprotectcount++;
-			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for defending %s in the field\n",
+			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for defending %s in the field!\n",
 				   attacker->client->pers.netname, ESP_LEADER_DANGER_PROTECT_BONUS, teams[attacker->client->resp.team].leader_name);
 		}
 	}
@@ -181,8 +181,8 @@ void _EspBonusHarassLeader(edict_t *targ, edict_t *attacker)
 		if (attacker_leader_dist < ESP_ATTACKER_HARASS_RADIUS ||
 			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
 			attacker->client->resp.score += ESP_LEADER_HARASS_BONUS;
-			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for harassing %s in the field\n",
-				   attacker->client->pers.netname, ESP_LEADER_HARASS_BONUS, teams[attacker->client->resp.team].leader_name);
+			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for harassing %s in the field!\n",
+				   attacker->client->pers.netname, ESP_LEADER_HARASS_BONUS, teams[targ->client->resp.team].leader_name);
 		}
 	}
 	// Set framenum to prevent multiple bonuses too quickly
@@ -2071,6 +2071,16 @@ void EspEndOfRoundCleanup()
 		esp_spawnpoint_index[i] = -1;
 	}
 
+	// Reset these three timed stats for the next round for each player
+	edict_t *ent;
+	for (i = 0; i < game.maxclients; i++) {
+		ent = g_edicts + 1 + i;
+		if (!ent->inuse)
+			continue;
+		ent->client->resp.esp_lastprotectcap = 0;
+		ent->client->resp.esp_lastprotectleader = 0;
+		ent->client->resp.esp_lasthurtleader = 0;
+	}
 
 	/* 
 	Note:  Resetting the ETV escort point is not done here,
