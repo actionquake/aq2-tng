@@ -126,12 +126,16 @@ void _EspBonusDefendLeader(edict_t *targ, edict_t *attacker)
 {
 	edict_t *leader = NULL;
 
+	// You can't defend a leader on a team that doesn't have one
+	if (attacker->client->resp.team == TEAM2 && etv->value)
+		return;
+
 	if (IS_LEADER(targ))
 		leader = targ;
 	/*
 	Leader protection bonus
 	*/
-	if (leader && leader != attacker) {
+	if (leader && leader != attacker && attacker->client->resp.team == leader->client->resp.team) {
 		int attacker_leader_dist = _EspDistanceFromEdict(attacker, leader);
 		int defender_leader_dist = _EspDistanceFromEdict(targ, leader);
 
@@ -149,6 +153,40 @@ void _EspBonusDefendLeader(edict_t *targ, edict_t *attacker)
 	}
 	// Set framenum to prevent multiple bonuses too quickly
 	attacker->client->resp.esp_lastprotectcap = level.realFramenum;
+	return;
+}
+
+/*
+Espionage Harrass Enemy Leader Bonus
+*/
+void _EspBonusHarassLeader(edict_t *targ, edict_t *attacker)
+{
+	edict_t *leader = NULL;
+
+	// You can't attack a leader on a team that doesn't have one
+	if (attacker->client->resp.team == TEAM1 && etv->value)
+		return;
+
+	if (IS_LEADER(targ))
+		leader = targ;
+	/*
+	Leader attack bonus
+	*/
+	if (leader && leader != attacker && attacker->client->resp.team != leader->client->resp.team) {
+		int attacker_leader_dist = _EspDistanceFromEdict(attacker, leader);
+
+		/* If attacker or defender are within ESP_ATTACKER_PROTECT_RADIUS units of the leader
+			or the leader is visible to either player
+		*/
+		if (attacker_leader_dist < ESP_ATTACKER_HARASS_RADIUS ||
+			visible(leader, targ, MASK_SOLID) || visible(leader, attacker, MASK_SOLID)) {
+			attacker->client->resp.score += ESP_LEADER_HARASS_BONUS;
+			gi.bprintf(PRINT_MEDIUM, "%s gets %d bonus points for harassing %s in the field\n",
+				   attacker->client->pers.netname, ESP_LEADER_HARASS_BONUS, teams[attacker->client->resp.team].leader_name);
+		}
+	}
+	// Set framenum to prevent multiple bonuses too quickly
+	attacker->client->resp.esp_lasthurtleader = level.framenum;
 	return;
 }
 
@@ -212,10 +250,11 @@ void _EspBonusCapture(edict_t *attacker, edict_t *flag)
 {
 	edict_t *ent;
 
-	gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s!\n",
+	gi.bprintf( PRINT_HIGH, "%s has reached the %s for %s! +%d points!\n",
 		flag->owner->client->pers.netname,
 		espsettings.target_name,
-		teams[ flag->owner->client->resp.team ].name );
+		teams[ flag->owner->client->resp.team ].name,
+		ESP_LEADER_CAPTURE_BONUS );
 
 	// Stats
 	espsettings.capturestreak++;
@@ -325,7 +364,11 @@ void EspScoreBonuses(edict_t * targ, edict_t * attacker)
 	if (lpl > (level.realFramenum - ESP_BONUS_COOLDOWN))
 		_EspBonusDefendLeader(targ, attacker);
 	if (lhl > (level.realFramenum - ESP_BONUS_COOLDOWN))
-		_EspBonusFragLeader(targ, attacker);
+		_EspBonusHarassLeader(targ, attacker);
+
+	// This will always award a bonus if the attacker is eligible, no time limit
+	_EspBonusFragLeader(targ, attacker);
+
 }
 
 void EspCapturePointThink( edict_t *flag )
@@ -1305,38 +1348,6 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 	return SelectFarthestDeathmatchSpawnPoint();
 }
 
-// void SetEspStats( edict_t *ent )
-// {
-// 	// Team scores for the score display and HUD.
-// 	ent->client->ps.stats[ STAT_TEAM1_SCORE ] = teams[ TEAM1 ].score;
-// 	ent->client->ps.stats[ STAT_TEAM2_SCORE ] = teams[ TEAM2 ].score;
-// 	ent->client->ps.stats[ STAT_TEAM3_SCORE ] = teams[ TEAM3 ].score;
-
-// 	// Team icons for the score display and HUD.
-// 	ent->client->ps.stats[ STAT_TEAM1_PIC ] = level.pic_esp_teamicon[ TEAM1 ];
-// 	ent->client->ps.stats[ STAT_TEAM2_PIC ] = level.pic_esp_teamicon[ TEAM2 ];
-// 	ent->client->ps.stats[ STAT_TEAM3_PIC ] = level.pic_esp_teamicon[ TEAM3 ];
-
-// 	int i;
-// 	for(i = TEAM1; i <= teamCount; i++)
-// 		if (etv->value)
-// 			level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
-// 		else if (atl->value)
-// 			level.pic_teamskin[i] = gi.imageindex(teams[i].leader_skin_index);
-
-// 	// During intermission, blink the team icon of the winning team.
-// 	if( level.intermission_framenum && ((level.realFramenum / FRAMEDIV) & 8) )
-// 	{
-// 		if (esp_winner == TEAM1)
-// 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
-// 		else if (esp_winner == TEAM2)
-// 			ent->client->ps.stats[ STAT_TEAM2_PIC ] = 0;
-// 		else if (esp_winner == TEAM3)
-// 			ent->client->ps.stats[ STAT_TEAM3_PIC ] = 0;
-// 	}
-// }
-
-
 void SetEspStats( edict_t *ent )
 {
 	int i;
@@ -1387,7 +1398,7 @@ void SetEspStats( edict_t *ent )
 	}
 
 	// During gameplay, flash your team's icon
-	if( team_round_going && ((level.realFramenum / FRAMEDIV) & 4) )
+	if( (team_round_going || lights_camera_action > 0) && ((level.realFramenum / FRAMEDIV) & 4) )
 	{
 		if (ent->client->resp.team == TEAM1)
 			ent->client->ps.stats[ STAT_TEAM1_PIC ] = 0;
@@ -1743,7 +1754,8 @@ qboolean EspLeaderCheck()
 	// Quick sanity check in case this ever occurs as I've seen it on rare occasions
 	for (i = TEAM1; i <= teamCount; i++) {
 		if (teams[i].leader && !IS_ALIVE(teams[i].leader) && team_round_going && !holding_on_tie_check) {
-			gi.dprintf("%s: Team %i leader is dead, but the round is still going...?\n", __FUNCTION__, teams[i].leader->client->resp.team);
+			if (esp_debug->value)
+				gi.dprintf("%s: Team %i leader is dead, but the round is still going...?\n", __FUNCTION__, teams[i].leader->client->resp.team);
 			athl = false;
 		}
 	}

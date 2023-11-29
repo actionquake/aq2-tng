@@ -91,6 +91,7 @@ typedef enum {
 // Score bonus critieria/limitations
 #define ESP_TARGET_PROTECT_RADIUS   		400	// the radius around an object being defended where a target will be worth extra frags
 #define ESP_ATTACKER_PROTECT_RADIUS 		400	// the radius around an object being defended where an attacker will get extra frags when making kills
+#define ESP_ATTACKER_HARASS_RADIUS			400	// the radius around an object being defended where an attacker will get extra frags when assaulting the leader
 #define ESP_BONUS_COOLDOWN					500	// the number of frames after a bonus is awarded before another bonus can be awarded	
 
 void EspForceEspionage(int espmode);
