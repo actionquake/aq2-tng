@@ -365,6 +365,14 @@ void Announce_Reward(edict_t *ent, int rewardType){
 		sprintf(buf, "ACCURACY %s!", ent->client->pers.netname);
 		CenterPrintAll(buf);
 		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/accuracy.wav"), 1.0, ATTN_NONE, 0.0);
+	} else if (rewardType == DOMINANT) {
+		sprintf(buf, "%s IS DOMINATING!", ent->client->pers.netname);
+		CenterPrintAll(buf);
+		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("radio/male/deliv3.wav"), 1.0, ATTN_NONE, 0.0);
+	} else if (rewardType == UNSTOPPABLE) {
+		sprintf(buf, "%s IS UNSTOPPABLE!", ent->client->pers.netname);
+		CenterPrintAll(buf);
+		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("radio/male/deliv3.wav"), 1.0, ATTN_NONE, 0.0);
 	}
 
 	#ifdef USE_AQTION

@@ -79,9 +79,7 @@ int EspCapturePointOwner( edict_t *flag )
 
 
 char *timedMessageStrings[NUM_MESSAGES] = {
-    "LAST ROUND BEFORE HALFTIME...",
-    "LOL HE DIED",
-    "This is message three",
+    "LAST ROUND BEFORE HALFTIME..."
     // Add more messages as needed
 };
 /*
@@ -414,9 +412,10 @@ void EspCapturePointThink( edict_t *flag )
 			if (esp_punish->value)
 				EspPunishment(OtherTeam(flag->owner->client->resp.team));
 
-			if( (esp_team_flags[ flag->owner->client->resp.team ] == esp_flag_count) && (esp_flag_count > 2) )
-				gi.bprintf( PRINT_HIGH, "%s IS UNSTOPPABLE!\n",
-				teams[ flag->owner->client->resp.team ].name );
+			if(teams[TEAM1].leader->client->resp.esp_capstreak == 5)
+				Announce_Reward(teams[TEAM1].leader, DOMINANT);
+			if(teams[TEAM1].leader->client->resp.esp_capstreak == 10)
+				Announce_Reward(teams[TEAM1].leader, UNSTOPPABLE);
 
 			for( ent = g_edicts + 1; ent <= g_edicts + game.maxclients; ent ++ )
 			{
@@ -453,7 +452,7 @@ void EspTouchCapturePoint( edict_t *flag, edict_t *player, cplane_t *plane, csur
 		flag->owner = player;
 }
 
-void EspMakeCapturePoint(edict_t *flag, qboolean reset)
+void EspMakeCapturePoint(edict_t *flag)
 {
 	vec3_t dest = {0};
 	trace_t tr = {0};
@@ -529,18 +528,7 @@ void EspResetCapturePoint()
 		flag = ent;
 	}
 	if (flag){
-		flag->solid = SOLID_TRIGGER;
-		flag->movetype = MOVETYPE_NONE;
-		flag->s.modelindex = esp_flag;
-		flag->s.skinnum = 0;
-		flag->s.effects = esp_team_effect[ NOTEAM ];
-		flag->s.renderfx = esp_team_fx[ NOTEAM ];
-		flag->owner = NULL;
-		flag->touch = EspTouchCapturePoint;
-		NEXT_KEYFRAME( flag, EspCapturePointThink );
-		flag->classname = "item_flag";
-		flag->svflags &= ~SVF_NOCLIENT;
-		gi.linkentity( flag );
+		EspMakeCapturePoint(flag);
 	}
 }
 
@@ -819,7 +807,7 @@ qboolean EspLoadConfig(const char *mapname)
 						}
 					}
 
-					EspMakeCapturePoint( flag, false );
+					EspMakeCapturePoint( flag );
 
 					// Set the capture point in the settings
 					es->capturepoint = flag;
