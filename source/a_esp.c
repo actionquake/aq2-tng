@@ -412,10 +412,12 @@ void EspCapturePointThink( edict_t *flag )
 			if (esp_punish->value)
 				EspPunishment(OtherTeam(flag->owner->client->resp.team));
 
-			if(teams[TEAM1].leader->client->resp.esp_capstreak == 5)
-				Announce_Reward(teams[TEAM1].leader, DOMINANT);
-			if(teams[TEAM1].leader->client->resp.esp_capstreak == 10)
-				Announce_Reward(teams[TEAM1].leader, UNSTOPPABLE);
+			if (use_rewards->value) {
+				if(teams[TEAM1].leader->client->resp.esp_capstreak == 5)
+					Announce_Reward(teams[TEAM1].leader, DOMINATING);
+				if(teams[TEAM1].leader->client->resp.esp_capstreak == 10)
+					Announce_Reward(teams[TEAM1].leader, UNSTOPPABLE);
+			}
 
 			for( ent = g_edicts + 1; ent <= g_edicts + game.maxclients; ent ++ )
 			{

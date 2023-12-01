@@ -975,7 +975,7 @@ typedef enum {
     ACCURACY,
     IMPRESSIVE,
     EXCELLENT,
-	DOMINANT,
+	DOMINATING,
 	UNSTOPPABLE,
 	AWARD_MAX
 } Awards;

@@ -350,35 +350,44 @@ static void FreeClientEdicts(gclient_t *client)
 #endif
 }
 
-void Announce_Reward(edict_t *ent, int rewardType){
-	char buf[256];
+void Announce_Reward(edict_t *ent, int rewardType) {
+    char buf[256];
+    char *soundFile;
+	char *playername = ent->client->pers.netname;
 
-	if (rewardType == IMPRESSIVE) {
-		sprintf(buf, "IMPRESSIVE %s!", ent->client->pers.netname);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/impressive.wav"), 1.0, ATTN_NONE, 0.0);
-	} else if (rewardType == EXCELLENT) {
-		sprintf(buf, "EXCELLENT %s (%dx)!", ent->client->pers.netname,ent->client->resp.streakKills/12);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/excellent.wav"), 1.0, ATTN_NONE, 0.0);
-	} else if (rewardType == ACCURACY) {
-		sprintf(buf, "ACCURACY %s!", ent->client->pers.netname);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/accuracy.wav"), 1.0, ATTN_NONE, 0.0);
-	} else if (rewardType == DOMINANT) {
-		sprintf(buf, "%s IS DOMINATING!", ent->client->pers.netname);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("radio/male/deliv3.wav"), 1.0, ATTN_NONE, 0.0);
-	} else if (rewardType == UNSTOPPABLE) {
-		sprintf(buf, "%s IS UNSTOPPABLE!", ent->client->pers.netname);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("radio/male/deliv3.wav"), 1.0, ATTN_NONE, 0.0);
-	}
+    switch (rewardType) {
+        case IMPRESSIVE:
+            sprintf(buf, "IMPRESSIVE %s!", playername);
+            soundFile = "tng/impressive.wav";
+            break;
+        case EXCELLENT:
+            sprintf(buf, "EXCELLENT %s (%dx)!", playername, ent->client->resp.streakKills/12);
+            soundFile = "tng/excellent.wav";
+            break;
+        case ACCURACY:
+            sprintf(buf, "ACCURACY %s!", playername);
+            soundFile = "tng/accuracy.wav";
+            break;
+        case DOMINATING:
+            sprintf(buf, "%s IS DOMINATING!", playername);
+            soundFile = "radio/male/deliv3.wav";
+            break;
+        case UNSTOPPABLE:
+            sprintf(buf, "%s IS UNSTOPPABLE!", playername);
+            soundFile = "radio/male/deliv3.wav";
+            break;
+        default:
+			gi.dprintf("%s: Unknown reward type %d for %s\n", __FUNCTION__, rewardType, playername);
+            return;  // Something didn't jive here?
+    }
 
-	#ifdef USE_AQTION
-	if (stat_logs->value)
-		LogAward(ent, rewardType);
-	#endif
+    CenterPrintAll(buf);
+    gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex(soundFile), 1.0, ATTN_NONE, 0.0);
+
+    #ifdef USE_AQTION
+    if (stat_logs->value)
+        LogAward(ent, rewardType);
+    #endif
 }
 
 void Add_Frag(edict_t * ent, int mod)
