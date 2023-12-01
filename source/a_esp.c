@@ -985,8 +985,8 @@ int EspGetRespawnTime(edict_t *ent)
 	else if((teamCount == 3) && ent->client->resp.team == TEAM3 && teams[TEAM3].respawn_timer > -1)
 		spawntime = teams[TEAM3].respawn_timer;
 
-	if (!IS_LEADER(ent)) {
-		gi.cprintf(ent, PRINT_HIGH, "You will respawn in %d seconds\n", spawntime);
+	if (!IS_LEADER(ent) && team_round_going) {
+		gi.centerprintf(ent, "You will respawn in %d seconds\n", spawntime);
 	}
 	return spawntime;
 }
@@ -1017,7 +1017,7 @@ void EspRespawnLCA(edict_t *ent)
 		return;
 
 	if (ent->client->resp.team && !IS_ALIVE(ent)){
-		int timercalc = ent->client->respawn_framenum - level.framenum;
+		int timercalc = (ent->client->respawn_framenum - level.framenum * HZ);
 
 		if (esp_debug->value)
 			gi.dprintf("%s: Level framenum is %d, respawn timer was %d for %s, timercalc is %i, esp_respawn_sounds was %i\n", 
@@ -1029,12 +1029,12 @@ void EspRespawnLCA(edict_t *ent)
 			return;
 		} else if (timercalc <= 20 && ent->client->resp.esp_respawn_sounds == 2) {
 			gi.centerprintf(ent, "CAMERA...");
-			gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_NONE, 0.0);
+			gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_STATIC, 0.0);
 			ent->client->resp.esp_respawn_sounds = 1;
 			return;
 		} else if (timercalc <= 40 && ent->client->resp.esp_respawn_sounds == 0) {
 			gi.centerprintf(ent, "LIGHTS...");
-			gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_NONE, 0.0);
+			gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_STATIC, 0.0);
 			ent->client->resp.esp_respawn_sounds = 2;
 			return;
 		}
@@ -1480,8 +1480,8 @@ qboolean EspCheckETVRules(void)
 		team_round_going = team_round_countdown = team_game_going = 0;
 		MakeAllLivePlayersObservers();
 		EspSwapTeams();
-		CenterPrintLevelTeam(TEAM1, PRINT_MEDIUM, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
-		CenterPrintLevelTeam(TEAM2, PRINT_MEDIUM, "The teams have been switched!\nYou are now defending!\n");
+		CenterPrintLevelTeam(TEAM1, PRINT_LOW, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
+		CenterPrintLevelTeam(TEAM2, PRINT_LOW, "The teams have been switched!\nYou are now defending!\n");
 		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
 		espsettings.halftime = 1;
@@ -1585,7 +1585,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 	}
 
 	if (etv->value && teamNum != TEAM1) {
-		gi.cprintf(ent, PRINT_CHAT, "** Only the Red team (team 1) has a leader in ETV mode **\n");
+		gi.cprintf(ent, PRINT_MEDIUM, "** Only the Red team (team 1) has a leader in ETV mode **\n");
 		return false;
 	}
 
