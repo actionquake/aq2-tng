@@ -1027,12 +1027,12 @@ void EspRespawnLCA(edict_t *ent)
 		if (timercalc <= 0){
 			// Play no sound, they've respawned by now
 			return;
-		} else if (timercalc <= 20 && ent->client->resp.esp_respawn_sounds == 2) {
+		} else if (timercalc <= (20 * FRAMEDIV) && ent->client->resp.esp_respawn_sounds == 2) {
 			gi.centerprintf(ent, "CAMERA...");
 			gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_STATIC, 0.0);
 			ent->client->resp.esp_respawn_sounds = 1;
 			return;
-		} else if (timercalc <= 40 && ent->client->resp.esp_respawn_sounds == 0) {
+		} else if (timercalc <= (40 * FRAMEDIV) && ent->client->resp.esp_respawn_sounds == 0) {
 			gi.centerprintf(ent, "LIGHTS...");
 			gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_STATIC, 0.0);
 			ent->client->resp.esp_respawn_sounds = 2;
@@ -1173,8 +1173,6 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 {
 	espsettings_t *es = &espsettings;
     int teamNum = ent->client->resp.team;
-    srand(time(NULL)); // Random seed
-	int random_index = 0;
 
 	// An index has been set, so spawn there, else find a random one
 	if (esp_spawnpoint_index[teamNum] >= 0)
@@ -1183,9 +1181,10 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 	// fresh round, so pick a random spawn
 	else {
 		int count = EspSpawnpointCount(teamNum);
+		int random_index = rand() % count;
 		if (count > 0) {
 			do {
-				random_index = rand() % count; // Generate a random index between 0 and the number of spawns
+				random_index = (random_index + 1) % count; // Cycle through the spawn points
 			} while (count > 1 && random_index == esp_last_chosen_spawn); // Keep generating a new index until it is different from the last one, unless there is only one spawn point
 		} else {
 			// If we count zero custom spawns, then we need to safely return a better function
@@ -1197,6 +1196,8 @@ edict_t *SelectEspCustomSpawnPoint(edict_t * ent)
 		// Keep track of which spawn was last chosen
 		esp_last_chosen_spawn = random_index;
 		esp_spawnpoint_index[teamNum] = esp_last_chosen_spawn;
+		if (esp_debug->value)
+			gi.dprintf("%s: For team %d, random index is %d\n", __FUNCTION__, teamNum, esp_spawnpoint_index[teamNum]);
 	}
 	// Everyone on each team spawns on the same spawnpoint index (spawn together)
 	edict_t *spawn_point = es->custom_spawns[teamNum][esp_spawnpoint_index[teamNum]];
