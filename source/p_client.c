@@ -2442,7 +2442,7 @@ void ClientLegDamage(edict_t *ent)
 	ent->client->leg_damage = 1;
 	ent->client->leghits++;
 
-	if (e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM)) { // we don't limp with enhanced slippers, so just ignore this leg damage.
+	if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM)) { // we don't limp with enhanced slippers, so just ignore this leg damage.
 		ent->client->leg_damage = 0;
 		return;
 	}

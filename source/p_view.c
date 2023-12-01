@@ -699,7 +699,7 @@ void P_FallingDamage (edict_t * ent)
 			ent->s.event = EV_FALLFAR;
 		else			// all falls are far
 			ent->s.event = EV_FALLFAR;
-		if (e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM))
+		if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM))
 			ent->s.event = EV_FALL;
 	}
 
