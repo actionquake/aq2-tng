@@ -1249,10 +1249,9 @@ extern cvar_t *am_delay;
 extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
+extern cvar_t *gun_dualmk23_enhance;
 extern cvar_t *printrules;
 extern cvar_t *timedmsgs;
-
-
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -1620,7 +1619,7 @@ void ProduceShotgunDamageReport(edict_t*);
 
 //tng_stats.c
 void StatBotCheck(void);
-#ifdef USE_AQTION
+#if USE_AQTION
 void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker);
 void LogWorldKill(edict_t *self);
 void LogMatch();
@@ -1721,7 +1720,7 @@ typedef struct
 	ignorelist_t ignorelist;
 	gitem_t *chosenItem2;		// Support for item kit mode
 
-	#ifdef USE_AQTION
+	#if USE_AQTION
 	char steamid[24];
 	char discordid[24];
 	#endif
@@ -2303,10 +2302,20 @@ typedef struct
 	int shotsTotal;
 	int hitsTotal;
 	int hitsLocations[LOC_MAX];
-	gunStats_t gunstats[MAX_GUNSTAT];
+	gunStats_t gunstats[MOD_TOTAL];
 	int team;
 	gitem_t *weapon;
 	gitem_t *item;
+	// Extended stats
+	#if USE_AQTION
+	char steamid[24];
+	char discordid[24];
+	#endif
+	int ctf_capstreak;
+	int team_kills;
+	int streakKillsHighest;
+	int streakHSHighest;
+
 }
 gghost_t;
 

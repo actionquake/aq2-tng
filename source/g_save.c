@@ -593,7 +593,7 @@ void InitGame( void )
 	gm = gi.cvar("gm", "dm", CVAR_SERVERINFO);
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
-  	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
+  g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);
@@ -607,6 +607,7 @@ void InitGame( void )
 	am_team = gi.cvar("am_team", "0", 0);
 	zoom_comp = gi.cvar("zoom_comp", "0", 0);
 	item_kit_mode = gi.cvar("item_kit_mode", "0", CVAR_LATCH);
+	gun_dualmk23_enhance = gi.cvar("gun_dualmk23_enhance", "0", 0);
 	printrules = gi.cvar("printrules", "0", 0);
 	timedmsgs = gi.cvar("timedmsgs", "0", 0);
 

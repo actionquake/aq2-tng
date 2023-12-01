@@ -2050,10 +2050,15 @@ int AdjustSpread(edict_t* ent, int spread)
 	if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)	// crouching
 		return (spread * .65);
 
-	if (INV_AMMO(ent, LASER_NUM) && (ent->client->curr_weap == MK23_NUM
-		|| ent->client->curr_weap == MP5_NUM || ent->client->curr_weap == M4_NUM))
+	if (INV_AMMO(ent, LASER_NUM) &&
+		(ent->client->curr_weap == MK23_NUM ||
+		ent->client->curr_weap == MP5_NUM ||
+		ent->client->curr_weap == M4_NUM))
 		laser = 1;
 
+	// Include the Dual MK23 pistol if enabled
+	if (gun_dualmk23_enhance->value && (INV_AMMO(ent, LASER_NUM)) && (ent->client->curr_weap == DUAL_NUM))
+		laser = 1;
 
 	// running
 	if (xyspeed > running* running)
@@ -2917,6 +2922,8 @@ void Dual_Fire(edict_t* ent)
 
 
 			ent->client->weapon_sound = MZ_BLASTER2;  // Becomes MZ_BLASTER.
+			if (gun_dualmk23_enhance->value && INV_AMMO(ent, SIL_NUM))
+				ent->client->weapon_sound |= MZ_SILENCED;
 			PlayWeaponSound(ent);
 		}
 		else
@@ -2989,6 +2996,8 @@ void Dual_Fire(edict_t* ent)
 
 
 	ent->client->weapon_sound = MZ_BLASTER2;  // Becomes MZ_BLASTER.
+	if (gun_dualmk23_enhance->value && INV_AMMO(ent, SIL_NUM))
+		ent->client->weapon_sound |= MZ_SILENCED;
 	PlayWeaponSound(ent);
 }
 

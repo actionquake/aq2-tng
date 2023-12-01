@@ -75,6 +75,7 @@ jobs:
           path: |
             build/gamex86_64.so
 
+  # The toil on keeping this stupid VM online is too much work
   x86_lin_compat_build_tng:
     runs-on: [self-hosted, X64, compat]
     steps:

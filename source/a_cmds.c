@@ -162,19 +162,36 @@ void SP_LaserSight(edict_t * self, gitem_t * item)
 		return;
 	}
 	//zucc code to make it be used with the right weapons
-
-	switch (self->client->weapon->typeNum) {
-	case MK23_NUM:
-	case MP5_NUM:
-	case M4_NUM:
-		break;
-	default:
-		// laser is on but we want it off
-		if (lasersight) {
-			G_FreeEdict(lasersight);
-			self->client->lasersight = NULL;
+	// edited to allow laser to be used with dual pistols if enabled -ds
+	if (!gun_dualmk23_enhance->value) {
+		switch (self->client->weapon->typeNum) {
+		case MK23_NUM:
+		case MP5_NUM:
+		case M4_NUM:
+			break;
+		default:
+			// laser is on but we want it off
+			if (lasersight) {
+				G_FreeEdict(lasersight);
+				self->client->lasersight = NULL;
+			}
+			return;
 		}
-		return;
+	} else { // include dualmk23
+		switch (self->client->weapon->typeNum) {
+		case DUAL_NUM:
+		case MK23_NUM:
+		case MP5_NUM:
+		case M4_NUM:
+			break;
+		default:
+			// laser is on but we want it off
+			if (lasersight) {
+				G_FreeEdict(lasersight);
+				self->client->lasersight = NULL;
+			}
+			return;
+		}
 	}
 
 	if (lasersight) { //Lasersight is already on
@@ -1266,6 +1283,10 @@ void Cmd_Ghost_f(edict_t * ent)
 	ent->client->resp.deaths = ghost->deaths;
 	ent->client->resp.damage_dealt = ghost->damage_dealt;
 	ent->client->resp.ctf_caps = ghost->ctf_caps;
+	ent->client->resp.ctf_capstreak = ghost->ctf_capstreak;
+	ent->client->resp.team_kills = ghost->team_kills;
+	ent->client->resp.streakKillsHighest = ghost->streakKillsHighest;
+	ent->client->resp.streakHSHighest = ghost->streakHSHighest;
 
 	if (teamplay->value && ghost->team && ghost->team != ent->client->resp.team)
 			JoinTeam( ent, ghost->team, 1 );

@@ -1496,7 +1496,7 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 		AddToTransparentList (ent);
 	}
 
-	#ifdef USE_AQTION
+	#if USE_AQTION
 	if (in_warmup && warmup_bots->value) {
 		PutClientInServer (ent);
 	}
@@ -2296,7 +2296,7 @@ void RunWarmup ()
 			gi.centerprintf(ent, "WARMUP");
 		}
 	}
-	#ifdef USE_AQTION
+	#if USE_AQTION
 	if (warmup_bots->value){
 		gi.cvar_forceset("am", "1");
 		gi.cvar_forceset("am_botcount", warmup_bots->string);
@@ -2783,7 +2783,7 @@ int CheckTeamRules (void)
 				gi.sound (&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 				gi.soundindex ("world/10_0.wav"), 1.0, ATTN_NONE, 0.0);
 
-				#ifdef USE_AQTION
+				#if USE_AQTION
 				// Cleanup and remove all bots, it's go time!
 				if (warmup_bots->value){
 					gi.cvar_forceset("am", "0");

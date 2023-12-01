@@ -699,6 +699,8 @@ void P_FallingDamage (edict_t * ent)
 			ent->s.event = EV_FALLFAR;
 		else			// all falls are far
 			ent->s.event = EV_FALLFAR;
+		if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM))
+			ent->s.event = EV_FALL;
 	}
 
 	ent->pain_debounce_framenum = KEYFRAME(FRAMEDIV);	// no normal pain sound
