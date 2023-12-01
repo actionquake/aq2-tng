@@ -378,7 +378,7 @@ void ED_CallSpawn (edict_t * ent)
 				else
 					G_FreeEdict(ent);
 			}
-			else if (ctf->value)
+			else if (ctf->value || esp->value)
 			{
 				if(item->flags & IT_FLAG)
 					SpawnItem(ent, item);
@@ -818,8 +818,10 @@ void G_LoadLocations( void )
 }
 
 
-
-int Gamemode(void) // These are distinct game modes; you cannot have a teamdm tourney mode, for example
+/*
+These are distinct game modes; you cannot have a teamdm tourney mode, for example
+*/
+int Gamemode(void)
 {
 	int gamemode = 0;
 	if (teamdm->value) {
@@ -834,13 +836,20 @@ int Gamemode(void) // These are distinct game modes; you cannot have a teamdm to
 		gamemode = GM_DOMINATION;
 	} else if (deathmatch->value) {
 		gamemode = GM_DEATHMATCH;
+	} else if (esp->value && atl->value) {
+		gamemode = GM_ASSASSINATE_THE_LEADER;
+	} else if (esp->value && etv->value) {
+		gamemode = GM_ESCORT_THE_VIP;
 	}
 	return gamemode;
 }
 
+/*
+These are gamemode flags that change the rules of gamemodes.
+For example, you can have a darkmatch matchmode 3team teamplay server
+*/
 int Gamemodeflag(void)
-// These are gamemode flags that change the rules of gamemodes.
-// For example, you can have a darkmatch matchmode 3team teamplay server
+
 {
 	int gamemodeflag = 0;
 	char gmfstr[16];
@@ -883,6 +892,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		teams[i].ready = teams[i].locked = 0;
 		teams[i].pauses_used = teams[i].wantReset = 0;
 		teams[i].captain = NULL;
+		if (esp->value) {
+			teams[i].leader = NULL;
+			teams[i].leader_dead = false;
+		}
 		gi.cvar_forceset(teams[i].teamscore->name, "0");
 	}
 
@@ -899,17 +912,12 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	gi.cvar_forceset(gm->name, "jump");
 
 	// Force disable settings for jump mode
-	disablecvar(stat_logs, GMN_JUMP);
-	disablecvar(dm_choose, GMN_JUMP);
-	disablecvar(uvtime, GMN_JUMP);
-	disablecvar(am, GMN_JUMP);
-	disablecvar(ltk_loadbots, GMN_JUMP);
-	// gi.cvar_forceset(stat_logs->name, "0"); // Turn off stat logs for jump mode
-	// gi.cvar_forceset(dm_choose->name, "0"); // Turn off dm_choose for jump mode
-	// gi.cvar_forceset(uvtime->name, "0"); // Turn off uvtime in jump mode
+	gi.cvar_forceset(stat_logs->name, "0"); // Turn off stat logs for jump mode
+	gi.cvar_forceset(dm_choose->name, "0"); // Turn off dm_choose for jump mode
+	gi.cvar_forceset(uvtime->name, "0"); // Turn off uvtime in jump mode
 	gi.cvar_forceset(unique_items->name, "6"); // Enables holding all items at once, if toggled
-	// gi.cvar_forceset(am->name, "0"); // Turns off attract mode
-	// gi.cvar_forceset(ltk_loadbots->name, "0"); // Turns off bots
+	gi.cvar_forceset(am->name, "0"); // Turns off attract mode
+	gi.cvar_forceset(ltk_loadbots->name, "0"); // Turns off bots
 	//
 		if (teamplay->value)
 		{
@@ -995,8 +1003,57 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
 		Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
 		Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
-		Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
-		Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
+		Q_strncpyz(teams[TEAM1].skin_index, "ctf_r", sizeof(teams[TEAM1].skin_index));
+		Q_strncpyz(teams[TEAM2].skin_index, "ctf_b", sizeof(teams[TEAM2].skin_index));
+	}
+	else if (esp->value)
+	{
+	gi.cvar_forceset(gm->name, "esp");
+		//gameSettings |= GS_WEAPONCHOOSE;
+		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
+
+		// Make sure teamplay is enabled
+		if (!teamplay->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing teamplay on\n");
+			gi.cvar_forceset(teamplay->name, "1");
+		}
+		// ETV mode doesn't support 3 teams, but ATL does
+		if (etv->value && use_3teams->value) {
+			gi.dprintf ("Espionage ETV Enabled - Incompatible with 3 Teams, reverting to ATL mode\n");
+			EspForceEspionage(ESPMODE_ATL);
+		}
+		if(teamdm->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Team DM off\n");
+			gi.cvar_forceset(teamdm->name, "0");
+		}
+		if (use_tourney->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Tourney off\n");
+			gi.cvar_forceset(use_tourney->name, "0");
+		}
+		if (dom->value)
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Domination off\n");
+			gi.cvar_forceset(dom->name, "0");
+		}
+		if (!DMFLAGS(DF_NO_FRIENDLY_FIRE))
+		{
+			gi.dprintf ("Espionage Enabled - Forcing Friendly Fire off\n");
+			gi.cvar_forceset(dmflags->name, va("%i", (int)dmflags->value | DF_NO_FRIENDLY_FIRE));
+		}
+		// uvtime is controlled via respawn logic
+		if (uvtime->value)
+		{
+			gi.cvar_forceset(uvtime->name, "0");
+		}
+		// Sane defaults for timelimit or roundlimit
+		// favoring a roundlimit over a timelimit, if not defined
+		if (!roundlimit->value)
+			gi.cvar_forceset(roundlimit->name, "20");
+		else if (!timelimit->value)
+			gi.cvar_forceset(timelimit->name, "20");
 	}
 	else if (dom->value)
 	{
@@ -1027,10 +1084,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
 		Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
 		Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
-		Q_strncpyz(teams[TEAM3].skin, "male/commando", sizeof(teams[TEAM3].skin));
-		Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
-		Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
-		Q_strncpyz(teams[TEAM3].skin_index, "i_pack", sizeof(teams[TEAM3].skin_index));
+		Q_strncpyz(teams[TEAM3].skin, "male/ctf_g", sizeof(teams[TEAM3].skin));
+		Q_strncpyz(teams[TEAM1].skin_index, "ctf_r_i", sizeof(teams[TEAM1].skin_index));
+		Q_strncpyz(teams[TEAM2].skin_index, "ctf_b_i", sizeof(teams[TEAM2].skin_index));
+		Q_strncpyz(teams[TEAM3].skin_index, "ctf_g_i", sizeof(teams[TEAM3].skin_index));
 	}
 	else if(teamdm->value)
 	{
@@ -1079,6 +1136,16 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		{
 			gi.dprintf ("Matchmode Enabled - Forcing Tourney off\n");
 			gi.cvar_forceset(use_tourney->name, "0");
+		}
+		if (esp->value && esp_matchmode->value)
+		{
+			gi.dprintf ("Matchmode Enabled - Forcing Espionage defaults\n");
+			MM_EspDefaultSettings();
+		}
+		if (auto_join->value == 2)
+		{
+			gi.dprintf ("Matchmode Enabled - Forcing auto_join off\n");
+			gi.cvar_forceset(auto_join->name, "0");
 		}
 	}
 	else if (use_tourney->value)
@@ -1132,7 +1199,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	// Set serverinfo correctly for gamemodeflags
 	Gamemodeflag();
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	generate_uuid();  // Run this once every time a map loads to generate a unique id for stats (game.matchid)
 	#endif
 
@@ -1171,7 +1238,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		{
 			client->clientNum = i;
 
-			if( auto_join->value )
+			if( auto_join->value == 1 )
 				client->resp.team = saved_team;
 
 			// combine name and skin into a configstring
@@ -1240,8 +1307,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			}
 		}
 	}
-	else if( dom->value )
-		DomLoadConfig( level.mapname );
+	else if(dom->value)
+		DomLoadConfig(level.mapname);
+	else if (esp->value)
+		EspLoadConfig(level.mapname);
 
 	G_FindTeams();
 
@@ -1406,6 +1475,8 @@ void G_SetupStatusbar( void )
 		}
 		else if( dom->value )
 			DomSetupStatusbar();
+		else if( esp->value )
+			EspSetupStatusbar();
 		else if( jump->value )
 			strcpy( level.statusbar, jump_statusbar );
 	}
@@ -1632,24 +1703,28 @@ void SP_worldspawn (edict_t * ent)
 			gi.imageindex("sbfctf2");
 		}
 
-		for(i = TEAM1; i <= teamCount; i++)
-		{
-			if (teams[i].skin_index[0] == 0) {
-				// If the action.ini file isn't found, set default skins rather than kill the server
-				gi.dprintf("WARNING: No skin was specified for team %i in config file, server either could not find it or is does not exist.\n", i);
-				gi.dprintf("Setting default team names, skins and skin indexes.\n", i);
-				Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
-				Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
-				Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
-				Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
-				Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
-				Q_strncpyz(teams[TEAM3].skin, "male/commando", sizeof(teams[TEAM3].skin));
-				Q_strncpyz(teams[TEAM1].skin_index, "i_ctf1", sizeof(teams[TEAM1].skin_index));
-				Q_strncpyz(teams[TEAM2].skin_index, "i_ctf2", sizeof(teams[TEAM2].skin_index));
-				Q_strncpyz(teams[TEAM3].skin_index, "i_pack", sizeof(teams[TEAM3].skin_index));
-				//exit(1);
+		// Espionage HUD is setup in SetEspStats()
+		if (!esp->value) {
+			for(i = TEAM1; i <= teamCount; i++)
+			{
+				if (teams[i].skin_index[0] == 0) {
+					// If the action.ini file isn't found, set default skins rather than kill the server
+					// Espionage has its own defaults
+					gi.dprintf("WARNING: No skin was specified for team %i in config file, server either could not find it or is does not exist.\n", i);
+					gi.dprintf("Setting default team names, skins and skin indexes.\n", i);
+					Q_strncpyz(teams[TEAM1].name, "RED", sizeof(teams[TEAM1].name));
+					Q_strncpyz(teams[TEAM2].name, "BLUE", sizeof(teams[TEAM2].name));
+					Q_strncpyz(teams[TEAM3].name, "GREEN", sizeof(teams[TEAM3].name));
+					Q_strncpyz(teams[TEAM1].skin, "male/ctf_r", sizeof(teams[TEAM1].skin));
+					Q_strncpyz(teams[TEAM2].skin, "male/ctf_b", sizeof(teams[TEAM2].skin));
+					Q_strncpyz(teams[TEAM3].skin, "male/ctf_g", sizeof(teams[TEAM3].skin));
+					Q_strncpyz(teams[TEAM1].skin_index, "ctf_r", sizeof(teams[TEAM1].skin_index));
+					Q_strncpyz(teams[TEAM2].skin_index, "ctf_b", sizeof(teams[TEAM2].skin_index));
+					Q_strncpyz(teams[TEAM3].skin_index, "ctf_g", sizeof(teams[TEAM3].skin_index));
+					//exit(1);
+				}
+				level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
 			}
-			level.pic_teamskin[i] = gi.imageindex(teams[i].skin_index);
 		}
 
 		level.snd_lights = gi.soundindex("atl/lights.wav");
@@ -1685,6 +1760,15 @@ void SP_worldspawn (edict_t * ent)
 	gi.soundindex("world/xian1.wav");	// intermission music
 	gi.soundindex("misc/secret.wav");	// used for ctf swap sound
 	gi.soundindex("weapons/grenlf1a.wav");	// respawn sound
+
+	// Precache insane sound effects, 11 of them total (1-11)
+	int insanesounds;
+	for (insanesounds = 1; insanesounds < 12; insanesounds++)
+	{
+		char soundname[32];
+		sprintf(soundname, "insane/insane%i.wav", insanesounds);
+		gi.soundindex(soundname);
+	}
 
 	PrecacheItems();
 	PrecacheRadioSounds();

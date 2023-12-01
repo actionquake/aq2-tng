@@ -215,6 +215,97 @@ void ReadMOTDFile()
 	fclose(motd_file);
 }
 
+void _PrintGameMsgToClient(char* msg, edict_t* ent)
+{
+	if (!auto_menu->value || ent->client->pers.menu_shown) {
+		gi.centerprintf(ent, "%s", msg);
+	} else {
+		gi.cprintf(ent, PRINT_LOW, "%s", msg);
+	}
+}
+
+/*
+Take great care with this function.  It will continuously print
+a message to players after the MOTD, so it should be something
+that has a condition where it would stop printing.  Otherwise,
+you'll have a lot of pissed off players who will complain about
+text on their screen.
+
+Only return true if conditions are met, else return false.
+*/
+
+qboolean PrintGameMessage(edict_t *ent)
+{
+	/* 
+		Each condition is checked in order, and the first one that is true
+		will be the message that is sent.  If none are true, then no message
+		will be sent (return false)
+
+		Always always ALWAYS remember to add
+			msg_ready = true;
+		if you add a new message, else the condition check will not work and the
+		function will return false.
+	*/
+
+	char msg_buf[1024];
+	qboolean msg_ready = false;
+
+	/*
+		This message is printed before a game starts in Espionage, and tells players what they need to do
+		in order to begin the match.  Once both teams have leaders, this message will no longer be printed.
+	*/
+	if (esp->value) {
+		if (!team_round_going && !AllTeamsHaveLeaders()) {
+			if (atl->value) {
+				Com_sprintf(msg_buf, sizeof(msg_buf), "Waiting for each team to have a leader\nType 'leader' in console to volunteer for duty.\n");
+				msg_ready = true;
+			} else if (etv->value) {
+				if (ent->client->resp.team == TEAM1)
+					Com_sprintf(msg_buf, sizeof(msg_buf), "Your team needs a leader!\nType 'leader' in console to volunteer for duty.");
+				else
+					Com_sprintf(msg_buf, sizeof(msg_buf), "Waiting for team 1 to have a leader...\n");
+				msg_ready = true;
+			}
+		}
+	}
+
+	// ****
+	/* Add all other messages before this one */
+	// ****
+	/*
+		This should be the last message to be evaluated, and will only be printed if the match is about to start.  It will
+		present the game rules to the players for a given game type during the countdown, and disappear when the countdown ends
+	*/
+
+	if (!team_game_going && (team_round_countdown > 20 && team_round_countdown < 101)) {
+		char* matchRules = PrintMatchRules();
+		if (matchRules != NULL && matchRules[0] != '\0') {
+			Com_sprintf(msg_buf, sizeof(msg_buf), "%s", matchRules);
+			msg_ready = true;
+		}
+	}
+
+	// ----- No more messages after this point ----- //
+	if (msg_ready) {
+		_PrintGameMsgToClient(msg_buf, ent);
+		return true;
+	}
+	// By default, return false to stop printing
+	return false;
+}
+
+void Cmd_PrintRules_f(edict_t *ent)
+{
+	char msg_buf[1024];
+
+	char* matchRules = PrintMatchRules();
+	if (matchRules != NULL && matchRules[0] != '\0') {
+		Com_sprintf(msg_buf, sizeof(msg_buf), "%s", matchRules);
+	}
+
+	_PrintGameMsgToClient(msg_buf, ent);
+}
+
 // AQ2:TNG Deathwatch - Ohh, lovely MOTD - edited it
 void PrintMOTD(edict_t * ent)
 {
@@ -224,7 +315,7 @@ void PrintMOTD(edict_t * ent)
 
 
 	//Welcome Message. This shows the Version Number and website URL, followed by an empty line
-	strcpy(msg_buf, TNG_TITLE " v" VERSION "\n" "http://aq2-tng.sourceforge.net/" "\n\n");
+	strcpy(msg_buf, TNG_TITLE " v" VERSION "\n" TNG_WEBSITE " -- " AQ2_DISCORD "\n");
 	lines = 3;
 
 	/*
@@ -261,6 +352,10 @@ void PrintMOTD(edict_t * ent)
 					server_type = "3 Team Deathmatch";
 				else
 					server_type = "Team Deathmatch";
+			}
+			else if (esp->value) // Is it Espionage?
+			{
+				server_type = "Espionage";
 			}
 			else if (use_tourney->value) // Is it Tourney?
 				server_type = "Tourney";
@@ -345,6 +440,58 @@ void PrintMOTD(edict_t * ent)
 			}
 		}
 
+		/* new Espionage settings added here for better readability */
+		if(esp->value) {
+			strcat(msg_buf, "\n");
+			lines++;
+
+			if(atl->value)
+				sprintf(msg_buf + strlen(msg_buf), "Espionage Mode: Assassinate the Leader\n");
+			else if(etv->value)
+				sprintf(msg_buf + strlen(msg_buf), "Espionage Mode: Escort the VIP\n");
+			else
+				strcat(msg_buf, "\n");
+			lines++;
+
+			if(teams[TEAM1].respawn_timer > -1 || teams[TEAM2].respawn_timer > -1 || teams[TEAM3].respawn_timer > -1) {
+				sprintf(msg_buf + strlen(msg_buf), "Spawn times:\n");
+				if(teams[TEAM1].respawn_timer > -1)
+					sprintf(msg_buf + strlen(msg_buf), "%s: %ds\n", teams[TEAM1].name, teams[TEAM1].respawn_timer);
+				if(teams[TEAM2].respawn_timer > -1)
+					sprintf(msg_buf + strlen(msg_buf), "%s: %ds\n", teams[TEAM2].name, teams[TEAM2].respawn_timer);
+				if(use_3teams->value){
+					if(teams[TEAM3].respawn_timer > -1)
+						sprintf(msg_buf + strlen(msg_buf), "%s: %ds\n", teams[TEAM3].name, teams[TEAM3].respawn_timer);
+					}
+				strcat(msg_buf, "\n");
+				lines++;
+			}
+
+			qboolean espcspawns = false;
+			if (espsettings.custom_spawns[0] != NULL)
+				espcspawns = true;
+			sprintf(msg_buf + strlen(msg_buf), "Using %s spawns\n",
+					(espcspawns ? "CUSTOM" : "ORIGINAL"));
+			lines++;
+
+			if(strlen(espsettings.author) > 0) {
+				strcat(msg_buf, "\n");
+				lines++;
+
+				sprintf(msg_buf + strlen(msg_buf), "Espionage configuration by %s\n",
+						espsettings.author);
+				lines++;
+
+				/* no comment without author, grr */
+				if(strlen(espsettings.name) > 0) {
+					/* max line length is 39 chars + new line */
+					Q_strncatz(msg_buf + strlen(msg_buf), espsettings.name, 39);
+					strcat(msg_buf, "\n");
+					lines++;
+				}
+			}
+		}
+
 		/*
 		   Darkmatch
 		 */
@@ -383,10 +530,19 @@ void PrintMOTD(edict_t * ent)
 			else
 				strcat(msg_buf, "Roundlimit: none");
 
-			if ((int)roundtimelimit->value) // What is the roundtimelimit?
-				sprintf(msg_buf + strlen(msg_buf), "  Roundtimelimit: %d\n", (int)roundtimelimit->value);
-			else
-				strcat(msg_buf, "  Roundtimelimit: none\n");
+			if (!esp->value) { // No Roundtimelimits on Espionage
+				if ((int)roundtimelimit->value) // What is the roundtimelimit?
+					sprintf(msg_buf + strlen(msg_buf), "  Roundtimelimit: %d\n", (int)roundtimelimit->value);
+				else
+					strcat(msg_buf, "  Roundtimelimit: none\n");
+			}
+
+			if (esp->value && etv->value) {
+				if ((int) capturelimit->value) // What is the capturelimit?
+					sprintf(msg_buf + strlen(msg_buf), "  Capturelimit: %d\n", (int) capturelimit->value);
+				else
+					strcat(msg_buf, "  Capturelimit: none\n");
+			}
 			lines++;
 		}
 		else if (ctf->value) // If we're in CTF, we want to know the capturelimit
@@ -417,7 +573,7 @@ void PrintMOTD(edict_t * ent)
 			if (tgren->value > 0)
 				sprintf(grenade_num, "%d grenade%s", (int)tgren->value, (int)tgren->value == 1 ? "" : "s");
 
-			sprintf(msg_buf + strlen(msg_buf), "Bandolier w/ %s%s%s\n",
+			sprintf(msg_buf + strlen(msg_buf), " Bandolier w/ %s%s%s\n",
 				!(ir->value) ? "no IR" : "",
 				(tgren->value > 0 && !(ir->value)) ? " & " : "",
 				tgren->value > 0 ? grenade_num : "");

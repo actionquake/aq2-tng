@@ -90,15 +90,22 @@ void RemoveFromTransparentList (edict_t *);
 qboolean OnTransparentList( const edict_t *ent );
 void PrintTransparentList ();
 void CenterPrintAll (const char *msg);
+void CenterPrintTeam (int teamNum, const char *msg);
+void CenterPrintLevelTeam (int teamNum, int printlvl, const char *msg);
 int TeamHasPlayers( int team );
+char* PrintMatchRules(void);
 
 //TNG:Freud - new spawning system
 void NS_GetSpawnPoints ();
 qboolean NS_SelectFarTeamplaySpawnPoint (int team, qboolean teams_assigned[]);
 void NS_SetupTeamSpawnPoints ();
+int OtherTeam(int teamNum);
 
 //PaTMaN - Menu support
 void OpenPMItemMenu (edict_t * ent);
+
+//Expose auto-join functionality
+void JoinTeamAutobalance (edict_t * ent);
 
 typedef struct spawn_distances_s
 {

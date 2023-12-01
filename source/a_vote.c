@@ -2016,7 +2016,7 @@ cvar_t *_InitScrambleVote (ini_t * ini)
 qboolean ScrambleTeams(void)
 {
 	int i, j, numplayers, newteam;
-	edict_t *ent, *players[MAX_CLIENTS], *oldCaptains[TEAM_TOP] = {NULL};
+	edict_t *ent, *players[MAX_CLIENTS], *oldCaptains[TEAM_TOP] = {NULL}, *oldLeaders[TEAM_TOP] = {NULL};
 
 	numplayers = 0;
 	for (i = 0, ent = &g_edicts[1]; i < game.maxclients; i++, ent++)
@@ -2044,6 +2044,8 @@ qboolean ScrambleTeams(void)
 		for (i = TEAM1; i <= teamCount; i++) {
 			oldCaptains[i] = teams[i].captain;
 			teams[i].captain = NULL;
+			if (esp->value)
+				teams[i].leader = NULL;
 		}
 	}
 
@@ -2055,6 +2057,10 @@ qboolean ScrambleTeams(void)
 
 		if (oldCaptains[ent->client->resp.team] == ent && !teams[newteam].captain)
 			teams[newteam].captain = ent;
+		
+		if (esp->value)
+			if (oldLeaders[ent->client->resp.team] == ent && !teams[newteam].leader)
+			teams[newteam].leader = ent;
 
 		ent->client->resp.team = newteam;
 

@@ -324,7 +324,7 @@ team_t teams[TEAM_TOP];
 int	teamCount = 2;
 int gameSettings;
 
-#define MAX_SPAWNS 512		// max DM spawn points supported
+//#define MAX_SPAWNS 512		// moved to g_local.h
 
 edict_t *potential_spawns[MAX_SPAWNS];
 int num_potential_spawns;
@@ -422,6 +422,89 @@ void ReprintMOTD (edict_t * ent, pmenu_t * p)
 	PrintMOTD (ent);
 }
 
+char* PrintMatchRules(void)
+{
+	static char rulesmsg[1024];
+
+	// Espionage rules
+	if (esp->value) {
+		int rndlimit = (int)roundlimit->value;
+		if (atl->value) {
+			if (teamCount == TEAM2) {
+				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leader to win, but don't forget to protect your own!\n",
+					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
+					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name );
+				} else {
+					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leaders to win, but don't forget to protect your own!\n",
+					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
+					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name,
+					teams[TEAM3].name, teams[TEAM3].leader->client->pers.netname, teams[TEAM3].leader_name );
+				}
+				// Roundlimit info
+				static char addmsg[64];
+				Com_sprintf(addmsg, sizeof(addmsg), "\nThe first team to %i points wins!", (int)rndlimit);
+				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
+
+		} else if (etv->value && teams[TEAM1].leader) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!\n\nTeam 1 Respawn Timer: %i seconds\nTeam 2 Respawn Timer: %i seconds\n\nThe first team to %i points wins!\n",
+				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
+				teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
+				(int)teams[TEAM1].respawn_timer, (int)teams[TEAM2].respawn_timer,
+				rndlimit );
+			// Append a little extra if halftime is enabled
+			if(esp_etv_halftime->value && roundlimit->value > 1){
+				static char addmsg[64];
+				Com_sprintf(addmsg, sizeof(addmsg), "Halftime is enabled: Teams switch at round %i", (int)rndlimit/2);
+				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
+			}
+		}
+	}
+	// CTF rules
+	else if (ctf->value)
+	{
+		if (!capturelimit->value) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nCapture the other team's flag!\nNo capturelimit set!\n",
+			teams[TEAM1].name, teams[TEAM2].name );
+		} else {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nCapture the other team's flag!\nThe first team to %s captures wins!\n",
+			teams[TEAM1].name, teams[TEAM2].name, capturelimit->string );
+		}
+	}
+	// Domination rules
+	else if (dom->value)
+	{
+		if (teamCount == TEAM2) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nCapture all of the checkpoints!\n",
+				teams[TEAM1].name, teams[TEAM2].name );
+		} else {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\nvs\n%s\n\nCapture all of the checkpoints!\n",
+				teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
+		}
+	}
+	// This covers both Teamplay and TeamDM
+	else if (!deathmatch->value) 
+	{
+		if (teamCount == TEAM2) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nFrag the other team!\n",
+				teams[TEAM1].name, teams[TEAM2].name );
+		} else if (teamCount == TEAM3) {
+			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\nvs\n%s\n\nFrag the other teams!\n",
+				teams[TEAM1].name, teams[TEAM2].name, teams[TEAM3].name );
+		}
+	}
+	else // If nothing else matches, just say glhf
+	{
+		Com_sprintf( rulesmsg, sizeof( rulesmsg ), "Frag 'em all!  Good luck and have fun!\n");
+	}
+
+    if (rulesmsg[0] == '\0') {
+        // Handle empty
+        return "";
+    }
+
+	return rulesmsg;
+}
+
 void JoinTeamAuto (edict_t * ent, pmenu_t * p)
 {
 	int i, team = TEAM1, num1 = 0, num2 = 0, num3 = 0, score1, score2, score3;
@@ -466,6 +549,11 @@ void JoinTeamAuto (edict_t * ent, pmenu_t * p)
 	}
 
 	JoinTeam(ent, team, 0);
+}
+
+void JoinTeamAutobalance (edict_t * ent)
+{
+	JoinTeamAuto(ent, NULL);
 }
 
 void JoinTeam1 (edict_t * ent, pmenu_t * p)
@@ -1112,6 +1200,11 @@ char *TeamName (int team)
 		return "None";
 }
 
+/*
+AssignSkin
+
+Anytime this is called, all player models are re-skinned
+*/
 void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 {
 	int playernum = ent - g_edicts - 1;
@@ -1125,8 +1218,37 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 		default_skin = force_skin->string;
 	}
 
-	if( (ctf->value || dom->value) && ! matchmode->value )
-	{
+	// Accounts for each Espionage mode, in matchmode or not
+	if (esp->value){
+		/*
+		In ATL mode (espsettings == 0), all teams must have a leader, and will have their own skin
+		In ETV mode (espsettings == 1), only TEAM1 gets a leader.
+		*/
+	
+		switch (ent->client->resp.team) {
+		case TEAM1:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].skin);
+			if (IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM1].leader_skin);
+			}
+			break;
+		case TEAM2:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].skin);
+			if ((atl->value) && IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM2].leader_skin);
+			}
+			break;
+		case TEAM3:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].skin);
+			if ((atl->value) && IS_LEADER(ent)){
+				Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, teams[TEAM3].leader_skin);
+			}
+			break;
+		default:
+			Com_sprintf(skin, sizeof(skin), "%s\\%s", ent->client->pers.netname, default_skin);
+			break;
+		}
+	} else if ((ctf->value || dom->value) && !matchmode->value) {
 		// forcing CTF model
 		if(ctf_model->string[0]) {
 			/* copy at most bytes that the skin name itself fits in with the delimieter and NULL */
@@ -1154,7 +1276,7 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 			break;
 		}
 	}
-	else
+	else // Normal teamplay mode, not CTF/DOM/ESP/Matchmode
 	{
 		switch (ent->client->resp.team)
 		{
@@ -1234,6 +1356,11 @@ void Team_f (edict_t * ent)
 		return;
 	}
 	//PG BUND - END (Tourney extension)
+
+	if (esp->value && IS_LEADER(ent)) {
+		gi.cprintf(ent, PRINT_MEDIUM, "You are a team leader, you cannot change teams.\n");
+		return;
+	}
 	
 	Q_strncpyz(team, gi.args(), sizeof(team));
 	t = team;
@@ -1356,6 +1483,13 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 	if (level.intermission_framenum)
 		return;
 
+	// Espionage join a game in progress
+	if (esp->value && team_round_going && ent->inuse && ent->client->resp.team)
+	{
+		PutClientInServer (ent);
+		//AddToTransparentList (ent);
+	}
+
 	if (!(gameSettings & GS_ROUNDBASED) && team_round_going && ent->inuse && ent->client->resp.team)
 	{
 		PutClientInServer (ent);
@@ -1377,6 +1511,8 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 		SelectRandomWeaponAndItem(ent, weapmenu);
 	}
 
+	gi.cprintf(ent, PRINT_CHAT, "You joined Team %i (%s).\n", desired_team, TeamName(desired_team));
+
 	teams_changed = true;
 }
 
@@ -1395,6 +1531,9 @@ void LeaveTeam (edict_t * ent)
 	IRC_printf (IRC_T_GAME, "%n left %n team.", ent->client->pers.netname, genderstr);
 
 	MM_LeftTeam( ent );
+
+	if (esp->value)
+		EspLeaderLeftTeam ( ent );
 
 	ent->client->resp.joined_team = 0;
 	ent->client->resp.team = NOTEAM;
@@ -1767,6 +1906,8 @@ void ResetScores (qboolean playerScores)
 	ctfgame.last_capture_team = 0;
 	ctfgame.halftime = 0;
 
+	espsettings.capturestreak = 0;
+
 	if(!playerScores)
 		return;
 
@@ -1784,6 +1925,7 @@ void ResetScores (qboolean playerScores)
 		ent->client->resp.roundStreakKills = 0;
 		ent->client->resp.ctf_caps = 0;
 		ent->client->resp.ctf_capstreak = 0;
+		ent->client->resp.esp_capstreak = 0;
 		ent->client->resp.deaths = 0;
 		ent->client->resp.team_kills = 0;
 		ent->client->resp.team_wounds = 0;
@@ -1802,8 +1944,40 @@ void CenterPrintAll (const char *msg)
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
+		if (ent->is_bot)
+			continue;
 		if (ent->inuse)
 			gi.centerprintf (ent, "%s", msg);
+	}
+}
+
+void CenterPrintTeam (int teamNum, const char *msg)
+{
+	int i;
+	edict_t *ent;
+	
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (ent->is_bot)
+			continue;
+		if (ent->inuse && ent->client->resp.team == teamNum)
+			gi.centerprintf (ent, "%s", msg);
+	}
+}
+
+void CenterPrintLevelTeam (int teamNum, int printlvl, const char *msg)
+{
+	int i;
+	edict_t *ent;
+	
+	for (i = 0; i < game.maxclients; i++)
+	{
+		ent = &g_edicts[1 + i];
+		if (ent->is_bot)
+			continue;
+		if (ent->inuse && ent->client->resp.team == teamNum)
+			gi.cprintf(ent, printlvl, "%s", msg);
 	}
 }
 
@@ -1874,32 +2048,66 @@ int CheckForWinner()
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
-	for (i = 0; i < game.maxclients; i++)
-	{
-		ent = &g_edicts[1 + i];
-		if (!ent->inuse || ent->solid == SOLID_NOT)
-			continue;
-
-		teamNum = game.clients[i].resp.team;
-		if (teamNum == NOTEAM)
-			continue;
-
-		players[teamNum]++;
-	}
-
-	teamsWithPlayers = 0;
-	for (i = TEAM1; i <= teamCount; i++)
-	{
-		if (players[i]) {
-			teamsWithPlayers++;
-			teamNum = i;
+	if (esp->value){
+		if (atl->value) {
+			if (teamCount == TEAM2) {
+				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
+					return WINNER_TIE;
+				} else if (teams[TEAM1].leader_dead) {
+					return TEAM2;
+				} else if (teams[TEAM2].leader_dead) {
+					return TEAM1;
+				}
+			} else if (teamCount == TEAM3) {
+				if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) {
+					return WINNER_TIE;
+				} else if (teams[TEAM1].leader_dead && teams[TEAM2].leader_dead) {
+					return TEAM3;
+				} else if (teams[TEAM1].leader_dead && teams[TEAM3].leader_dead) {
+					return TEAM2;
+				} else if (teams[TEAM2].leader_dead && teams[TEAM3].leader_dead) {
+					return TEAM1;
+				} 
+			}
+		} else if (etv->value) {
+			// Check if this value is 1, which means the escorting team wins
+			// By default it is 0
+			if (espsettings.escortcap == true) {
+				//gi.dprintf("The winner was team %d\n", TEAM1);
+				return TEAM1;
+			} else if (teams[TEAM1].leader_dead){
+				//gi.dprintf("The winner was team %d\n", TEAM2);
+				return TEAM2;
+			}
 		}
+	//gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
+	
+	} else if (!esp->value) {
+		for (i = 0; i < game.maxclients; i++){
+			ent = &g_edicts[1 + i];
+			if (!ent->inuse || ent->solid == SOLID_NOT)
+				continue;
+
+			teamNum = game.clients[i].resp.team;
+			if (teamNum == NOTEAM)
+				continue;
+
+			players[teamNum]++;
+		}
+		teamsWithPlayers = 0;
+		for (i = TEAM1; i <= teamCount; i++){
+			if (players[i]) {
+				teamsWithPlayers++;
+				teamNum = i;
+			}
+		}
+		if (teamsWithPlayers)
+			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
+
+		//gi.dprintf("I was called somehow\n\n\n");
+		return WINNER_TIE;
 	}
-
-	if (teamsWithPlayers)
-		return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
-
-	return WINNER_TIE;
+	return WINNER_NONE;
 }
 
 // CheckForForcedWinner: A winner is being forced, find who it is.
@@ -1909,6 +2117,33 @@ int CheckForForcedWinner()
 	int health[TEAM_TOP] = { 0 };
 	int i, teamNum, bestTeam, secondBest;
 	edict_t *ent;
+
+	/*
+	In ATL mode, if all leaders are alive, the round ends in a tie
+	health notwithstanding
+	In ETV mode, if the escorting team has
+	not captured the point, the defending team wins
+	*/
+	if (esp->value){
+		if (atl->value){
+			if (teamCount == TEAM2){
+				if (IS_ALIVE(teams[TEAM1].leader) && 
+				IS_ALIVE(teams[TEAM2].leader)){
+					return WINNER_TIE;
+				}
+			} else if (teamCount == TEAM3){
+				if (IS_ALIVE(teams[TEAM1].leader) && 
+				IS_ALIVE(teams[TEAM2].leader) && 
+				IS_ALIVE(teams[TEAM3].leader)){
+					return WINNER_TIE;
+				}
+			}
+		} else if (etv->value){
+			if (espsettings.escortcap == false){
+				return TEAM2;
+			}
+		}
+	}
 
 	for (i = 0; i < game.maxclients; i++)
 	{
@@ -1957,6 +2192,9 @@ static void SpawnPlayers(void)
 {
 	int i;
 	edict_t *ent;
+
+	if (esp->value)
+		NS_SetupTeamSpawnPoints ();
 
 	if (gameSettings & GS_ROUNDBASED)
 	{
@@ -2075,8 +2313,12 @@ void StartRound ()
 
 static void StartLCA(void)
 {
-	if (gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED))
+	if ((gameSettings & (GS_WEAPONCHOOSE|GS_ROUNDBASED)))
 		CleanLevel();
+
+	if (esp->value)
+		// Re-skin everyone to ensure only one leader skin
+		EspSkinCheck();
 
 	if (use_tourney->value && !tourney_lca->value)
 	{
@@ -2090,6 +2332,11 @@ static void StartLCA(void)
 		lights_camera_action = 43;	// TempFile changed from 41
 	}
 	SpawnPlayers();
+
+	if (esp->value) {
+		EspResetCapturePoint();
+		EspAnnounceDetails(false);
+	}
 }
 
 // FindOverlap: Find the first (or next) overlapping player for ent.
@@ -2156,6 +2403,10 @@ void MakeAllLivePlayersObservers (void)
 	if(ctf->value)
 		CTFResetFlags();
 
+	// Reset Espionage flag
+	if (esp->value && etv->value)
+		EspResetCapturePoint();
+
 	for (i = 0; i < game.maxclients; i++)
 	{
 		ent = &g_edicts[1 + i];
@@ -2216,11 +2467,11 @@ qboolean CheckTimelimit( void )
 			return true;
 		}
 		
-		// CTF with use_warnings should have the same warnings when the map is ending as it does for halftime (see CTFCheckRules).
+		// CTF or Espionage with use_warnings should have the same warnings when the map is ending as it does for halftime (see CTFCheckRules).
 		// Otherwise, use_warnings should warn about 3 minutes and 1 minute left, but only if there aren't round ending warnings.
 		if( use_warnings->value && (ctf->value || ! roundtimelimit->value) )
 		{
-			if( timewarning < 3 && ctf->value && level.matchTime >= timelimit->value * 60 - 10 )
+			if( timewarning < 3 && (ctf->value && level.matchTime >= timelimit->value * 60 - 10 ))
 			{
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/10_0.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 3;
@@ -2230,6 +2481,11 @@ qboolean CheckTimelimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/1_minute.wav"), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
+				if (esp->value){
+					if (esp_debug->value)
+						gi.dprintf("%s: level.matchTime = %f\n", __FUNCTION__, level.matchTime);
+					EspAnnounceDetails(true);
+				}
 			}
 			else if( timewarning < 1 && (! ctf->value) && timelimit->value > 3 && level.matchTime >= (timelimit->value - 3) * 60 )
 			{
@@ -2280,6 +2536,11 @@ static qboolean CheckRoundTimeLimit( void )
 				CenterPrintAll( "1 MINUTE LEFT..." );
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "tng/1_minute.wav" ), 1.0, ATTN_NONE, 0.0 );
 				timewarning = 2;
+				if (esp->value) {
+					if (esp_debug->value)
+						gi.dprintf("%s: roundLimitFrames = %d\n", __FUNCTION__, roundLimitFrames);
+					EspAnnounceDetails(true);
+				}
 			}
 			else if (roundLimitFrames <= 1800 && timewarning < 1 && roundtimelimit->value > 3)
 			{
@@ -2345,6 +2606,8 @@ int WonGame (int winner)
 
 		if(use_warnings->value)
 			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_teamwins[0], 1.0, ATTN_NONE, 0.0);
+		if (esp->value)
+			EspEndOfRoundCleanup();
 		PrintScores ();
 	}
 	else
@@ -2374,7 +2637,9 @@ int WonGame (int winner)
 				gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_teamwins[winner], 1.0, ATTN_NONE, 0.0);
 			// end of changing sound dir
 			teams[winner].score++;
-
+			if (esp->value) {
+				EspEndOfRoundCleanup();
+			}
 			gi.cvar_forceset(teams[winner].teamscore->name, va("%i", teams[winner].score));
 
 			PrintScores ();
@@ -2454,6 +2719,10 @@ int CheckTeamRules (void)
 
 	if (holding_on_tie_check)
 	{
+		if (esp->value) {
+			holding_on_tie_check = 0;
+			checked_tie = 1;
+		}
 		holding_on_tie_check--;
 		if (holding_on_tie_check > 0)
 			return 0;
@@ -2466,19 +2735,39 @@ int CheckTeamRules (void)
 		team_round_countdown--;
 		if(!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers ())
+			if (!esp->value && BothTeamsHavePlayers())
 			{
+				in_warmup = 0;
+				team_game_going = 1;
+				StartLCA();
+			}
+			else if (esp->value && AllTeamsHaveLeaders() && BothTeamsHavePlayers())
+			{
+				if (esp_debug->value)
+					gi.dprintf("%s: Esp mode on, All teams have leaders, Both teams have players\n", __FUNCTION__);
 				in_warmup = 0;
 				team_game_going = 1;
 				StartLCA();
 			}
 			else
 			{
-				if (!matchmode->value || TeamsReady())
+				if (esp->value && !AllTeamsHaveLeaders()) {
+					if (atl->value){
+						CenterPrintAll ("All Teams Must Have a Leader!\nType 'leader' in console to volunteer!");
+					} else if (etv->value) {
+						CenterPrintTeam(TEAM1, "Team 1 Must Have a Leader!\nType 'leader' in console to volunteer!");
+						CenterPrintTeam(TEAM2, "Waiting on Team 1 to select a leader...");
+					}
+					EspEndOfRoundCleanup();
+				} else if (!matchmode->value || TeamsReady()) {
 					CenterPrintAll ("Not enough players to play!");
-				else
+						// Remove all leaders if they are bots
+						if (esp->value){
+							
+						}
+				} else {
 					CenterPrintAll ("Both Teams Must Be Ready!");
-
+				}
 				team_round_going = team_round_countdown = team_game_going = 0;
 				MakeAllLivePlayersObservers ();
 			}
@@ -2540,6 +2829,17 @@ int CheckTeamRules (void)
 	{
 		RunWarmup();
 
+		if (esp->value) {
+			if (!AllTeamsHaveLeaders())
+				return 1;
+
+			if (EspCheckRules()){
+				EndDMLevel();
+				team_round_going = team_round_countdown = team_game_going = 0;
+				return 1;
+			}
+		}
+
 		if (CheckTimelimit())
 			return 1;
 
@@ -2551,7 +2851,7 @@ int CheckTeamRules (void)
 
 		if (!team_round_countdown)
 		{
-			if (BothTeamsHavePlayers ())
+			if (BothTeamsHavePlayers() || (esp->value && AllTeamsHaveLeaders() && BothTeamsHavePlayers()))
 			{
 				if (use_tourney->value)
 				{
@@ -2563,7 +2863,11 @@ int CheckTeamRules (void)
 				{
 					int warmup_length = max( warmup->value, round_begin->value );
 					char buf[64] = "";
-					sprintf( buf, "The round will begin in %d seconds!", warmup_length );
+					if (esp->value && BothTeamsHavePlayers()) {
+						sprintf( buf, "All teams are ready!\nThe round will begin in %d seconds!", warmup_length );
+					} else {
+						sprintf( buf, "The round will begin in %d seconds!", warmup_length );
+					}
 					CenterPrintAll( buf );
 					team_round_countdown = warmup_length * 10 + 2;
 
@@ -2611,10 +2915,12 @@ int CheckTeamRules (void)
 				return 1;
 			}
 
-			if (!BothTeamsHavePlayers())
+			if (!BothTeamsHavePlayers() || (esp->value && !AllTeamsHaveLeaders()))
 			{
 				if (!matchmode->value || TeamsReady())
 					CenterPrintAll( "Not enough players to play!" );
+				else if (esp->value && !AllTeamsHaveLeaders())
+					CenterPrintAll ("Both Teams Must Have a Leader!\nType 'leader' in console to volunteer!");
 				else
 					CenterPrintAll( "Both Teams Must Be Ready!" );
 
@@ -2625,6 +2931,24 @@ int CheckTeamRules (void)
 				while (CheckForUnevenTeams( NULL ));
 			}
 			return 0; //CTF and teamDM dont need to check winner, its not round based
+		}
+		else if ((gameSettings & GS_ROUNDBASED))
+		// Team round is going, and it's GS_ROUNDBASED
+		{
+			if (esp->value) {
+				//Debugging
+				if (esp_debug->value)
+					EspDebug();
+
+				if (EspCheckRules()){
+					EndDMLevel();
+					team_round_going = team_round_countdown = team_game_going = 0;
+					return 1;
+				}
+				GenerateMedKit(false);
+				EspCleanUp();
+				EspLeaderCheck();
+			}
 		}
 
 		winner = CheckForWinner();
@@ -2925,6 +3249,13 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 			tpic[TEAM1][0] = 30;
 			tpic[TEAM2][0] = 31;
 		}
+		else if(esp->value)
+		{
+			base_x += 8;
+			tpic[TEAM1][0] = STAT_TEAM1_PIC;
+			tpic[TEAM2][0] = STAT_TEAM2_PIC;
+			tpic[TEAM3][0] = STAT_TEAM3_PIC;
+		}
 		else if(teamdm->value)
 		{
 			scoreWidth = 3;
@@ -3110,7 +3441,7 @@ void A_ScoreboardMessage (edict_t * ent, edict_t * killer)
 						totalaliveprinted++;
 
 					playername[0] = 0;
-					if (IS_CAPTAIN(cl_ent)) {
+					if (IS_CAPTAIN(cl_ent) || IS_LEADER(cl_ent)) {
 						playername[0] = '@';
 						playername[1] = 0;
 					}
@@ -3426,7 +3757,7 @@ void TallyEndOfLevelTeamScores (void)
 	}
 
 	// Stats begin
-	#if USE_AQTION
+	#ifdef USE_AQTION
 		if (stat_logs->value && !matchmode->value) {
 			LogMatch(); // Generates end of game stats
 			LogEndMatchStats(); // Generates end of match logs
@@ -3437,13 +3768,17 @@ void TallyEndOfLevelTeamScores (void)
 	// Stats end
 }
 
-
 /*
  * Teamplay spawning functions...
  */
 
 edict_t *SelectTeamplaySpawnPoint (edict_t * ent)
 {
+	// Print all of the teamplay_spawns
+	// int i;
+	// for (i = 0; i < num_potential_spawns; i++)
+	// 	gi.dprintf ("teamplay_spawn %d: %s\n", i, potential_spawns[i]->classname);
+	// 	gi.dprintf("%s was called!\n\n\n", __FUNCTION__);
   return teamplay_spawns[ent->client->resp.team - 1];
 }
 
@@ -3750,4 +4085,24 @@ void NS_SetupTeamSpawnPoints ()
 		if (l != NS_randteam && NS_SelectFarTeamplaySpawnPoint(l, teams_assigned) == false)
 			return;
 	}
+}
+
+/* 
+Simple function that just returns the opposite team number
+Obviously, do not use this for 3team functions
+*/
+int OtherTeam(int teamNum)
+{
+	if (teamNum < 0 || teamNum > TEAM2) {
+		gi.dprintf("OtherTeam() was called but parameter supplied is not 1 or 2");
+		return 0;
+	}
+
+	if (teamNum == 1)
+		return TEAM2;
+	else
+		return TEAM1;
+
+	// Returns zero if teamNum is not 1 or 2
+	return 0;
 }

@@ -465,6 +465,8 @@ cvar_t *spectator_hud;
 cvar_t *medkit_drop;
 cvar_t *medkit_time;
 cvar_t *medkit_instant;
+cvar_t *medkit_max;
+cvar_t *medkit_value;
 
 #ifndef NO_BOTS
 cvar_t *ltk_jumpy;
@@ -480,7 +482,20 @@ cvar_t *ltk_classic;
 cvar_t *jump;			// jumping mod
 
 // BEGIN AQ2 ETE
-cvar_t *e_enhancedSlippers;
+cvar_t *esp;
+cvar_t *atl;
+cvar_t *etv;
+cvar_t *esp_atl;
+cvar_t *esp_punish;
+cvar_t *esp_etv_halftime;
+cvar_t *esp_showleader;
+cvar_t *esp_showtarget;
+cvar_t *esp_leaderequip;
+cvar_t *esp_leaderenhance;
+cvar_t *esp_enhancedslippers;
+cvar_t *esp_matchmode;
+cvar_t *esp_respawn_uvtime;
+cvar_t *esp_debug;
 // END AQ2 ETE
 
 // 2022
@@ -506,6 +521,8 @@ cvar_t *am_team;  // Attract mode team, which team do you want the bots to join
 cvar_t *zoom_comp; // Compensates zoom-in frames with ping (high ping = fewer frames)
 cvar_t *item_kit_mode;  // Toggles item kit mode
 cvar_t *gun_dualmk23_enhance; // Enables laser sight for dual mk23 pistols
+cvar_t *printrules;  // Centerprint game rules when the countdown begins
+cvar_t *timedmsgs; // Toggles timed messages
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;
@@ -743,6 +760,9 @@ void ClientEndServerFrames (void)
 		if (ent->client->chase_target)
 			UpdateChaseCam(ent);
 	}
+
+	if (timedmsgs->value)
+		FireTimedMessages();
 }
 
 /*
@@ -982,7 +1002,7 @@ void CheckDMRules (void)
 			{
 				gi.bprintf (PRINT_HIGH, "Fraglimit hit.\n");
 				IRC_printf (IRC_T_GAME, "Fraglimit hit.");
-				if (ctf->value)
+				if (ctf->value || esp->value)
 					ResetPlayers ();
 				EndDMLevel ();
 				return;
@@ -1252,3 +1272,42 @@ void CheckNeedPass (void)
 }
 
 //FROM 3.20 END
+
+// This doesn't work yet but I'll keep trying
+edict_t *ChooseRandomPlayer(int teamNum, qboolean allowBot)
+{
+	int i, j;
+	edict_t *ent;
+	edict_t *plist[ MAX_CLIENTS ] = {NULL};
+	int pcount = 0;
+
+	// Supplied paramter must be a valid team number
+	if (teamNum < TEAM1 && teamNum > TEAM3)
+		return 0;
+	if (teamCount == 2 && teamNum == 3) {
+		// Somehow passing team 3 in a 2-team match?
+		gi.dprintf("Warning: Unable to ChooseRandomPlayer for a team that doesn't exist\n");
+		return 0;
+	}
+
+	for (i = 0, ent = &g_edicts[1]; i < game.maxclients; i++, ent++)
+	{
+		// Client must exist and be on a team, and not be a sub
+		if (!ent->inuse || !ent->client || !ent->client->resp.team || ent->client->resp.subteam)
+			continue;
+		if (!allowBot)
+			if (ent->is_bot)
+				continue;
+		pcount++;
+		players[i] = ent;
+		//gi.dprintf("%s\n", players[i]->client->pers.netname);
+	}
+
+	j = rand() % pcount;
+
+	ent = plist[j];
+	gi.dprintf("%s\n", ent->client->pers.netname);
+	
+	// Returns a random player
+	return ent;
+}

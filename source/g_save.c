@@ -415,6 +415,8 @@ void InitGame( void )
 	medkit_drop = gi.cvar( "medkit_drop", "0", 0 );
 	medkit_time = gi.cvar( "medkit_time", "30", 0 );
 	medkit_instant = gi.cvar( "medkit_instant", "0", 0 );
+	medkit_max = gi.cvar( "medkit_max", "3", 0 );
+	medkit_value = gi.cvar( "medkit_value", "25", 0 );
 	dom = gi.cvar( "dom", "0", /*CVAR_SERVERINFO | */ CVAR_LATCH ); //Removed in favor of 'gmf' (gamemodeflags)
 	use_grapple = gi.cvar( "use_grapple", "0", 0 );
 	mv_public = gi.cvar( "mv_public", "0", 0 );	//slicer 
@@ -548,7 +550,30 @@ void InitGame( void )
 	use_mvd2 = gi.cvar( "use_mvd2", "0", 0 );	// JBravo: q2pro MVD2 recording. 0 = off, 1 = on
 
 	// BEGIN AQ2 ETE
-	e_enhancedSlippers = gi.cvar( "e_enhancedSlippers", "0", 0);
+	esp = gi.cvar( "esp", "0", /*CVAR_SERVERINFO | */ CVAR_LATCH );  //Removed in favor of 'gm' (gamemode)
+	if (esp->value) {
+		atl = gi.cvar( "atl", "1", CVAR_LATCH );
+		etv = gi.cvar( "etv", "0", CVAR_LATCH );
+	};
+	esp_atl = gi.cvar( "esp_atl", "0", 0 ); // This forces ATL mode even if ETV mode is set in the .esp file
+	esp_punish = gi.cvar("esp_punish", "0", 0);
+	esp_etv_halftime = gi.cvar("esp_etv_halftime", "0", 0);
+	if (esp_etv_halftime->value && !roundlimit->value) {
+		// Disabling halftime because roundlimit is not set
+		disablecvar(esp_etv_halftime, "No Roundlimit was set");
+	}
+	esp_showleader = gi.cvar("esp_showleader", "1", 0);
+	esp_showtarget = gi.cvar("esp_showtarget", "1", 0);
+	esp_leaderequip = gi.cvar("esp_leaderequip", "1", 0);
+	esp_leaderenhance = gi.cvar("esp_leaderenhance", "0", 0);
+	esp_enhancedslippers = gi.cvar("esp_enhancedslippers", "0", 0);
+	esp_matchmode = gi.cvar("esp_matchmode", "0", 0);
+	esp_respawn_uvtime = gi.cvar("esp_respawn_uvtime", "10", 0);
+	if (esp_respawn_uvtime->value > 20) {
+		gi.dprintf("esp_respawn_uvtime was set too high, setting to 2 seconds\n");
+		gi.cvar_forceset("esp_respawn_uvtime", "20");
+	}
+	esp_debug = gi.cvar("esp_debug", "0", 0); // Set to 1 to enable debug messages for Espionage
 	// END AQ2 ETE
 
 	// 2022
@@ -568,7 +593,7 @@ void InitGame( void )
 	gm = gi.cvar("gm", "dm", CVAR_SERVERINFO);
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
-  	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
+  g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);
@@ -583,6 +608,8 @@ void InitGame( void )
 	zoom_comp = gi.cvar("zoom_comp", "0", 0);
 	item_kit_mode = gi.cvar("item_kit_mode", "0", CVAR_LATCH);
 	gun_dualmk23_enhance = gi.cvar("gun_dualmk23_enhance", "0", 0);
+	printrules = gi.cvar("printrules", "0", 0);
+	timedmsgs = gi.cvar("timedmsgs", "0", 0);
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION

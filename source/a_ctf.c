@@ -230,6 +230,8 @@ void CTFSetTeamSpawns(int team, char *str)
 	if(team == TEAM2)
 		team_spawn_name = "info_player_team2";
 
+
+
 	/* find and remove all team spawns for this team */
 	while ((spawn = G_Find(spawn, FOFS(classname), team_spawn_name)) != NULL) {
 		G_FreeEdict (spawn);
@@ -931,7 +933,7 @@ void CTFCalcScores(void)
 			ctfgame.total2 += game.clients[i].resp.score;
 	}
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	// Needed to add this here because this is called separately from TallyEndOfLevelTeamScores (teamplay)
 		if (stat_logs->value) {
 			LogMatch();  // Generates end of game stats
@@ -1386,7 +1388,7 @@ void CTFCapReward(edict_t * ent)
 		ReadySpecialWeapon(ent);
 	}
 
-	// give health times cap streak
+	// give health times cap streak and awards
 	ent->health = ent->max_health * (ent->client->resp.ctf_capstreak > 4 ? 4 : ent->client->resp.ctf_capstreak);
 
 	if(ent->client->resp.ctf_capstreak == 2)
@@ -1398,5 +1400,11 @@ void CTFCapReward(edict_t * ent)
 	else if(ent->client->resp.ctf_capstreak > 4)
 		gi.centerprintf(ent, "CAPTURED YET AGAIN!\n\nYou have been rewarded QUAD health and %d times your ammo!\n\nNow go get some more!",
 				ent->client->resp.ctf_capstreak);
-	else	gi.centerprintf(ent, "CAPTURED!\n\nYou have been rewarded.\n\nNow go get some more!");
+	if (use_rewards->value) {
+		if(ent->client->resp.ctf_capstreak == 5)
+			Announce_Reward(ent, DOMINATING);
+		if(ent->client->resp.ctf_capstreak == 10)
+			Announce_Reward(ent, UNSTOPPABLE);
+	}
+	else	gi.cprintf(ent, PRINT_MEDIUM, "CAPTURED!\n\nYou have been rewarded.\n\nNow go get some more!");
 }

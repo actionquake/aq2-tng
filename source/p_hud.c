@@ -119,6 +119,9 @@ void BeginIntermission(edict_t *targ)
 	int i;
 	edict_t *ent;
 
+	// Clear all timed messages
+	free(timedMessages);
+
 	if (level.intermission_framenum)
 		return;			// already activated
 
@@ -129,7 +132,7 @@ void BeginIntermission(edict_t *targ)
 	} else if (teamplay->value) {
 		TallyEndOfLevelTeamScores();
 	}
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	// Generates stats for non-CTF, Teamplay or Matchmode
 	else if (stat_logs->value && !matchmode->value) {
 		LogMatch();
@@ -639,6 +642,8 @@ void G_SetStats (edict_t * ent)
 		SetCTFStats (ent);
 	else if (dom->value)
 		SetDomStats (ent);
+	else if (esp->value)
+		SetEspStats (ent);
 	else if (teamplay->value)
 		A_Scoreboard (ent);
 	//FIREBLADE

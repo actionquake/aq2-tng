@@ -620,8 +620,7 @@ Use_Weapon(edict_t* ent, gitem_t* item)
 
 
 
-edict_t*
-FindSpecWeapSpawn(edict_t* ent)
+edict_t *FindSpecWeapSpawn(edict_t* ent)
 {
 	edict_t* spot = NULL;
 
@@ -643,8 +642,7 @@ FindSpecWeapSpawn(edict_t* ent)
 	return spot;
 }
 
-static void
-SpawnSpecWeap(gitem_t* item, edict_t* spot)
+static void SpawnSpecWeap(gitem_t* item, edict_t* spot)
 {
 	/*        edict_t *ent;
 			vec3_t  forward, right;
@@ -716,8 +714,7 @@ void temp_think_specweap(edict_t* ent)
 
 
 // zucc make dropped weapons respawn elsewhere
-void
-ThinkSpecWeap(edict_t* ent)
+void ThinkSpecWeap(edict_t* ent)
 {
 	edict_t* spot;
 
@@ -1449,7 +1446,10 @@ Weapon_Generic(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		if (ent->client->ps.gunframe == FRAME_DEACTIVATE_LAST)
 		{
 			ent->client->weaponstate = WEAPON_BUSY;
-			ent->client->idle_weapon = BANDAGE_TIME;
+			if (esp->value && esp_leaderenhance->value)
+				ent->client->idle_weapon = ENHANCED_BANDAGE_TIME;
+			else
+				ent->client->idle_weapon = BANDAGE_TIME;
 			return;
 		}
 		ent->client->ps.gunframe++;
@@ -3195,7 +3195,10 @@ Weapon_Generic_Knife(edict_t* ent, int FRAME_ACTIVATE_LAST,
 		if (ent->client->ps.gunframe == FRAME_DEACTIVATE_LAST)
 		{
 			ent->client->weaponstate = WEAPON_BUSY;
-			ent->client->idle_weapon = BANDAGE_TIME;
+			if (esp->value && esp_leaderenhance->value)
+				ent->client->idle_weapon = ENHANCED_BANDAGE_TIME;
+			else
+				ent->client->idle_weapon = BANDAGE_TIME;
 			return;
 		}
 		ent->client->ps.gunframe++;
@@ -3690,7 +3693,10 @@ void Weapon_Gas(edict_t* ent)
 		if (ent->client->ps.gunframe == 0)
 		{
 			ent->client->weaponstate = WEAPON_BUSY;
-			ent->client->idle_weapon = BANDAGE_TIME;
+			if (esp->value && esp_leaderenhance->value)
+				ent->client->idle_weapon = ENHANCED_BANDAGE_TIME;
+			else
+				ent->client->idle_weapon = BANDAGE_TIME;
 			return;
 		}
 		ent->client->ps.gunframe--;

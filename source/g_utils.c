@@ -749,3 +749,4 @@ void enablecvar(cvar_t *cvar, char *msg)
 
 	gi.cvar_forceset(cvar->name, "1");
 }
+

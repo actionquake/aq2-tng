@@ -4,7 +4,7 @@
 #
 
 PACKAGE=aq2-tng
-VERSION=2.82
+VERSION=2.83
 FILE_VERSION:=$(VERSION)
 
 ## Export env TNG_BUILD_FOR=WIN32 or TNG_BUILD_FOR=WIN64 to build 32-bit exe on 64-bit arch
@@ -158,7 +158,7 @@ GAME_OBJS = \
 	g_utils.o g_weapon.o \
 	p_antilag.o p_client.o p_hud.o p_view.o p_weapon.o q_shared.o \
 	tng_stats.o tng_flashlight.o tng_irc.o tng_ini.o tng_balancer.o \
-	g_grapple.o a_dom.o tng_jump.o
+	g_grapple.o a_dom.o tng_jump.o a_esp.o
 
 ifndef NO_BOTS
 GAME_OBJS += acesrc/acebot_ai.o acesrc/acebot_nodes.o acesrc/bot_combat.o \
