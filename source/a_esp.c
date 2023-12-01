@@ -1017,7 +1017,7 @@ void EspRespawnLCA(edict_t *ent)
 		return;
 
 	if (ent->client->resp.team && !IS_ALIVE(ent)){
-		int timercalc = (ent->client->respawn_framenum - level.framenum * HZ);
+		int timercalc = (ent->client->respawn_framenum - level.framenum);
 
 		if (esp_debug->value)
 			gi.dprintf("%s: Level framenum is %d, respawn timer was %d for %s, timercalc is %i, esp_respawn_sounds was %i\n", 
