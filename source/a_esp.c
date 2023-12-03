@@ -1339,6 +1339,9 @@ void SetEspStats( edict_t *ent )
 	}
 
 	// Now set the HUD
+	// Set the new respawn icon indicator
+	ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
+
 	ent->client->ps.stats[ STAT_TEAM1_HEADER ] = level.pic_esp_teamtag[ TEAM1 ];
 	ent->client->ps.stats[ STAT_TEAM2_HEADER ] = level.pic_esp_teamtag[ TEAM2 ];
 
@@ -1918,6 +1921,12 @@ void GenerateMedKit(qboolean instant)
 
 void EspSetupStatusbar( void )
 {
+
+	Q_strncatz(level.statusbar,
+		// Respawn indicator
+		"yb -220 " "if 9 xr -24 pic 9 endif " "xr -92 num 4 10 ",
+		sizeof(level.statusbar) );
+
 	Q_strncatz(level.statusbar, 
 		// Red Team
 		"yb -172 " "if 24 xr -24 pic 24 endif " "xr -92 num 4 26 "

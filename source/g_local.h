@@ -844,6 +844,7 @@ typedef struct
   int pic_esp_teamtag[TEAM_TOP];
   int pic_esp_teamicon[TEAM_TOP];
   int pic_esp_leadericon[TEAM_TOP];
+  int pic_esp_respawn_icon;
 }
 level_locals_t;
 

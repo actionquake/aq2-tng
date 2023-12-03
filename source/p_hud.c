@@ -537,25 +537,35 @@ void G_SetStats (edict_t * ent)
 		//
 		// timers
 		//
-		if (ent->client->quad_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_quad");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->quad_framenum - level.framenum) / HZ;
-		}
-		else if (ent->client->invincible_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_invulnerability");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->invincible_framenum - level.framenum) / HZ;
-		}
-		else if (ent->client->enviro_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_envirosuit");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->enviro_framenum - level.framenum) / HZ;
-		}
-		else if (ent->client->breather_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_rebreather");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / HZ;
+		// if (ent->client->quad_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_quad");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->quad_framenum - level.framenum) / HZ;
+		// }
+		// else if (ent->client->invincible_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_invulnerability");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->invincible_framenum - level.framenum) / HZ;
+		// }
+		// else if (ent->client->enviro_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_envirosuit");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->enviro_framenum - level.framenum) / HZ;
+		// }
+		// else if (ent->client->breather_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_rebreather");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / HZ;
+		// }
+		// else
+		if (esp->value) {
+			if (ent->client->respawn_framenum > 0 && ent->client->respawn_framenum > level.framenum > 0){
+				ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
+				ent->client->ps.stats[STAT_TIMER] = (ent->client->respawn_framenum - level.framenum) / HZ;
+			} else {
+				ent->client->ps.stats[STAT_TIMER_ICON] = 0;
+				ent->client->ps.stats[STAT_TIMER] = 0;
+			}
 		}
 		else
 		{
