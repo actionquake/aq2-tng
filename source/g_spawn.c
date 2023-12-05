@@ -1660,6 +1660,7 @@ void SP_worldspawn (edict_t * ent)
 	level.pic_health = gi.imageindex("i_health");
 	gi.imageindex("field_3");
 	level.pic_esp_respawn_icon = gi.imageindex("i_ctf1t"); // Espionage respawn icon
+	level.pic_teamplay_timer_icon = gi.imageindex("i_ctf1t"); // Teamplay timer icon
 
 	// zucc - preload sniper stuff
 	level.pic_sniper_mode[1] = gi.imageindex("scope2x");

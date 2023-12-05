@@ -4,9 +4,9 @@ author=darksaint
 name=Get the Fish!
 
 [respawn]
-red=10
-blue=10
-green=10
+red=8
+blue=8
+green=8
 
 [spawns]
 red=<1079 206 -660 180>,<1043 -496 -570 140>

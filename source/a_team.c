@@ -2984,7 +2984,14 @@ int CheckTeamRules (void)
 
 void A_Scoreboard (edict_t * ent)
 {
-  int wteam = 0;
+	int wteam = 0;
+
+	// int timeRemaining = (level.matchTime >= (timelimit->value - 1) * 60);
+
+	// if (timelimit->value && timeRemaining < 60){
+	// 		ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
+	// 		ent->client->ps.stats[STAT_TIMER] = timeRemaining / HZ;
+	// }
 
 	if (ent->client->layout == LAYOUT_SCORES)
 	{

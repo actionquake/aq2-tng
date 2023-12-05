@@ -558,20 +558,20 @@ void G_SetStats (edict_t * ent)
 		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / HZ;
 		// }
 		// else
-		if (esp->value) {
-			if (ent->client->respawn_framenum > 0 && ent->client->respawn_framenum > level.framenum > 0){
-				ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
-				ent->client->ps.stats[STAT_TIMER] = (ent->client->respawn_framenum - level.framenum) / HZ;
-			} else {
-				ent->client->ps.stats[STAT_TIMER_ICON] = 0;
-				ent->client->ps.stats[STAT_TIMER] = 0;
-			}
-		}
-		else
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = 0;
-			ent->client->ps.stats[STAT_TIMER] = 0;
-		}
+		// if (esp->value) {
+		// 	if (!IS_LEADER(ent) && ent->client->respawn_framenum > 0 && ent->client->respawn_framenum > level.framenum > 0){
+		// 		ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
+		// 		ent->client->ps.stats[STAT_TIMER] = (ent->client->respawn_framenum - level.framenum) / HZ;
+		// 	} else {
+		// 		ent->client->ps.stats[STAT_TIMER_ICON] = 0;
+		// 		ent->client->ps.stats[STAT_TIMER] = 0;
+		// 	}
+		// }
+		// else
+		// {
+		ent->client->ps.stats[STAT_TIMER_ICON] = 0;
+		ent->client->ps.stats[STAT_TIMER] = 0;
+		//}
 
 		//
 		// selected item

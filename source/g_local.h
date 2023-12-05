@@ -839,6 +839,7 @@ typedef struct
   float matchTime;
   float emptyTime;
   int weapon_sound_framenum;
+  int pic_teamplay_timer_icon;
 
   int pic_leaderskin[TEAM_TOP];  
   int pic_esp_teamtag[TEAM_TOP];

@@ -1361,6 +1361,17 @@ void SetEspStats( edict_t *ent )
 		//ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
 	}
 
+	// Shows the timer and icon, but does not count down ent is Leader, it stays at 0
+
+	if (ent->client->respawn_framenum > 0 &&
+	ent->client->respawn_framenum - level.framenum > 0){
+		ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
+		if (!IS_LEADER(ent))
+			ent->client->ps.stats[STAT_TIMER] = (ent->client->respawn_framenum - level.framenum) / HZ;
+		else
+			ent->client->ps.stats[STAT_TIMER] = 0;
+	}
+
 	// During gameplay, flash your team's icon
 	if( (team_round_going || lights_camera_action > 0) && ((level.realFramenum / FRAMEDIV) & 4) )
 	{
