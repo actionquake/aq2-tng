@@ -1090,6 +1090,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.dprintf ("Highlander Enabled - Maxclient setting too high: Forcing maxclients to %d\n", 21);
 			gi.cvar_forceset(maxclients->name, va("%d", 21));
 		}
+		if (ltk_loadbots->value || am->value){
+			gi.dprintf ("Highlander Enabled - Forcing bots off\n");
+			gi.cvar_forceset(ltk_loadbots->name, "0");
+			gi.cvar_forceset(am->name, "0");
+		}
 	}
 	else if (matchmode->value)
 	{
