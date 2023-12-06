@@ -1311,6 +1311,32 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 	if (!skip_menuclose)
 		PMenu_Close (ent);
 
+	if (highlander->value){
+		// Count number of players on each team
+			int team1count = 0;
+			int team2count = 0;
+			int team3count = 0;
+			int i;
+			for (i = 0; i < maxclients->value; i++) {
+				edict_t *player = &g_edicts[i + 1];
+				if (!player->inuse || !player->client)
+					continue;
+				if (player->client->resp.team == TEAM1)
+					team1count++;
+				else if (player->client->resp.team == TEAM2)
+					team2count++;
+				else if (player->client->resp.team == TEAM3)
+					team3count++;
+			}
+			// Check if the desired team size exceeds the maximum allowed size
+			if ((desired_team == TEAM1 && team1count >= 7) || 
+				(desired_team == TEAM2 && team2count >= 7) || 
+				(desired_team == TEAM3 && team3count >= 7)) {
+				gi.cprintf(ent, PRINT_HIGH, "Highlander Mode: Cannot join team %s: Max players per team is 7\n", TeamName(desired_team));
+				return;
+			}
+	}
+
 	oldTeam = ent->client->resp.team;
 	if (oldTeam == desired_team || ent->client->pers.mvdspec)
 		return;
