@@ -445,7 +445,7 @@ char* PrintMatchRules(void)
 				}
 				// Roundlimit info
 				static char addmsg[64];
-				Com_sprintf(addmsg, sizeof(addmsg), "\nThe first team to %i points wins!", (int)rndlimit);
+				Com_sprintf(addmsg, sizeof(addmsg), "\n** The first team to %i points wins! **", (int)rndlimit);
 				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
 
 		} else if (etv->value) {
@@ -458,11 +458,11 @@ char* PrintMatchRules(void)
 						(int)teams[TEAM1].respawn_timer, (int)teams[TEAM2].respawn_timer,
 						rndlimit );
 			// Append a little extra if halftime is enabled
-			if(esp_etv_halftime->value && roundlimit->value > 3){
-				static char addmsg[64];
-				Com_sprintf(addmsg, sizeof(addmsg), "\n** Halftime is enabled: Teams switch at round %i **", (int)rndlimit/2);
-				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
-			}
+				if(esp_etv_halftime->value && roundlimit->value > 3){
+					static char addmsg[64];
+					Com_sprintf(addmsg, sizeof(addmsg), "\n** Halftime is enabled: Teams switch at round %i **", (int)rndlimit/2);
+					Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
+				}
 			}
 		}
 	}
@@ -489,7 +489,7 @@ char* PrintMatchRules(void)
 		}
 	}
 	// This covers both Teamplay and TeamDM
-	else if (!deathmatch->value) 
+	else if (teamplay->value)
 	{
 		if (teamCount == TEAM2) {
 			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s\nvs\n%s\n\nFrag the other team!\n",
