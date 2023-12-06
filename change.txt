@@ -7,7 +7,8 @@ Changes in TNG 2.83
 From 2.83
 + esp: Value [0/1], default 0, enables Espionage mode (ETV and ATL).  Review Espionage.md for details
 + printrules: Value [0/1], default 0 (disabled).  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes
-+ auto_join 2: Added an option for automatically joining a team using the JoinTeamAuto logic.
++ timedmsgs: Value [0/1], default 0 (disabled).  If enabled, messages will be printed in the game, determined by state and time in the round
++ auto_join 2: Added an option for automatically joining a team using the JoinTeamAuto logic.  Automatically disabled for matchmode.
 
 From 2.82
 + mapvote_next_limit: Value in seconds, restricts players from voting for a map at the very end of the match while still enabling mapvote_next features

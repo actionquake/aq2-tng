@@ -558,9 +558,9 @@ void InitGame( void )
 	esp_atl = gi.cvar( "esp_atl", "0", 0 ); // This forces ATL mode even if ETV mode is set in the .esp file
 	esp_punish = gi.cvar("esp_punish", "0", 0);
 	esp_etv_halftime = gi.cvar("esp_etv_halftime", "0", 0);
-	if (esp_etv_halftime->value && !roundlimit->value) {
+	if (esp_etv_halftime->value && roundlimit->value < 3) {
 		// Disabling halftime because roundlimit is not set
-		disablecvar(esp_etv_halftime, "No Roundlimit was set");
+		disablecvar(esp_etv_halftime, "Roundlimit set too low for halftime, minimum is 4 rounds");
 	}
 	esp_showleader = gi.cvar("esp_showleader", "1", 0);
 	esp_showtarget = gi.cvar("esp_showtarget", "1", 0);

@@ -589,19 +589,6 @@ Features
   sv_mvd_enable must also be set to 1.  The demos go into the action/demos folder on the server and contain
   all players points of view for the entire match.   To activate this simply set use_mvd2 1 in your server config.
 
-* Espionage Additions
-  Taken from AQ2:ETE, these additions are optional server vars to create a larger variety of gameplay.
-  Review the document called Espionage.md to understand how to run a server and how to create and edit scene files.
-
-  esp [0/1] - Activates Espionage mode.  Default 0
-  atl [0/1] - Sets Assassinate the Leader mode, if esp is enabled.
-  etv [0/1] - Sets Escort the VIP mode, will default to Assassinate the Leader if the map configuration is missing or malformed
-  esp_punish [0/1/2] - Sets punishment mode for losing team.  0 is default post-round teamplay with FF on.  1 immediately kills all remaining members of the losing team.  2 generates an invunerability shield on the remaining winning team members for the duration of post-round celebrations, so they can deal with the remaining losing team members in style
-  esp_etv_halftime [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the timelimit has passed
-  esp_showleader [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
-  esp_showtarget [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
-  esp_leaderequip [0/1/2/3] - Adjusts the loadout of all leaders, see Espionage.md for details
-  esp_enhancedslippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
 
 * Latency Compensation
   Antilag
@@ -672,6 +659,18 @@ Features
 
 * Espionage
   See included Espionage.md file for details
+  Taken from AQ2:ETE, these additions are optional server vars to create a larger variety of gameplay.
+  Review the document called Espionage.md to understand how to run a server and how to create and edit scene files.
+
+  esp [0/1] - Activates Espionage mode.  Default 0
+  atl [0/1] - Sets Assassinate the Leader mode, if esp is enabled.
+  etv [0/1] - Sets Escort the VIP mode, will default to Assassinate the Leader if the map configuration is missing or malformed
+  esp_punish [0/1/2] - Sets punishment mode for losing team.  0 is default post-round teamplay with FF on.  1 immediately kills all remaining members of the losing team.  2 generates an invunerability shield on the remaining winning team members for the duration of post-round celebrations, so they can deal with the remaining losing team members in style
+  esp_etv_halftime [0/1] - Sets halftime rule of swapping teams in an ETV scenario after half of the timelimit has passed
+  esp_showleader [0/1] - GHUD setting, enabling this will show a marker over your team's leader at all times so that you can find him
+  esp_showtarget [0/1] - GHUD setting, enabling this will show a marker over your escort target, where the leader needs to reach to win the round
+  esp_leaderequip [0/1/2/3] - Adjusts the loadout of all leaders, see Espionage.md for details
+  esp_enhancedslippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
   
 --------------------------------------------------------------------------------------------------------------------
 Contact Information

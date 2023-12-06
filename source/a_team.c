@@ -430,7 +430,10 @@ char* PrintMatchRules(void)
 	if (esp->value) {
 		int rndlimit = (int)roundlimit->value;
 		if (atl->value) {
-			if (teamCount == TEAM2) {
+			if (!teams[TEAM1].leader && !teams[TEAM2].leader && !teams[TEAM3].leader) {
+				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "Frag the other team's leader to win, but don't forget to protect your own!\n");
+			}
+			else if (teamCount == TEAM2) {
 				Com_sprintf( rulesmsg, sizeof( rulesmsg ), "%s leader: %s (%s)\n\n%s leader: %s (%s)\n\nFrag the other team's leader to win, but don't forget to protect your own!\n",
 					teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, teams[TEAM1].leader_name,
 					teams[TEAM2].name, teams[TEAM2].leader->client->pers.netname, teams[TEAM2].leader_name );
@@ -445,17 +448,21 @@ char* PrintMatchRules(void)
 				Com_sprintf(addmsg, sizeof(addmsg), "\nThe first team to %i points wins!", (int)rndlimit);
 				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
 
-		} else if (etv->value && teams[TEAM1].leader) {
-			Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!\n\nTeam 1 Respawn Timer: %i seconds\nTeam 2 Respawn Timer: %i seconds\n\nThe first team to %i points wins!\n",
-				teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
-				teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
-				(int)teams[TEAM1].respawn_timer, (int)teams[TEAM2].respawn_timer,
-				rndlimit );
+		} else if (etv->value) {
+				if (!teams[TEAM1].leader)
+					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\nTeam 1 is trying to escort their leader to the briefcase!\n\nTeam 2 is tasked with preventing that from happening!\n");
+				else if (teams[TEAM1].leader) {
+					Com_sprintf( rulesmsg, sizeof( rulesmsg ), "\n%s: Escort your leader %s to the %s! Don't get them killed!\n\n%s: DO NOT let %s get to the %s! Use lethal force!\n\nTeam 1 Respawn Timer: %i seconds\nTeam 2 Respawn Timer: %i seconds\n\nThe first team to %i points wins!\n",
+						teams[TEAM1].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
+						teams[TEAM2].name, teams[TEAM1].leader->client->pers.netname, espsettings.target_name, 
+						(int)teams[TEAM1].respawn_timer, (int)teams[TEAM2].respawn_timer,
+						rndlimit );
 			// Append a little extra if halftime is enabled
-			if(esp_etv_halftime->value && roundlimit->value > 1){
+			if(esp_etv_halftime->value && roundlimit->value > 3){
 				static char addmsg[64];
-				Com_sprintf(addmsg, sizeof(addmsg), "Halftime is enabled: Teams switch at round %i", (int)rndlimit/2);
+				Com_sprintf(addmsg, sizeof(addmsg), "\n** Halftime is enabled: Teams switch at round %i **", (int)rndlimit/2);
 				Q_strncatz( rulesmsg, addmsg, sizeof( rulesmsg ) );
+			}
 			}
 		}
 	}
