@@ -1935,21 +1935,21 @@ void EspSetupStatusbar( void )
 
 	Q_strncatz(level.statusbar,
 		// Respawn indicator
-		"yb -220 " "if 9 xr -24 pic 9 endif " "xr -92 num 4 10 ",
+		"yb -220 " "if 9 xr -28 pic 9 endif " "xr -100 num 4 10 ",
 		sizeof(level.statusbar) );
 
 	Q_strncatz(level.statusbar, 
 		// Red Team
-		"yb -172 " "if 24 xr -24 pic 24 endif " "xr -92 num 4 26 "
+		"yb -172 " "if 24 xr -32 pic 24 endif " "xr -100 num 4 26 "
 		// Blue Team
-		"yb -148 " "if 25 xr -24 pic 25 endif " "xr -92 num 4 27 ",
+		"yb -140 " "if 25 xr -32 pic 25 endif " "xr -100 num 4 27 ",
 		sizeof(level.statusbar) );
 	
 	if( teamCount >= 3 )
 	{
 		Q_strncatz(level.statusbar, 
 			// Green Team
-			"yb -124 " "if 30 xr -24 pic 30 endif " "xr -92 num 4 31 ",
+			"yb -108 " "if 30 xr -32 pic 30 endif " "xr -100 num 4 31 ",
 			sizeof(level.statusbar) );
 	}
 }
