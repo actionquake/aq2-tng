@@ -846,6 +846,10 @@ typedef struct
   int pic_esp_teamicon[TEAM_TOP];
   int pic_esp_leadericon[TEAM_TOP];
   int pic_esp_respawn_icon;
+
+  // Point of interest
+  vec3_t poi_origin;
+  vec3_t poi_angle;
 }
 level_locals_t;
 
@@ -1542,6 +1546,7 @@ qboolean OnLadder( edict_t *ent );
 // p_hud.c
 //
 void MoveClientToIntermission (edict_t * client);
+void MoveClientToPOI(edict_t *ent, edict_t *poi);
 void G_SetStats (edict_t * ent);
 void G_CheckChaseStats (edict_t * ent);
 void ValidateSelectedItem (edict_t * ent);

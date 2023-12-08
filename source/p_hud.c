@@ -193,6 +193,74 @@ void BeginIntermission(edict_t *targ)
 }
 
 /*
+  ======================================================================
+  Point of Interest
+  
+  This isn't perfect, but it gets you in the 'area' of a point of interest
+  Could use some refactoring, but it works for now.
+  Works much like intermission, but it more or less 'teleports' spectators
+  and those who are not 'spawned in' to the point of interest.
+  ======================================================================
+*/
+void MoveClientToPOI(edict_t *ent, edict_t *poi)
+{
+	PMenu_Close(ent);
+
+	VectorCopy(level.poi_origin, ent->s.origin);
+    ent->s.origin[0] -= 50;
+    ent->s.origin[1] -= 50;
+    ent->s.origin[2] += 50;
+
+    ent->client->ps.pmove.origin[0] = (level.poi_origin[0] - 50) * 8;
+    ent->client->ps.pmove.origin[1] = (level.poi_origin[1] - 50) * 8;
+    ent->client->ps.pmove.origin[2] = (level.poi_origin[2] + 50) * 8;
+
+    vec3_t direction;
+    VectorSubtract(level.poi_origin, ent->s.origin, direction);
+    vectoangles(direction, ent->client->ps.viewangles);
+	
+	VectorClear(ent->client->ps.kick_angles);
+	ent->client->ps.gunindex = 0;
+	ent->client->ps.blend[3] = 0;
+	ent->client->ps.rdflags &= ~RDF_UNDERWATER;
+	ent->client->ps.stats[STAT_FLASHES] = 0;
+
+	// clean up powerup info
+	ent->client->quad_framenum = 0;
+	ent->client->invincible_framenum = 0;
+	ent->client->breather_framenum = 0;
+	ent->client->enviro_framenum = 0;
+	ent->client->grenade_blew_up = false;
+	ent->client->grenade_framenum = 0;
+
+	ent->watertype = 0;
+	ent->waterlevel = 0;
+	ent->viewheight = 0;
+	ent->s.modelindex = 0;
+	ent->s.modelindex2 = 0;
+	ent->s.modelindex3 = 0;
+	ent->s.modelindex4 = 0;
+	ent->s.effects = 0;
+	ent->s.renderfx = 0;
+	ent->s.sound = 0;
+	ent->s.event = 0;
+	ent->s.solid = 0;
+	ent->solid = SOLID_NOT;
+	ent->svflags = SVF_NOCLIENT;
+
+	ent->client->resp.sniper_mode = SNIPER_1X;
+	ent->client->desired_fov = 90;
+	ent->client->ps.fov = 90;
+	ent->client->ps.stats[STAT_SNIPER_ICON] = 0;
+	ent->client->pickup_msg_framenum = 0;
+
+#ifndef NO_BOTS
+	if( ent->is_bot )
+		return;
+#endif
+}
+
+/*
   ==================
   DeathmatchScoreboardMessage
   

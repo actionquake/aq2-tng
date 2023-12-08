@@ -2803,6 +2803,36 @@ int CheckTeamRules (void)
 					game.ai_ent_found = false;
 					gi.cvar_forceset(stat_logs->name, "1");
 				}
+
+				// Move spectators to the capturepoint
+				if (esp->value && etv->value) {
+					// find the capturepoint
+					edict_t *capturepoint;
+					edict_t *ent;
+					capturepoint = G_Find(NULL, FOFS(classname), "item_flag");
+					if (!capturepoint) // Somehow we're in ETV with no capture point?	
+						gi.dprintf("ERROR: No capture point (item_flag) found for ETV!?\n");
+
+					if (capturepoint) {
+						gi.dprintf("INFO: capture point (item_flag) found\n");
+						VectorCopy( capturepoint->s.origin, level.poi_origin );
+						VectorCopy( capturepoint->s.angles, level.poi_angle );
+					}
+
+					// move all spectators to the capture point
+					for (i = 0, ent = g_edicts + 1; i < game.maxclients; i++, ent++)
+					{
+						if (!ent->inuse || !ent->client || ent->is_bot)
+							continue;
+						if (ent->solid != SOLID_NOT)
+							continue;
+						// if (!ent->client->pers.spectator)
+						// 	continue;
+						gi.dprintf("INFO: moving spectators\n");
+
+						MoveClientToPOI(ent, capturepoint);
+					}
+				}
 				#endif
 			}
 		}
