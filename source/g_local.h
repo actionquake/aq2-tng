@@ -833,6 +833,7 @@ typedef struct
   float matchTime;
   float emptyTime;
   int weapon_sound_framenum;
+  int teamcount[MAX_TEAMS];
 }
 level_locals_t;
 
