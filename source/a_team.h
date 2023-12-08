@@ -42,6 +42,8 @@
 #define MAX_TEAMS       3
 #define TEAM_TOP        (MAX_TEAMS+1)
 
+#define HIGHLANDER_MAX_PLAYERS 7
+
 #define WINNER_NONE     NOTEAM
 #define WINNER_TIE      TEAM_TOP
 

@@ -1244,6 +1244,36 @@ int TP_GetTeamFromArg(const char *name)
 	return -1;
 }
 
+qboolean TeamSizeLimiter(edict_t *ent, int teamNum, int teamSize)
+{
+	// // Count number of players on each team
+	// int team1count = 0;
+	// int team2count = 0;
+	// int team3count = 0;
+	// int i;
+	// for (i = 0; i < maxclients->value; i++) {
+	// 	edict_t *player = &g_edicts[i + 1];
+	// 	if (!player->inuse || !player->client)
+	// 		continue;
+	// 	if (player->client->resp.team == TEAM1)
+	// 		team1count++;
+	// 	else if (player->client->resp.team == TEAM2)
+	// 		team2count++;
+	// 	else if (player->client->resp.team == TEAM3)
+	// 		team3count++;
+	// }
+	// Check if the desired team size exceeds the maximum allowed size
+	if (highlander->value) {
+		if ((teamNum == TEAM1 && level.teamcount[TEAM1] >= teamSize) || 
+			(teamNum == TEAM2 && level.teamcount[TEAM2] >= teamSize) || 
+			(teamNum == TEAM3 && level.teamcount[TEAM3] >= teamSize)) {
+			gi.cprintf(ent, PRINT_HIGH, "Highlander Mode: Cannot join team %s: Max players per team is %i\n", TeamName(teamNum), teamSize);
+			return false;
+		}
+	}
+	return true;
+}
+
 void Team_f (edict_t * ent)
 {
 	char *t;
@@ -1311,31 +1341,6 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 	if (!skip_menuclose)
 		PMenu_Close (ent);
 
-	if (highlander->value){
-		// Count number of players on each team
-			int team1count = 0;
-			int team2count = 0;
-			int team3count = 0;
-			int i;
-			for (i = 0; i < maxclients->value; i++) {
-				edict_t *player = &g_edicts[i + 1];
-				if (!player->inuse || !player->client)
-					continue;
-				if (player->client->resp.team == TEAM1)
-					team1count++;
-				else if (player->client->resp.team == TEAM2)
-					team2count++;
-				else if (player->client->resp.team == TEAM3)
-					team3count++;
-			}
-			// Check if the desired team size exceeds the maximum allowed size
-			if ((desired_team == TEAM1 && team1count >= 7) || 
-				(desired_team == TEAM2 && team2count >= 7) || 
-				(desired_team == TEAM3 && team3count >= 7)) {
-				gi.cprintf(ent, PRINT_HIGH, "Highlander Mode: Cannot join team %s: Max players per team is 7\n", TeamName(desired_team));
-				return;
-			}
-	}
 
 	oldTeam = ent->client->resp.team;
 	if (oldTeam == desired_team || ent->client->pers.mvdspec)
@@ -1367,10 +1372,23 @@ void JoinTeam (edict_t * ent, int desired_team, int skip_menuclose)
 			}
 		}
 	}
-
+	
+	if (highlander->value){
+		int i;
+		for (i = TEAM1; i < TEAM_TOP; i++) {
+			if (!TeamSizeLimiter(ent, i, HIGHLANDER_MAX_PLAYERS)) {
+				return;
+			}
+		}
+	}
+	
 	MM_LeftTeam( ent );
 
 	a = (oldTeam == NOTEAM) ? "joined" : "changed to";
+
+	// Team count update
+	level.teamcount[ent->client->resp.team]--;
+	level.teamcount[desired_team]++;
 
 	ent->client->resp.team = desired_team;
 	s = Info_ValueForKey (ent->client->pers.userinfo, "skin");
@@ -1446,6 +1464,8 @@ void LeaveTeam (edict_t * ent)
 	IRC_printf (IRC_T_GAME, "%n left %n team.", ent->client->pers.netname, genderstr);
 
 	MM_LeftTeam( ent );
+
+	level.teamcount[ent->client->resp.team]--;
 
 	ent->client->resp.joined_team = 0;
 	ent->client->resp.team = NOTEAM;
@@ -1606,12 +1626,19 @@ void OpenWeaponMenu (edict_t * ent)
 			if (!WPF_ALLOWED(menuEntry->itemNum))
 				continue;
 
-			// If the weapon is available and either has no owner or belongs to the player's team, add it to the menu
-			if (weapon_status[menu_items[i].itemNum][ent->client->resp.team].owner == NULL ||
-			weapon_status[menu_items[i].itemNum][weapon_status[menu_items[i].itemNum][ent->client->resp.team].owner->client->resp.team].owner->client->resp.team != ent->client->resp.team) {
-				weapmenu[pos].text = menu_itemnames[menu_items[i].itemNum];
-				weapmenu[pos].SelectFunc = menu_items[i].SelectFunc;
-				pos++;
+			char *weaponName = menu_itemnames[menu_items[i].itemNum];
+			if (ent->client->pers.chosenWeapon && ent->client->pers.chosenWeapon->typeNum == menu_items[i].itemNum) {
+				char *modifiedWeaponName = (char *)malloc(sizeof(char) * 32); // Dynamically allocate memory
+				snprintf(modifiedWeaponName, 32, "@%s", weaponName);
+				weaponName = modifiedWeaponName;
+			}
+
+			weapmenu[pos].text = weaponName;
+			weapmenu[pos].SelectFunc = menu_items[i].SelectFunc;
+			pos++;
+			// If weaponName was modified, free the allocated memory
+			if (ent->client->pers.chosenWeapon && ent->client->pers.chosenWeapon->typeNum == menu_items[i].itemNum) {
+				free(weaponName);
 			}
 		}
 
@@ -2037,9 +2064,13 @@ static void SpawnPlayers(void)
 
 		// make sure teamplay spawners always have some weapon, warmup starts only after weapon selected
 		if (!ent->client->pers.chosenWeapon) {
-			if (WPF_ALLOWED(MP5_NUM)) {
+			if (!highlander->value){
+				ent->client->pers.chosenWeapon = GET_ITEM(MP5_NUM);  // Highlander mode removes default MP5
+			} else if (WPF_ALLOWED(MP5_NUM) && !highlander->value) {
 				ent->client->pers.chosenWeapon = GET_ITEM(MP5_NUM);
-			} else if (WPF_ALLOWED(MK23_NUM)) {
+			}
+
+			if (WPF_ALLOWED(MK23_NUM)) {
 				ent->client->pers.chosenWeapon = GET_ITEM(MK23_NUM);
 			} else if (WPF_ALLOWED(KNIFE_NUM)) {
 				ent->client->pers.chosenWeapon = GET_ITEM(KNIFE_NUM);
