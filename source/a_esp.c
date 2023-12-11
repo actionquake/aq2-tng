@@ -999,13 +999,13 @@ void EspRespawnLCA(edict_t *ent)
 
 	// Print out all conditions below as debug prints
 	// This is massively noisy so I'm setting it so that esp_debug must be > 1 to see it
-	// if (esp_debug->value > 1)
-	// 	gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
-	// 	gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
-	// 	gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
-	// 	gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
-	// 	gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
-	// 	gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
+	if (esp_debug->value > 1)
+		gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
+		gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
+		gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
+		gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
+		gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
+		gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
 
 	// Basically we just want real, dead players who are in the respawn waiting period
 	if (!ent->inuse ||
@@ -1088,47 +1088,6 @@ void EspRespawnPlayer(edict_t *ent)
 	}
 }
 
-void EspAssignTeam(gclient_t * who)
-{
-	edict_t *player;
-	int i, team1count = 0, team2count = 0, team3count = 0;
-
-	who->resp.esp_state = ESP_STATE_START;
-
-	if (!DMFLAGS(DF_ESP_FORCEJOIN)) {
-		who->resp.team = NOTEAM;
-		return;
-	}
-
-	for (i = 1; i <= game.maxclients; i++) {
-		player = &g_edicts[i];
-		if (!player->inuse || player->client == who)
-			continue;
-		switch (player->client->resp.team) {
-		case TEAM1:
-			team1count++;
-			break;
-		case TEAM2:
-			team2count++;
-			break;
-		case TEAM3:
-			team3count++;
-		}
-	}
-	if (team1count < team2count)
-		who->resp.team = TEAM1;
-	else if (team2count < team1count)
-		who->resp.team = TEAM2;
-	else if (team3count < team1count && team3count < team2count)
-		who->resp.team = TEAM3;
-	else if (rand() & 1)
-		who->resp.team = TEAM1;
-	else
-		who->resp.team = TEAM2;
-
-	teams_changed = true;
-}
-
 /*
 Internally used only, spot check if leader is alive
 depending on the game mode
@@ -1145,7 +1104,8 @@ qboolean _EspLeaderAliveCheck(edict_t *ent, edict_t *leader, int espmode)
 		return false;
 
 	if (espmode == ESPMODE_ATL) {
-		if (teams[leader->client->resp.team].leader)
+		if (teams[leader->client->resp.team].leader &&
+		IS_ALIVE(teams[leader->client->resp.team].leader))
 			return true;
 		else
 			return false;
@@ -1361,7 +1321,7 @@ void SetEspStats( edict_t *ent )
 		//ent->client->ps.stats[ STAT_TEAM3_LEADERPIC ] = level.pic_esp_leadericon[ TEAM3 ];
 	}
 
-	// Shows the timer and icon, but does not count down ent is Leader, it stays at 0
+	// Shows the timer and icon, but does not count down if ent is Leader, it stays at 0
 
 	if (ent->client->respawn_framenum > 0 &&
 	ent->client->respawn_framenum - level.framenum > 0){
