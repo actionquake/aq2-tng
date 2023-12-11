@@ -998,14 +998,14 @@ void EspRespawnLCA(edict_t *ent)
 {
 
 	// Print out all conditions below as debug prints
-	// This is massively noisy so I'm setting it so that esp_debug must be > 1 to see it
-	if (esp_debug->value > 1)
-		gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
-		gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
-		gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
-		gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
-		gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
-		gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
+	// This is massively noisy so I'm setting it so that esp_debug must be 2 to see it
+	// if (esp_debug->value == 2)
+	// 	gi.dprintf("%s: ent->inuse is %d\n", __FUNCTION__, ent->inuse);
+	// 	gi.dprintf("%s: ent->client->resp.team is %d\n", __FUNCTION__, ent->client->resp.team);
+	// 	gi.dprintf("%s: ent->client->respawn_framenum is %d\n", __FUNCTION__, ent->client->respawn_framenum);
+	// 	gi.dprintf("%s: IS_LEADER(ent) is %d\n", __FUNCTION__, IS_LEADER(ent));
+	// 	gi.dprintf("%s: ent->is_bot is %d\n", __FUNCTION__, ent->is_bot);
+	// 	gi.dprintf("%s: team_round_going is %d\n", __FUNCTION__, team_round_going);
 
 	// Basically we just want real, dead players who are in the respawn waiting period
 	if (!ent->inuse ||
@@ -1445,8 +1445,8 @@ qboolean EspCheckETVRules(void)
 
 		if(!espsettings.halftime && (t1 + t2 == roundlimitwarn)){
 			if( use_warnings->value && !halftimeMessageAdded ){
-				EspTimedMessageHandler(TEAM1, NULL, 3, ESP_HALFTIME_WARNING);
 				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/incoming.wav"), 1.0, ATTN_NONE, 0.0 );
+				EspTimedMessageHandler(TEAM1, NULL, 3, ESP_HALFTIME_WARNING);
 				halftimeMessageAdded = true;
 			}
 		} else if(!espsettings.halftime && (t1 + t2 == (roundlimit->value / 2))){
