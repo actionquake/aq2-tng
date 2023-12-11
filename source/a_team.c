@@ -597,6 +597,13 @@ void SelectWeapon9(edict_t *ent, pmenu_t *p)
 	unicastSound(ent, gi.soundindex("weapons/mk23slide.wav"), 1.0);
 }
 
+void UnequipWeapon(edict_t *ent)
+{
+	ent->client->pers.chosenWeapon = NULL;
+	PMenu_Close(ent);
+	unicastSound(ent, gi.soundindex("weapons/swish.wav"), 1.0);
+}
+
 void SelectItem1(edict_t *ent, pmenu_t *p)
 {
 	ent->client->pers.chosenItem = GET_ITEM(KEV_NUM);
@@ -3897,9 +3904,11 @@ qboolean Highlander_Check(edict_t *ent, int weaponNum)
 		return false;
 	}
 
-	// If the player already selected this weapon, return true
+	// If the player already selected this weapon, unequip it
     if (ent->client->pers.chosenWeapon != NULL && ent->client->pers.chosenWeapon->typeNum == weaponNum) {
-		gi.cprintf(ent, PRINT_HIGH, "Highlander Mode: You already own that weapon\n");
+		gi.cprintf(ent, PRINT_HIGH, "Highlander Mode: Unequipping weapon to make it available to others\n");
+		weapon_status[ent->client->pers.chosenWeapon->typeNum][ent->client->resp.team].owner = NULL;
+		UnequipWeapon(ent);
     }
 
 	if (weaponChange){
