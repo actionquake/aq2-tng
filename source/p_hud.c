@@ -200,6 +200,10 @@ void BeginIntermission(edict_t *targ)
   Could use some refactoring, but it works for now.
   Works much like intermission, but it more or less 'teleports' spectators
   and those who are not 'spawned in' to the point of interest.
+
+  Points of interest are generally on the ground, so this adds 25 units
+  to each axis to move the camera in the area without being directly 
+  on top of the point of interest.
   ======================================================================
 */
 void MoveClientToPOI(edict_t *ent, edict_t *poi)
@@ -207,13 +211,13 @@ void MoveClientToPOI(edict_t *ent, edict_t *poi)
 	PMenu_Close(ent);
 
 	VectorCopy(level.poi_origin, ent->s.origin);
-    ent->s.origin[0] -= 50;
-    ent->s.origin[1] -= 50;
-    ent->s.origin[2] += 50;
+    ent->s.origin[0] -= 25;
+    ent->s.origin[1] -= 25;
+    ent->s.origin[2] += 25;
 
-    ent->client->ps.pmove.origin[0] = (level.poi_origin[0] - 50) * 8;
-    ent->client->ps.pmove.origin[1] = (level.poi_origin[1] - 50) * 8;
-    ent->client->ps.pmove.origin[2] = (level.poi_origin[2] + 50) * 8;
+    ent->client->ps.pmove.origin[0] = (level.poi_origin[0] - 25) * 8;
+    ent->client->ps.pmove.origin[1] = (level.poi_origin[1] - 25) * 8;
+    ent->client->ps.pmove.origin[2] = (level.poi_origin[2] + 25) * 8;
 
     vec3_t direction;
     VectorSubtract(level.poi_origin, ent->s.origin, direction);

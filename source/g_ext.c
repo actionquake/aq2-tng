@@ -92,10 +92,6 @@ int G_customizeentityforclient(edict_t *clent, edict_t *ent, entity_state_t *sta
 		if (!teamplay->value) // don't use indicators in non-teamplay
 			return false;
 
-		// How to assign an arrow to the flag?
-		// if (esp->value && use_indicators->value == 2 && clent->classname == "item_flag") 
-		// 	ent->s.effects = EF_COLOR_SHELL;
-
 		// Espionage allows indicators for leaders if set to 2
 		if (esp->value && use_indicators->value == 2 && esp_showleader->value && clent->client->resp.team) {
 			// Quad is a blue glow, pent is a red glow

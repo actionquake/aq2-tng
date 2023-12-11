@@ -1440,27 +1440,28 @@ qboolean EspCheckETVRules(void)
 	}
 
 	// This is checking for conditions involving halftime
-	if (!esp_etv_halftime->value)
-		return false;
+	if (esp_etv_halftime->value) {
+		static qboolean halftimeMessageAdded = false;
 
-	static qboolean halftimeMessageAdded = false;
-
-	if(!espsettings.halftime && (t1 + t2 == roundlimitwarn)){
-		if( use_warnings->value && !halftimeMessageAdded ){
-			EspTimedMessageHandler(TEAM1, NULL, 3, ESP_HALFTIME_WARNING);
-			gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/incoming.wav"), 1.0, ATTN_NONE, 0.0 );
-			halftimeMessageAdded = true;
+		if(!espsettings.halftime && (t1 + t2 == roundlimitwarn)){
+			if( use_warnings->value && !halftimeMessageAdded ){
+				EspTimedMessageHandler(TEAM1, NULL, 3, ESP_HALFTIME_WARNING);
+				gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("world/incoming.wav"), 1.0, ATTN_NONE, 0.0 );
+				halftimeMessageAdded = true;
+			}
+		} else if(!espsettings.halftime && (t1 + t2 == (roundlimit->value / 2))){
+			team_round_going = team_round_countdown = team_game_going = 0;
+			MakeAllLivePlayersObservers();
+			EspSwapTeams();
+			CenterPrintLevelTeam(TEAM1, PRINT_LOW, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
+			CenterPrintLevelTeam(TEAM2, PRINT_LOW, "The teams have been switched!\nYou are now defending!\n");
+			gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
+					gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
+			espsettings.halftime = 1;
 		}
-	} else if(!espsettings.halftime && (t1 + t2 == (roundlimit->value / 2))){
-		team_round_going = team_round_countdown = team_game_going = 0;
-		MakeAllLivePlayersObservers();
-		EspSwapTeams();
-		CenterPrintLevelTeam(TEAM1, PRINT_LOW, "The teams have been switched!\nYour team needs a leader to volunteer!\n");
-		CenterPrintLevelTeam(TEAM2, PRINT_LOW, "The teams have been switched!\nYou are now defending!\n");
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
-				gi.soundindex("misc/secret.wav"), 1.0, ATTN_NONE, 0.0);
-		espsettings.halftime = 1;
 	}
+
+	// Default return false, which includes !esp_etv_halftime->value
 	return false;
 }
 

@@ -558,7 +558,7 @@ void InitGame( void )
 	esp_atl = gi.cvar( "esp_atl", "0", 0 ); // This forces ATL mode even if ETV mode is set in the .esp file
 	esp_punish = gi.cvar("esp_punish", "0", 0);
 	esp_etv_halftime = gi.cvar("esp_etv_halftime", "0", CVAR_LATCH);
-	if (esp_etv_halftime->value && roundlimit->value < 3) {
+	if (esp_etv_halftime->value && roundlimit->value < 4) {
 		// Disabling halftime because roundlimit is not set
 		disablecvar(esp_etv_halftime, "Roundlimit set too low for halftime, minimum is 4 rounds");
 	}
@@ -588,12 +588,12 @@ void InitGame( void )
 	sv_antilag_interp = gi.cvar("sv_antilag_interp", "0", CVAR_SERVERINFO);
 	sv_limp_highping = gi.cvar("sv_limp_highping", "70", 0); 	// Removed it from Serverinfo
 	mapvote_next_limit = gi.cvar( "mapvote_next_limit", "0", 0);
-	stat_apikey = gi.cvar("stat_apikey", "none", 0);
+	stat_apikey = gi.cvar("stat_apikey", "none", 0); // Never include this in serverinfo!
 	stat_url = gi.cvar("stat_url", "https://apigateway.aq2world.com/api/v1/stats", 0);
 	gm = gi.cvar("gm", "dm", CVAR_SERVERINFO);
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
-  g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
+	g_spawn_items = gi.cvar("g_spawn_items", "0", CVAR_LATCH);
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);
