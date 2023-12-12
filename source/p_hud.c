@@ -208,9 +208,9 @@ void BeginIntermission(edict_t *targ)
 */
 void MoveClientToPOI(edict_t *ent, edict_t *poi)
 {
-	PMenu_Close(ent);
+    PMenu_Close(ent);
 
-	VectorCopy(level.poi_origin, ent->s.origin);
+    VectorCopy(level.poi_origin, ent->s.origin);
     ent->s.origin[0] -= 25;
     ent->s.origin[1] -= 25;
     ent->s.origin[2] += 25;
@@ -219,12 +219,26 @@ void MoveClientToPOI(edict_t *ent, edict_t *poi)
     ent->client->ps.pmove.origin[1] = (level.poi_origin[1] - 25) * 8;
     ent->client->ps.pmove.origin[2] = (level.poi_origin[2] + 25) * 8;
 
-    vec3_t direction;
-    VectorSubtract(level.poi_origin, ent->s.origin, direction);
-    vectoangles(direction, ent->client->ps.viewangles);
-	
-	VectorClear(ent->client->ps.kick_angles);
-	ent->client->ps.gunindex = 0;
+    vec3_t ownerv, o, ownerv_forward, ownerv_right;
+    vec3_t angles;
+
+    VectorCopy(level.poi_origin, ownerv);
+    ownerv[2] += poi->viewheight;
+
+    VectorCopy(ent->client->ps.viewangles, angles);
+    AngleVectors(angles, ownerv_forward, ownerv_right, NULL);
+
+    VectorNormalize(ownerv_forward);
+    VectorMA(ownerv, -75, ownerv_forward, o);
+
+    VectorCopy(o, ent->s.origin);
+    VectorCopy(o, ent->client->ps.pmove.origin);
+
+    VectorSubtract(level.poi_origin, ent->s.origin, ent->client->ps.viewangles);
+    vectoangles(ent->client->ps.viewangles, ent->client->ps.viewangles);
+
+    VectorClear(ent->client->ps.kick_angles);
+    ent->client->ps.gunindex = 0;
 	ent->client->ps.blend[3] = 0;
 	ent->client->ps.rdflags &= ~RDF_UNDERWATER;
 	ent->client->ps.stats[STAT_FLASHES] = 0;
