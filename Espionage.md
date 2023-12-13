@@ -40,7 +40,7 @@ The second sub-mode is Escort the VIP.  It's a mixture of Assassinate the Leader
 3. Team 2's goal is to prevent Team 1's Leader from touching the capture point.  This can be achieved in two ways:
    1. Killing Team 1's Leader before he reaches the capture point
    2. Waiting for the `roundtimelimit` to expire (if set), causing a Team 2 win by default.  Suggested `roundtimelimit` for most maps is 2 minutes.
-4. Halftime, if enabled and a `roundlimit`` is set, will swap teams when half of the roundlimit is reached.  This is so that the experience is fair to both teams for the map.
+4. Halftime, if enabled and a `roundlimit` is set, will swap teams when half of the roundlimit is reached.  This is so that the experience is fair to both teams for the map.
 
 
 ### Sounds great, how do I enable Espionage mode on my servers?
@@ -147,6 +147,7 @@ leader_skin=male/hulk2
   * Reference skins that are in the AQtion distrib, so players don't see the default `male/resdog` skin if they don't have it.  If you want to suggest a new skin to use in your killer scenario, contact the AQ2World team in Discord.
   * Err on the side of shorter respawn times rather than longer ones -- it's more fun to play than to watch.  Some playtesting to get the perfect timings down may be needed, especially on maps where it's easy to defend a capture point, perhaps Team 2's respawn timer is a tad longer than Team 1's, for example.
   * When creating an ETV target, ensure that not only is it in a good spot, but keep in mind that the indicator arrow is 75 quake units floating above it -- this may clip into low ceilings and not look good.  The value of 75 units is so that the arrow doesn't interfere with visibility from the player's view.
+  * Fill in details for the third team, even if you only envision this scenario being played out with 2 teams.  In the event that a server operator wants to run 3 team ATL mode 24/7, this will use your config rather than falling back on defaults.
 
 Save your map-specific file with the name of the map to `action/tng/mapname.esp`.  If you formatted it correctly, it should load those values in the next time the map is loaded.
 

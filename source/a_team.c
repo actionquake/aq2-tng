@@ -2052,6 +2052,25 @@ int CheckForWinner()
 	int players[TEAM_TOP] = { 0 }, i = 0, teamNum = 0, teamsWithPlayers = 0;
 	edict_t *ent;
 
+	for (i = 0; i < game.maxclients; i++){
+		ent = &g_edicts[1 + i];
+		if (!ent->inuse || ent->solid == SOLID_NOT)
+			continue;
+
+		teamNum = game.clients[i].resp.team;
+		if (teamNum == NOTEAM)
+			continue;
+
+		players[teamNum]++;
+	}
+	teamsWithPlayers = 0;
+	for (i = TEAM1; i <= teamCount; i++){
+		if (players[i]) {
+			teamsWithPlayers++;
+			teamNum = i;
+		}
+	}
+
 	if (!(gameSettings & GS_ROUNDBASED))
 		return WINNER_NONE;
 
@@ -2085,29 +2104,11 @@ int CheckForWinner()
 			} else if (teams[TEAM1].leader_dead){
 				//gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
-			}
+			} else if (teamsWithPlayers)
+				return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 		}
-	//gi.dprintf("Escortcap value is %d\n", espsettings.escortcap);
 	
 	} else if (!esp->value) {
-		for (i = 0; i < game.maxclients; i++){
-			ent = &g_edicts[1 + i];
-			if (!ent->inuse || ent->solid == SOLID_NOT)
-				continue;
-
-			teamNum = game.clients[i].resp.team;
-			if (teamNum == NOTEAM)
-				continue;
-
-			players[teamNum]++;
-		}
-		teamsWithPlayers = 0;
-		for (i = TEAM1; i <= teamCount; i++){
-			if (players[i]) {
-				teamsWithPlayers++;
-				teamNum = i;
-			}
-		}
 		if (teamsWithPlayers)
 			return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 
@@ -2881,7 +2882,7 @@ int CheckTeamRules (void)
 			return 1;
 
 		if (vCheckVote()) {
-			EndDMLevel ();
+			EndDMLevel();
 			team_round_going = team_round_countdown = team_game_going = 0;
 			return 1;
 		}
