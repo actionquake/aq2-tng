@@ -4,9 +4,9 @@ author=darksaint
 name=Urban Gang Wars
 
 [respawn]
-red=10
-blue=10
-green=10
+red=7
+blue=7
+green=7
 
 [spawns]
 red=<274 1165 446 -148>,<553 -293 277 90>,<-783 -64 444 -60>,<342 632 319 180>

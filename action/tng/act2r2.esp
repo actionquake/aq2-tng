@@ -4,8 +4,8 @@ author=darksaint
 name=Casino Cashout
 
 [respawn]
-red=10
-blue=10
+red=8
+blue=8
 
 [spawns]
 red=<1160 986 334 -82>,<1058 718 430 -45>,<1558 -234 238 130>,<1157 -216 336 55>
@@ -17,7 +17,7 @@ name=Briefcase full of money
 
 [red_team]
 name=Thugs
-leader_name=Pimp Candy
+leader_name=Pepper Jack
 skin=male/aqgthug
 leader_skin=male/pimp
 
