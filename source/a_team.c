@@ -2096,15 +2096,13 @@ int CheckForWinner()
 				} 
 			}
 		} else if (etv->value) {
-			// Check if this value is 1, which means the escorting team wins
-			// By default it is 0
+			// Check if this value is true, which means the escorting team wins
+			// By default it is false
 			if (espsettings.escortcap == true) {
-				//gi.dprintf("The winner was team %d\n", TEAM1);
 				return TEAM1;
 			} else if (teams[TEAM1].leader_dead){
-				//gi.dprintf("The winner was team %d\n", TEAM2);
 				return TEAM2;
-			} else if (teamsWithPlayers)
+			} else if (teamsWithPlayers) // This is in case the last person on team 2 leaves without dying, TEAM1 wins
 				return (teamsWithPlayers > 1) ? WINNER_NONE : teamNum;
 		}
 	
