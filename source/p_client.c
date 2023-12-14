@@ -3826,7 +3826,7 @@ void ClientBeginServerFrame(edict_t * ent)
 		}
 	// This next message appears perpetually until the conditions to make the message go away are met
 	} else if (ent->client->layout != LAYOUT_MENU) {
-		if (printrules->value) {
+		if (printrules->value) { // Do not print rules unless printrules is 1
 			if (PrintGameMessage(ent)) {
 				if (client->resp.last_gamemsg_refresh + 2 * HZ < level.realFramenum) {
 					client->resp.last_gamemsg_refresh = level.realFramenum;
