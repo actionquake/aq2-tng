@@ -719,6 +719,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 	int n;
 
 	self->client->resp.ctf_capstreak = 0;
+	self->client->resp.dom_capstreak = 0;
 
 	if (esp->value && IS_LEADER(self)) {
 		// Reset capture streak to 0

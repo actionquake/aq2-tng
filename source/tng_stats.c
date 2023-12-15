@@ -867,6 +867,59 @@ void LogWorldKill(edict_t *self)
 
 /*
 ==================
+LogCapture
+=================
+*/
+void LogCapture(edict_t *capturer)
+{
+	int eventtime;
+	char msg[1024];
+	eventtime = (int)time(NULL);
+	int cap, capstreak;
+
+	// Check if there's an AI bot in the game, if so, do nothing
+	if (game.ai_ent_found) {
+		return;
+	}
+
+	int mode = Gamemode();
+	switch (mode) {
+		case GM_CTF:
+			cap = capturer->client->resp.ctf_caps;
+			capstreak = capturer->client->resp.ctf_capstreak;
+			break;
+		case GM_ESCORT_THE_VIP:
+			cap = capturer->client->resp.esp_caps;
+			capstreak = capturer->client->resp.esp_capstreak;
+			break;
+		case GM_DOMINATION:
+			cap = capturer->client->resp.dom_caps;
+			capstreak = capturer->client->resp.dom_capstreak;
+			break;
+		default:
+			// Safety measure in case something isn't right
+			cap = 0;
+			capstreak = 0;
+			break;
+	}
+
+	Com_sprintf(
+		msg, sizeof(msg),
+		"{\"capture\":{\"mid\":\"%s\",\"sid\":\"%s\",\"steamid\":\"%s\",\"t\":\"%d\",\"gm\":%i,\"gmf\":%i,\"c\":%i,\"cs\":%i}}\n",
+		game.matchid,
+		server_id->string,
+		capturer->client->pers.steamid,
+		eventtime,
+		Gamemode(),
+		Gamemodeflag(),
+		cap,
+		capstreak
+	);
+	Write_Stats(msg);
+}
+
+/*
+==================
 LogMatch
 =================
 */

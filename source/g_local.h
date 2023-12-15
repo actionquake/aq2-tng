@@ -1629,6 +1629,7 @@ void StatBotCheck(void);
 #if USE_AQTION
 void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker);
 void LogWorldKill(edict_t *self);
+void LogCapture(edict_t *capturer);
 void LogMatch();
 void LogAward(edict_t *ent, int award);
 void LogEndMatchStats();
@@ -1828,6 +1829,7 @@ typedef struct
 #endif
 
   int esp_state;
+  int esp_caps;						// How many times a player has captured the case
   int esp_capstreak;				// As leader, how many caps in a row
   int esp_capstreakbest;			// Best cap streak
   int esp_leaderkillstreak;			// How many enemy leader kills a player has had in a row
@@ -1836,6 +1838,7 @@ typedef struct
   int esp_leaderfragcount;			// How many times this player has fragged a leader
   int esp_capdefendercount;			// How many times a player has defended the capture point
   
+  // timers
   int esp_lastprotectcap;			// Last time this player protected the capture point (framenum)
   int esp_lastprotectleader;		// Last time this player protected the leader (framenum)
   int esp_lasthurtleader;			// Last time this player hurt the leader (framenum)
@@ -1849,7 +1852,10 @@ typedef struct
   int toggle_lca;
   int toggles;
 
-  //char skin[MAX_SKINLEN];
+  // Domination stats
+  int dom_caps;						// How many times a player captured a dom point
+  int dom_capstreak;				// How many times a player captured a dom point in a row
+  int dom_capstreakbest;			// Best cap streak for domination
 }
 client_respawn_t;
 

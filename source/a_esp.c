@@ -255,11 +255,12 @@ void _EspBonusCapture(edict_t *attacker, edict_t *flag)
 		ESP_LEADER_CAPTURE_BONUS );
 
 	// Stats
-	espsettings.capturestreak++;
+	flag->owner->client->resp.esp_caps++;
 	flag->owner->client->resp.esp_capstreak++;
 	if (flag->owner->client->resp.esp_capstreak > flag->owner->client->resp.esp_capstreakbest)
 		flag->owner->client->resp.esp_capstreakbest = flag->owner->client->resp.esp_capstreak;
-
+	LogCapture(flag->owner);
+	
 	// Bonus points awarded
 	flag->owner->client->resp.score += ESP_LEADER_CAPTURE_BONUS;
 
@@ -1819,7 +1820,6 @@ int EspReportLeaderDeath(edict_t *ent)
 		EspPunishment(dead_leader_team);
 
 	// Stats Reset
-	espsettings.capturestreak = 0;
 	if (ent->client->resp.esp_capstreak > ent->client->resp.esp_capstreakbest)
 		ent->client->resp.esp_capstreakbest = ent->client->resp.esp_capstreak;
 	ent->client->resp.esp_capstreak = 0;
