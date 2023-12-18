@@ -2865,6 +2865,15 @@ int CheckTeamRules (void)
 	{
 		RunWarmup();
 
+		if (CheckTimelimit())
+			return 1;
+
+		if (vCheckVote()) {
+			EndDMLevel();
+			team_round_going = team_round_countdown = team_game_going = 0;
+			return 1;
+		}
+
 		if (esp->value) {
 			if (!AllTeamsHaveLeaders())
 				return 1;
@@ -2874,15 +2883,6 @@ int CheckTeamRules (void)
 				team_round_going = team_round_countdown = team_game_going = 0;
 				return 1;
 			}
-		}
-
-		if (CheckTimelimit())
-			return 1;
-
-		if (vCheckVote()) {
-			EndDMLevel();
-			team_round_going = team_round_countdown = team_game_going = 0;
-			return 1;
 		}
 
 		if (!team_round_countdown)
