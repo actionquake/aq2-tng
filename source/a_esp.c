@@ -1030,12 +1030,14 @@ void EspRespawnLCA(edict_t *ent)
 			return;
 		} else if (timercalc <= (20 * FRAMEDIV) && ent->client->resp.esp_respawn_sounds == 2) {
 			gi.centerprintf(ent, "CAMERA...");
-			gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_STATIC, 0.0);
+			unicastSound(ent, gi.soundindex(level.snd_camera), 1.0);
+			//gi.sound(ent, CHAN_VOICE, level.snd_camera, 1.0, ATTN_STATIC, 0.0);
 			ent->client->resp.esp_respawn_sounds = 1;
 			return;
 		} else if (timercalc <= (40 * FRAMEDIV) && ent->client->resp.esp_respawn_sounds == 0) {
 			gi.centerprintf(ent, "LIGHTS...");
-			gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_STATIC, 0.0);
+			unicastSound(ent, gi.soundindex(level.snd_lights), 1.0);
+			//gi.sound(ent, CHAN_VOICE, level.snd_lights, 1.0, ATTN_STATIC, 0.0);
 			ent->client->resp.esp_respawn_sounds = 2;
 			return;
 		}
@@ -1072,7 +1074,8 @@ void EspRespawnPlayer(edict_t *ent)
 			if (atl->value) {
 				if (teams[ent->client->resp.team].leader != NULL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 					gi.centerprintf(ent, "ACTION!");
-					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
+					unicastSound(ent, gi.soundindex(level.snd_action), 1.0);
+					//gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 					ent->client->resp.esp_respawn_sounds = 0;
 					respawn(ent);
 				}
@@ -1080,7 +1083,8 @@ void EspRespawnPlayer(edict_t *ent)
 			} else if (etv->value) {
 				if (teams[TEAM1].leader != NULL && IS_ALIVE(teams[TEAM1].leader)) {
 					gi.centerprintf(ent, "ACTION!");
-					gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
+					unicastSound(ent, gi.soundindex(level.snd_action), 1.0);
+					//gi.sound(ent, CHAN_VOICE, level.snd_action, 1.0, ATTN_STATIC, 0.0);
 					ent->client->resp.esp_respawn_sounds = 0;
 					respawn(ent);
 				}
