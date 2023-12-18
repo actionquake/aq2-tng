@@ -610,6 +610,7 @@ void InitGame( void )
 	gun_dualmk23_enhance = gi.cvar("gun_dualmk23_enhance", "0", 0);
 	printrules = gi.cvar("printrules", "0", 0);
 	timedmsgs = gi.cvar("timedmsgs", "0", 0);
+	mm_captain_teamname = gi.cvar("mm_captain_teamname", "0", 0);
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION

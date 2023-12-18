@@ -153,6 +153,8 @@ Features
   lock - allows a captain to lock his team. When a team is locked, noone can join it. Locks are removed on a 
   new map. (client side)
   unlock - allows a captain to unlock his team. (client side)
+  mm_captain_teamname - [0/1] - default 0, if enabled (1) then the team name will change to the name of the captain,
+  prepended with the string "Team", for example, "Team Suislide" if Suislide is the captain of that team.
 
 * Voice Command
   The voice command allows clients to play taunts for other players to hear. (as long as they have the sound file)

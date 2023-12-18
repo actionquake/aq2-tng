@@ -1258,6 +1258,7 @@ extern cvar_t *item_kit_mode;
 extern cvar_t *gun_dualmk23_enhance;
 extern cvar_t *printrules;
 extern cvar_t *timedmsgs;
+extern cvar_t *mm_captain_teamname;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -2432,7 +2433,7 @@ void Cmd_AutoRecord_f(edict_t * ent);
 
 typedef struct team_s
 {
-	char name[20];
+	char name[24];
 	char skin[MAX_SKINLEN];
 	char skin_index[MAX_QPATH];
 	int score, total;

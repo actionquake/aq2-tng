@@ -174,6 +174,9 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 				gi.cprintf( ent, PRINT_HIGH, "Team %i wants to reset scores, type 'resetscores' to accept\n", i );
 		}
 	}
+	// Change the name of the team if enabled
+	if (mm_captain_teamname->value)
+		Cmd_Teamname_f(ent);
 }
 
 void MM_LeftTeam( edict_t *ent )
@@ -334,6 +337,8 @@ void Cmd_Teamname_f(edict_t * ent)
 	char temp[32];
 	team_t *team;
 
+	gi.dprintf("CALLED: Attempted to change name to %s\n", temp);
+
 	if (!matchmode->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs matchmode to be enabled\n");
 		return;
@@ -372,17 +377,22 @@ void Cmd_Teamname_f(edict_t * ent)
 	}
 
 	argc = gi.argc();
-	if (argc < 2) {
+	if (argc < 2 && !mm_captain_teamname->value) {
 		gi.cprintf( ent, PRINT_HIGH, "Your team name is %s\n", team->name );
 		return;
 	}
 
-	Q_strncpyz(temp, gi.argv(1), sizeof(temp));
-	for (i = 2; i < argc; i++) {
-		Q_strncatz(temp, " ", sizeof(temp));
-		Q_strncatz(temp, gi.argv(i), sizeof(temp));
+	if (mm_captain_teamname->value){
+		snprintf(temp, sizeof(temp), "Team %s", ent->client->pers.netname);
+		temp[23] = '\0';  // Ensure that the team name is not too long
+	} else {
+		Q_strncpyz(temp, gi.argv(1), sizeof(temp));
+		for (i = 2; i < argc; i++) {
+			Q_strncatz(temp, " ", sizeof(temp));
+			Q_strncatz(temp, gi.argv(i), sizeof(temp));
+		}
+		temp[18] = 0;
 	}
-	temp[18] = 0;
 
 	if (!temp[0])
 		strcpy( temp, "noname" );
