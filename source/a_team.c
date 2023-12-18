@@ -1172,6 +1172,8 @@ void killPlayer( edict_t *ent, qboolean suicidePunish )
 	if (!IS_ALIVE(ent))
 		return;
 	
+	int damage = 100000;
+
 	if (suicidePunish && punishkills->value)
 	{
 		edict_t *attacker = ent->client->attacker;
@@ -1191,11 +1193,22 @@ void killPlayer( edict_t *ent, qboolean suicidePunish )
 			}
 		}
 	}
+
+	// Throws bloody gibs everywhere
+	if (sv_killgib->value) {
+		int n;
+		for (n = 0; n < 10; n++)
+			ThrowGib(ent, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+		ThrowClientHead(ent, damage);
+		ent->client->anim_priority = ANIM_DEATH;
+		ent->client->anim_end = 0;
+		//ent->takedamage = DAMAGE_NO;
+	}
 	
 	ent->flags &= ~FL_GODMODE;
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
-	player_die(ent, ent, ent, 100000, vec3_origin);
+	player_die(ent, ent, ent, damage, vec3_origin);
 	ent->deadflag = DEAD_DEAD;
 }
 

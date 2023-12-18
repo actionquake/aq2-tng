@@ -1259,6 +1259,7 @@ extern cvar_t *gun_dualmk23_enhance;
 extern cvar_t *printrules;
 extern cvar_t *timedmsgs;
 extern cvar_t *mm_captain_teamname;
+extern cvar_t *sv_killgib;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);

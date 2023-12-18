@@ -524,6 +524,7 @@ cvar_t *gun_dualmk23_enhance; // Enables laser sight for dual mk23 pistols
 cvar_t *printrules;  // Centerprint game rules when the countdown begins
 cvar_t *timedmsgs; // Toggles timed messages
 cvar_t *mm_captain_teamname; // Toggles if we want to use the captain's name for the team in matchmode
+cvar_t *sv_killgib; // Gibs on 'kill' command
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;

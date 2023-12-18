@@ -165,6 +165,8 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 	}
 
 	if (ent != oldCaptain) {
+		if (mm_captain_teamname->value)
+			Cmd_Teamname_f(ent);
 		gi.bprintf( PRINT_HIGH, "%s is now %s's captain\n", ent->client->pers.netname, teams[teamNum].name );
 		gi.cprintf( ent, PRINT_CHAT, "You are the captain of '%s'\n", teams[teamNum].name );
 		gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
@@ -175,8 +177,7 @@ void MM_SetCaptain( int teamNum, edict_t *ent )
 		}
 	}
 	// Change the name of the team if enabled
-	if (mm_captain_teamname->value)
-		Cmd_Teamname_f(ent);
+
 }
 
 void MM_LeftTeam( edict_t *ent )
@@ -337,8 +338,6 @@ void Cmd_Teamname_f(edict_t * ent)
 	char temp[32];
 	team_t *team;
 
-	gi.dprintf("CALLED: Attempted to change name to %s\n", temp);
-
 	if (!matchmode->value) {
 		gi.cprintf(ent, PRINT_HIGH, "This command needs matchmode to be enabled\n");
 		return;
@@ -376,16 +375,15 @@ void Cmd_Teamname_f(edict_t * ent)
 		return;
 	}
 
-	argc = gi.argc();
-	if (argc < 2 && !mm_captain_teamname->value) {
-		gi.cprintf( ent, PRINT_HIGH, "Your team name is %s\n", team->name );
-		return;
-	}
-
 	if (mm_captain_teamname->value){
 		snprintf(temp, sizeof(temp), "Team %s", ent->client->pers.netname);
 		temp[23] = '\0';  // Ensure that the team name is not too long
 	} else {
+		argc = gi.argc();
+		if (argc < 2) {
+			gi.cprintf( ent, PRINT_HIGH, "Your team name is %s\n", team->name );
+			return;
+		}
 		Q_strncpyz(temp, gi.argv(1), sizeof(temp));
 		for (i = 2; i < argc; i++) {
 			Q_strncatz(temp, " ", sizeof(temp));

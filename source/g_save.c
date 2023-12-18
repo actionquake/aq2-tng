@@ -611,6 +611,7 @@ void InitGame( void )
 	printrules = gi.cvar("printrules", "0", 0);
 	timedmsgs = gi.cvar("timedmsgs", "0", 0);
 	mm_captain_teamname = gi.cvar("mm_captain_teamname", "0", 0);
+	sv_killgib = gi.cvar("sv_killgib", "0", 0);
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION
