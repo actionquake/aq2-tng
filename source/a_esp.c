@@ -1252,15 +1252,17 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 		gi.dprintf("%s: Is team round going? %d\n", __FUNCTION__, team_round_going);
 		gi.dprintf("%s: Is the team leader alive? %d\n", __FUNCTION__, _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()));
 	}
+
+	// Time to respawn on the leader!
 	if (team_round_going && _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck())) {
-		// Time to respawn on the leader!
 		return EspRespawnOnLeader(ent, cname);
 	} else {
+		// Custom spawns take precedence over standard spawns
 		if ((EspSpawnpointCount(teamNum) > 0)) {
-			// Custom spawns take precedence over standard spawns
 			return SelectEspCustomSpawnPoint(ent);
+
+		// but if there are none, then we go back to old faithful
 		} else {
-			// but if there are none, then we go back to old faithful
 			if (esp_debug->value)
 				gi.dprintf("%s: No custom spawns, defaulting to teamplay spawn\n", __FUNCTION__);
 
