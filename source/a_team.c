@@ -1913,8 +1913,6 @@ void ResetScores (qboolean playerScores)
 	ctfgame.last_capture_team = 0;
 	ctfgame.halftime = 0;
 
-	espsettings.capturestreak = 0;
-
 	if(!playerScores)
 		return;
 
