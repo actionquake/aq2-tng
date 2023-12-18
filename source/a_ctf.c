@@ -1272,6 +1272,7 @@ void CTFCapReward(edict_t * ent)
 	band = ent->client->resp.ctf_capstreak;
 	client = ent->client;
 
+
 	// give initial knife if none
 	if (WPF_ALLOWED(KNIFE_NUM) && ent->client->inventory[ITEM_INDEX(GET_ITEM(KNIFE_NUM))] == 0)
 		ent->client->inventory[ITEM_INDEX(GET_ITEM(KNIFE_NUM))] += 1;
@@ -1407,4 +1408,6 @@ void CTFCapReward(edict_t * ent)
 			Announce_Reward(ent, UNSTOPPABLE);
 	}
 	else	gi.cprintf(ent, PRINT_MEDIUM, "CAPTURED!\n\nYou have been rewarded.\n\nNow go get some more!");
+
+	LogCapture(ent);
 }

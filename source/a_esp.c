@@ -260,7 +260,7 @@ void _EspBonusCapture(edict_t *attacker, edict_t *flag)
 	if (flag->owner->client->resp.esp_capstreak > flag->owner->client->resp.esp_capstreakbest)
 		flag->owner->client->resp.esp_capstreakbest = flag->owner->client->resp.esp_capstreak;
 	LogCapture(flag->owner);
-	
+
 	// Bonus points awarded
 	flag->owner->client->resp.score += ESP_LEADER_CAPTURE_BONUS;
 
@@ -1609,7 +1609,7 @@ qboolean EspSetLeader( int teamNum, edict_t *ent )
 		Com_sprintf(temp, sizeof(temp), "%s is now %s's leader\n", ent->client->pers.netname, teams[teamNum].name );
 		CenterPrintAll(temp);
 		gi.cprintf( ent, PRINT_CHAT, "You are the leader of '%s'\n", teams[teamNum].name );
-		gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+		unicastSound(ent, gi.soundindex("aqdt/leader.wav"), 1.0);
 		//gi.sound( &g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex( "misc/comp_up.wav" ), 1.0, ATTN_NONE, 0.0 );
 		AssignSkin(ent, teams[teamNum].leader_skin, false);
 		// Set the time the player became leader so they can't unleader immediately after
@@ -1952,7 +1952,8 @@ void EspAnnounceDetails( qboolean timewarning )
 			if (!ent->inuse)
 				continue;
 			if (IS_LEADER(ent)){
-				gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+				//gi.sound(ent, CHAN_VOICE, gi.soundindex("aqdt/leader.wav"), 1, ATTN_STATIC, 0);
+				unicastSound(ent, gi.soundindex("aqdt/leader.wav"), 1.0);
 				gi.cprintf(ent, PRINT_MEDIUM, "Take cover, you're the leader!\n");
 			}
 			if (!IS_LEADER(ent)) {

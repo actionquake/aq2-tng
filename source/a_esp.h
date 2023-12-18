@@ -55,7 +55,6 @@ typedef struct espsettings_s
 	edict_t *custom_spawns[TEAM_TOP][MAX_SPAWNS];
 	qboolean custom_skins;
 	int halftime;
-	int capturestreak;
 	qboolean escortcap;
 	char target_name[MAX_ESP_STRLEN];
 	edict_t *capturepoint;
