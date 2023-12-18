@@ -875,7 +875,7 @@ void LogCapture(edict_t *capturer)
 	int eventtime;
 	char msg[1024];
 	eventtime = (int)time(NULL);
-	int cap, capstreak;
+	int caps, capstreak;
 	int ttc = current_round_length / 10; // TimeToCapture (how many seconds in the round)
 
 	// Check if there's an AI bot in the game, if so, do nothing
@@ -912,7 +912,7 @@ void LogCapture(edict_t *capturer)
 		"{\"capture\":{\"mid\":\"%s\",\"steamid\":\"%s\",\"cn\":\"%s\",\"t\":\"%d\",\"team\":\"%i\",\"gm\":%i,\"gmf\":%i,\"c\":%i,\"cs\":%i,\"ttc\":%i}}\n",
 		game.matchid,
 		capturer->client->pers.steamid,
-		capturer->client->resp.netname,
+		capturer->client->pers.netname,
 		eventtime,
 		capturer->client->resp.team,
 		Gamemode(),
