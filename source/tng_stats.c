@@ -876,6 +876,7 @@ void LogCapture(edict_t *capturer)
 	char msg[1024];
 	eventtime = (int)time(NULL);
 	int cap, capstreak;
+	int ttc = current_round_length / 10; // TimeToCapture (how many seconds in the round)
 
 	// Check if there's an AI bot in the game, if so, do nothing
 	if (game.ai_ent_found) {
@@ -885,35 +886,40 @@ void LogCapture(edict_t *capturer)
 	int mode = Gamemode();
 	switch (mode) {
 		case GM_CTF:
-			cap = capturer->client->resp.ctf_caps;
+			caps = capturer->client->resp.ctf_caps;
 			capstreak = capturer->client->resp.ctf_capstreak;
 			break;
 		case GM_ESCORT_THE_VIP:
-			cap = capturer->client->resp.esp_caps;
+			caps = capturer->client->resp.esp_caps;
 			capstreak = capturer->client->resp.esp_capstreak;
 			break;
 		case GM_DOMINATION:
-			cap = capturer->client->resp.dom_caps;
+			caps = capturer->client->resp.dom_caps;
 			capstreak = capturer->client->resp.dom_capstreak;
 			break;
 		default:
 			// Safety measure in case something isn't right
-			cap = 0;
+			caps = 0;
 			capstreak = 0;
 			break;
 	}
 
+	// (matchid,capturer,capturername,team,gamemode,gamemodeflag,cap,capstreak)
+	// (mid,steamid,cn,t,team,gm,gmf,c,cs,ttc)
+
 	Com_sprintf(
 		msg, sizeof(msg),
-		"{\"capture\":{\"mid\":\"%s\",\"sid\":\"%s\",\"steamid\":\"%s\",\"t\":\"%d\",\"gm\":%i,\"gmf\":%i,\"c\":%i,\"cs\":%i}}\n",
+		"{\"capture\":{\"mid\":\"%s\",\"steamid\":\"%s\",\"cn\":\"%s\",\"t\":\"%d\",\"team\":\"%i\",\"gm\":%i,\"gmf\":%i,\"c\":%i,\"cs\":%i,\"ttc\":%i}}\n",
 		game.matchid,
-		server_id->string,
 		capturer->client->pers.steamid,
+		capturer->client->resp.netname,
 		eventtime,
+		capturer->client->resp.team,
 		Gamemode(),
 		Gamemodeflag(),
-		cap,
-		capstreak
+		caps,
+		capstreak,
+		ttc
 	);
 	Write_Stats(msg);
 }
