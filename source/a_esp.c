@@ -1245,6 +1245,9 @@ edict_t *SelectEspSpawnPoint(edict_t *ent)
 	If none of this is true, it's a round start spawn
 	*/
 
+	if (in_warmup)
+		return SelectDeathmatchSpawnPoint();
+
 	if (esp_debug->value){
 		gi.dprintf("%s: Is team round going? %d\n", __FUNCTION__, team_round_going);
 		gi.dprintf("%s: Is the team leader alive? %d\n", __FUNCTION__, _EspLeaderAliveCheck(ent, teams[ent->client->resp.team].leader, EspModeCheck()));
