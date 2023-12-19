@@ -1063,14 +1063,13 @@ void EspRespawnPlayer(edict_t *ent)
 			gi.dprintf("%s: Level framenum is %d, respawn timer was %d for %s\n", __FUNCTION__, level.framenum, ent->client->respawn_framenum, ent->client->pers.netname);
 
 		if (level.framenum > ent->client->respawn_framenum) {
-			// // If your leader is alive, you can respawn
-
 			if (esp_debug->value) {
 				gi.dprintf("Is it ETV mode? %f\n", etv->value);
 				gi.dprintf("Is team 1 leader alive? %d\n", IS_ALIVE(teams[TEAM1].leader));
 				gi.dprintf("Is team 1's leader NULL? %d\n", teams[TEAM1].leader == NULL);
 			}
 
+			// Only respawn if leader(s) are still alive and the round is still going
 			if (atl->value) {
 				if (teams[ent->client->resp.team].leader != NULL && IS_ALIVE(teams[ent->client->resp.team].leader)) {
 					gi.centerprintf(ent, "ACTION!");
@@ -1426,12 +1425,11 @@ qboolean EspCheckETVRules(void)
 		IRC_printf(IRC_T_GAME, "Roundlimit hit.\n");
 		return true;
 	}
-	
-
 	// Must be etv mode, halftime must have not occured yet, and be enabled, and the roundlimit must be set
 
 	// Print all condition states
 	if (esp_debug->value) {
+		gi.dprintf("-- Debug start %s --\n", __FUNCTION__);
 		gi.dprintf("Roundlimit is %f\n", roundlimit->value);
 		gi.dprintf("Team 1 score is %d\n", teams[TEAM1].score);
 		gi.dprintf("Team 2 score is %d\n", teams[TEAM2].score);
@@ -1441,6 +1439,7 @@ qboolean EspCheckETVRules(void)
 		gi.dprintf("ETV is %f\n", etv->value);
 		gi.dprintf("Use warnings is %f\n", use_warnings->value);
 		gi.dprintf("ETV halftime is %f\n", esp_etv_halftime->value);
+		gi.dprintf("-- Debug end %s --\n", __FUNCTION__);
 	}
 
 	if (!roundlimit->value && esp_etv_halftime->value){
@@ -1902,7 +1901,6 @@ void GenerateMedKit(qboolean instant)
 
 void EspSetupStatusbar( void )
 {
-
 	Q_strncatz(level.statusbar,
 		// Respawn indicator
 		"yb -220 " "if 9 xr -28 pic 9 endif " "xr -100 num 4 10 ",
@@ -1934,7 +1932,7 @@ void EspAnnounceDetails( qboolean timewarning )
 	if (timewarning){
 		for (i = 0; i < game.maxclients; i++){
 			ent = g_edicts + 1 + i;
-			if (!ent->inuse || !ent->is_bot)
+			if (!ent->inuse || ent->is_bot || ent->client->resp.team == NOTEAM)
 				continue;
 			if (atl->value){
 				CenterPrintAll("You're running low on time! Kill the enemy leader!\n");
@@ -2006,10 +2004,10 @@ void EspEndOfRoundCleanup()
 	// Remove all bot leaders, they are dumb
 	if (esp_debug->value)
 		gi.dprintf("%s: Removing bot leaders\n", __FUNCTION__);
-	if (teams[TEAM1].leader && teams[TEAM1].leader->is_bot)
-		teams[TEAM1].leader = NULL;
-	if (teams[TEAM2].leader && teams[TEAM2].leader->is_bot)
-		teams[TEAM2].leader = NULL;
+	for (int i = TEAM1; i <= teamCount; i++) {
+		if (teams[i].leader && teams[i].leader->is_bot)
+			teams[i].leader = NULL;
+	}
 
 	// Check that we have leaders for the next round
 	EspLeaderCheck();
