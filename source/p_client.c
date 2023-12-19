@@ -381,8 +381,9 @@ void Announce_Reward(edict_t *ent, int rewardType) {
             return;  // Something didn't jive here?
     }
 
+	// The bprintf is for MVD recording capture
 	gi.bprintf(PRINT_LOW, buf);
-    //CenterPrintAll(buf);
+    CenterPrintAll(buf);
     gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex(soundFile), 1.0, ATTN_NONE, 0.0);
 
     #ifdef USE_AQTION
