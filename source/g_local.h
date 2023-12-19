@@ -1435,6 +1435,7 @@ qboolean ai_visible( edict_t *self, edict_t *other );
 qboolean infront( edict_t *self, edict_t *other );
 #endif
 void disablecvar(cvar_t *cvar, char *msg);
+int eztimer(int seconds);
 
 // Re-enabled for bots
 float *tv (float x, float y, float z);
@@ -2374,7 +2375,7 @@ void Drop_Spec (edict_t * ent, gitem_t * item);
 void SpecThink (edict_t * spec);
 void DeadDropSpec (edict_t * ent);
 
-void temp_think_specweap (edict_t * ent);	// p_weapons.c
+void SpecialWeaponRespawnTimer (edict_t * ent);	// p_weapons.c
 void ThinkSpecWeap (edict_t * ent);
 void DropExtraSpecial (edict_t * ent);
 void TransparentListSet (solid_t solid_type);

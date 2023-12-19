@@ -1307,7 +1307,7 @@ void EjectWeapon(edict_t * ent, gitem_t * item)
 		ent->client->v_angle[YAW] += spread;
 		drop->spawnflags = DROPPED_PLAYER_ITEM;
 		if (!in_warmup)
-			drop->think = temp_think_specweap;
+			drop->think = SpecialWeaponRespawnTimer;
 	}
 
 }
