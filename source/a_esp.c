@@ -1997,16 +1997,11 @@ void EspEndOfRoundCleanup()
 {
 	int i = 0;
 	// Reset leader_dead for all teams before next round starts
-	for (i = TEAM1; i < TEAM_TOP; i++) {
-		teams[i].leader_dead = false;
-	}
-
-	// Remove all bot leaders, they are dumb
-	if (esp_debug->value)
-		gi.dprintf("%s: Removing bot leaders\n", __FUNCTION__);
-	for (int i = TEAM1; i <= teamCount; i++) {
+	// as well as any bots that were leaders, somehow
+	for (i = TEAM1; i <= teamCount; i++) {
 		if (teams[i].leader && teams[i].leader->is_bot)
 			teams[i].leader = NULL;
+		teams[i].leader_dead = false;
 	}
 
 	// Check that we have leaders for the next round
