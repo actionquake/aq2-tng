@@ -92,6 +92,14 @@ int G_customizeentityforclient(edict_t *clent, edict_t *ent, entity_state_t *sta
 		if (!teamplay->value) // don't use indicators in non-teamplay
 			return false;
 
+		// Espionage allows indicators for leaders if set to 2
+		if (esp->value && use_indicators->value == 2 && esp_showleader->value && clent->client->resp.team) {
+			// Quad is a blue glow, pent is a red glow
+			if (clent->client->resp.team == TEAM1 && IS_LEADER(clent))
+				ent->s.effects = EF_PENT;
+			else if (clent->client->resp.team == TEAM2 && IS_LEADER(clent))
+				ent->s.effects = EF_QUAD;
+		}
 		if ((use_indicators->value == 2 && clent->client->resp.team) || (clent->client->resp.team && clent->client->pers.cl_indicators != 2)) // disallow indicators for players in use_indicators 2, and don't use them for players unless cl_indicators 2
 			return false;
 
@@ -108,6 +116,38 @@ int G_customizeentityforclient(edict_t *clent, edict_t *ent, entity_state_t *sta
 		trace = gi.trace(view_pos, vnull, vnull, arrow_pos, ent->owner, CONTENTS_SOLID);
 		if (trace.fraction < 1)
 			return false;
+
+		VectorCopy(clent->client->v_angle, state->angles);
+	}
+
+	// objective arrow in Espionage
+	if (!strcmp(ent->classname, "ind_arrow_objective"))
+	{
+		if (clent == ent->owner || ent->owner == clent->client->chase_target) // if the objective marker is on the viewer, don't send it
+			return false;
+
+		if (!clent->client->pers.cl_indicators) // never show if client doesn't want them
+			return false;
+
+		if (use_indicators->value <= 0) // if the server disallows them, don't send
+			return false;
+
+		trace_t trace;
+		vec3_t view_pos, arrow_pos, vnull;
+		VectorClear(vnull);
+
+		VectorCopy(ent->owner->s.origin, arrow_pos);
+		arrow_pos[2] += ent->owner->maxs[2] - 4;
+
+		VectorCopy(clent->s.origin, view_pos);
+		view_pos[2] += clent->viewheight;
+		
+		//if (0) // this stops it from being show through walls
+		//{
+		trace = gi.trace(view_pos, vnull, vnull, arrow_pos, ent->owner, CONTENTS_SOLID);
+		if (trace.fraction < 1)
+			return false;
+		//}
 
 		VectorCopy(clent->client->v_angle, state->angles);
 	}

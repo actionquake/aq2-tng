@@ -749,3 +749,11 @@ void enablecvar(cvar_t *cvar, char *msg)
 
 	gi.cvar_forceset(cvar->name, "1");
 }
+
+/*
+Supply integer in seconds, calculates number of seconds
+based on variable FPS (HZ)
+*/
+int eztimer(int seconds){
+	return (level.framenum + seconds * HZ);
+}

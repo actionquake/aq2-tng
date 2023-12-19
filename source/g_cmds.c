@@ -1812,7 +1812,7 @@ static void Cmd_CPSI_f (edict_t * ent)
 		ent->client->resp.gllockpvs = atoi(gi.argv(2));
 		ent->client->resp.glclear = atoi(gi.argv(3));
 		ent->client->resp.gldynamic = atoi(gi.argv(4));
-		ent->client->resp.glbrightness = atoi(gi.argv(5));
+		ent->client->resp.glbrightness = atof(gi.argv(5));
 		Q_strncpyz(ent->client->resp.gldriver, gi.argv (6), sizeof(ent->client->resp.gldriver));
 		//      strncpy(ent->client->resp.vidref,gi.argv(4),sizeof(ent->client->resp.vidref-1));
 		//      ent->client->resp.vidref[15] = 0;
@@ -1937,9 +1937,12 @@ static cmdList_t commandList[] =
 	{ "voteconfig", Cmd_Voteconfig_f, 0 },
 	{ "configlist", Cmd_Configlist_f, 0 },
 	{ "votescramble", Cmd_Votescramble_f, 0 },
+	{ "printrules", Cmd_PrintRules_f, 0},
 	// JumpMod / jmod -- all commands are prefaced with 'jmod' ex: 'jmod spawnc'
 	{ "jmod", Cmd_Jmod_f, 0 },
-
+	// Espionage, aliased command so it's easy to remember
+	{ "volunteer", Cmd_Volunteer_f, 0},
+	{ "leader", Cmd_Volunteer_f, 0}
 };
 
 #define MAX_COMMAND_HASH 64

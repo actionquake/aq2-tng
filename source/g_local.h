@@ -324,6 +324,8 @@
 #define svc_stufftext           11
 #define	svc_configstring		13
 
+// These are mapped to the enum svc_ops_t in protocol.h q2pro
+// If these need adjusted in q2pro, adjust them here too
 #define svc_extend				30
 #define svc_userstatistic		31
 
@@ -655,6 +657,9 @@ bind 6 "use Sniper Rifle"
 #define ITF_DEFAULT				63 //ITF_MASK
 #define ITF_DEFAULT_STR			TOSTRING(ITF_DEFAULT)
 #define ITF_ALLOWED(typeNum)	((int)itm_flags->value & items[typeNum].flag)
+
+#define MAX_SPAWNS 512		// max DM spawn points supported
+
 //AQ2:TNG End adding flags
 
 typedef struct itemList_s
@@ -687,12 +692,13 @@ extern itemList_t items[ITEM_MAX_NUM];
 // these should be server variables, when I get around to it
 //#define UNIQUE_WEAPONS_ALLOWED 2
 //#define UNIQUE_ITEMS_ALLOWED   1
-#define SPEC_WEAPON_RESPAWN 1
-#define BANDAGE_TIME    27	// 10 = 1 second
-#define BLEED_TIME      10	// 10 = 1 second is time for losing 1 health at slowest bleed rate
+#define SPEC_WEAPON_RESPAWN 		1
+#define BANDAGE_TIME    			27	// 10 = 1 second
+#define ENHANCED_BANDAGE_TIME		10
+#define BLEED_TIME      			10	// 10 = 1 second is time for losing 1 health at slowest bleed rate
 // Igor's back in Time to hard grenades :-)
-#define GRENADE_DAMRAD_CLASSIC  170
-#define GRENADE_DAMRAD          250
+#define GRENADE_DAMRAD_CLASSIC  	170
+#define GRENADE_DAMRAD          	250
 
 
 typedef struct gitem_s
@@ -834,6 +840,17 @@ typedef struct
   float emptyTime;
   int weapon_sound_framenum;
   int teamcount[MAX_TEAMS];
+  int pic_teamplay_timer_icon;
+
+  int pic_leaderskin[TEAM_TOP];  
+  int pic_esp_teamtag[TEAM_TOP];
+  int pic_esp_teamicon[TEAM_TOP];
+  int pic_esp_leadericon[TEAM_TOP];
+  int pic_esp_respawn_icon;
+
+  // Point of interest
+  vec3_t poi_origin;
+  vec3_t poi_angle;
 }
 level_locals_t;
 
@@ -906,70 +923,82 @@ extern spawn_temp_t st;
 extern int sm_meat_index;
 
 // means of death
-#define MOD_UNKNOWN                     0
-
-#define MOD_MK23                        1
-#define MOD_MP5                         2
-#define MOD_M4                          3
-#define MOD_M3                          4
-#define MOD_HC                          5
-#define MOD_SNIPER                      6
-#define MOD_DUAL                        7
-#define MOD_KNIFE                       8
-#define MOD_KNIFE_THROWN                9
-#define MOD_GRENADE                     10
-#define MOD_G_SPLASH                    11
-#define MOD_HANDGRENADE                 12
-#define MOD_HG_SPLASH                   13
-#define MOD_PUNCH                       14
-#define MOD_BLASTER                     15
-#define MOD_HYPERBLASTER                16
-#define MOD_WATER                       17
-#define MOD_SLIME                       18
-#define MOD_LAVA                        19
-#define MOD_CRUSH                       20
-#define MOD_TELEFRAG                    21
-#define MOD_FALLING                     22
-#define MOD_SUICIDE                     23
-#define MOD_HELD_GRENADE                24
-#define MOD_EXPLOSIVE                   25
-#define MOD_BARREL                      26
-#define MOD_BOMB                        27
-#define MOD_EXIT                        28
-#define MOD_SPLASH                      29
-#define MOD_TARGET_LASER                30
-#define MOD_TRIGGER_HURT                31
-#define MOD_HIT                         32
-#define MOD_TARGET_BLASTER              33
-//zucc
-#define MOD_BLEEDING                    34
-#define MOD_KICK                        35
-#define MOD_GRAPPLE						36
-#define MOD_TOTAL						37
-#define MOD_FRIENDLY_FIRE               0x8000000
+typedef enum {
+    MOD_UNKNOWN = 0,
+    MOD_MK23,
+    MOD_MP5,
+    MOD_M4,
+    MOD_M3,
+    MOD_HC,
+    MOD_SNIPER,
+    MOD_DUAL,
+    MOD_KNIFE,
+    MOD_KNIFE_THROWN,
+    MOD_GRENADE,
+    MOD_G_SPLASH,
+    MOD_HANDGRENADE,
+    MOD_HG_SPLASH,
+    MOD_PUNCH,
+    MOD_BLASTER,
+    MOD_HYPERBLASTER,
+    MOD_WATER,
+    MOD_SLIME,
+    MOD_LAVA,
+    MOD_CRUSH,
+    MOD_TELEFRAG,
+    MOD_FALLING,
+    MOD_SUICIDE,
+    MOD_HELD_GRENADE,
+    MOD_EXPLOSIVE,
+    MOD_BARREL,
+    MOD_BOMB,
+    MOD_EXIT,
+    MOD_SPLASH,
+    MOD_TARGET_LASER,
+    MOD_TRIGGER_HURT,
+    MOD_HIT,
+    MOD_TARGET_BLASTER,
+    MOD_BLEEDING,
+    MOD_KICK,
+    MOD_GRAPPLE,
+    MOD_TOTAL,
+    MOD_FRIENDLY_FIRE = 0x8000000
+} ModTable;
 
 // types of locations that can be hit
-#define LOC_HDAM		1	// head
-#define LOC_CDAM		2	// chest
-#define LOC_SDAM		3	// stomach
-#define LOC_LDAM		4	// legs
-#define LOC_KVLR_HELMET 5	// kevlar helmet	Freud, for %D
-#define LOC_KVLR_VEST	6	// kevlar vest 		Freud, for %D
-#define LOC_NO			7	// Shot by shotgun or handcannon
-#define LOC_MAX			8
+typedef enum {
+    LOC_HDAM = 1,    // head
+    LOC_CDAM,        // chest
+    LOC_SDAM,        // stomach
+    LOC_LDAM,        // legs
+    LOC_KVLR_HELMET, // kevlar helmet	Freud, for %D
+    LOC_KVLR_VEST,   // kevlar vest 		Freud, for %D
+    LOC_NO,          // Shot by shotgun or handcannon
+    LOC_MAX
+} ModLocation;
 
 // Awards
-#define ACCURACY 0
-#define IMPRESSIVE 1
-#define EXCELLENT 2
+typedef enum {
+    ACCURACY,
+    IMPRESSIVE,
+    EXCELLENT,
+	DOMINATING,
+	UNSTOPPABLE,
+	AWARD_MAX
+} Awards;
 
 // Game Modes
-#define GM_TEAMPLAY 0
-#define GM_TEAMDM 1
-#define GM_CTF 2
-#define GM_TOURNEY 3
-#define GM_DEATHMATCH 4
-#define GM_DOMINATION 5
+typedef enum {
+    GM_TEAMPLAY,
+    GM_TEAMDM,
+    GM_CTF,
+    GM_TOURNEY,
+    GM_DEATHMATCH,
+    GM_DOMINATION,
+    GM_ASSASSINATE_THE_LEADER,
+    GM_ESCORT_THE_VIP,
+	GM_MAX
+} GameMode;
 
 // Game Mode Flags
 #define GMF_NONE 0
@@ -985,6 +1014,7 @@ extern int sm_meat_index;
 #define GMN_TOURNEY "Tourney"
 #define GMN_DEATHMATCH "Deathmatch"
 #define GMN_DOMINATION "Domination"
+#define GMN_ESPIONAGE "Espionage"
 #define GMN_JUMP "Jump"
 #define GMN_3TEAMS "3 Teams"
 //#define GMN_NEW_MODE 2       // If new game mode flags are created, use 2 for its value first
@@ -1196,9 +1226,24 @@ extern cvar_t *bholelife;
 extern cvar_t *medkit_drop;
 extern cvar_t *medkit_time;
 extern cvar_t *medkit_instant;
+extern cvar_t *medkit_max;
+extern cvar_t *medkit_value;
 
 // BEGIN AQ2 ETE
-extern cvar_t *e_enhancedSlippers;
+extern cvar_t *esp;
+extern cvar_t *atl;
+extern cvar_t *etv;
+extern cvar_t *esp_atl;
+extern cvar_t *esp_punish;
+extern cvar_t *esp_etv_halftime;
+extern cvar_t *esp_showleader;
+extern cvar_t *esp_showtarget;
+extern cvar_t *esp_leaderequip;
+extern cvar_t *esp_leaderenhance;
+extern cvar_t *esp_enhancedslippers;
+extern cvar_t *esp_matchmode;
+extern cvar_t *esp_respawn_uvtime;
+extern cvar_t *esp_debug;
 
 // END AQ2 ETE
 
@@ -1212,6 +1257,11 @@ extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
 extern cvar_t *highlander;
+extern cvar_t *gun_dualmk23_enhance;
+extern cvar_t *printrules;
+extern cvar_t *timedmsgs;
+extern cvar_t *mm_captain_teamname;
+extern cvar_t *sv_killgib;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -1387,6 +1437,7 @@ qboolean ai_visible( edict_t *self, edict_t *other );
 qboolean infront( edict_t *self, edict_t *other );
 #endif
 void disablecvar(cvar_t *cvar, char *msg);
+int eztimer(int seconds);
 
 // Re-enabled for bots
 float *tv (float x, float y, float z);
@@ -1500,6 +1551,7 @@ qboolean OnLadder( edict_t *ent );
 // p_hud.c
 //
 void MoveClientToIntermission (edict_t * client);
+void MoveClientToPOI(edict_t *ent, edict_t *poi);
 void G_SetStats (edict_t * ent);
 void G_CheckChaseStats (edict_t * ent);
 void ValidateSelectedItem (edict_t * ent);
@@ -1521,6 +1573,7 @@ void G_RunEntity (edict_t * ent);
 //
 void EndDMLevel (void);
 void ExitLevel (void);
+edict_t *ChooseRandomPlayer(int teamNum, qboolean allowBot);
 
 //
 // g_chase.c
@@ -1532,6 +1585,8 @@ void SetChase( edict_t *ent, edict_t *target );
 void ChaseNext (edict_t * ent);
 void ChasePrev (edict_t * ent);
 void GetChaseTarget (edict_t * ent);
+void TeamplayChaseCam(edict_t *self, edict_t *attacker);
+void EspionageChaseCam(edict_t *self, edict_t *attacker);
 
 
 //
@@ -1544,7 +1599,7 @@ void G_UpdateSpectatorStatusbar( void );
 void G_UpdatePlayerStatusbar( edict_t *ent, int force );
 int Gamemodeflag(void);
 int Gamemode(void);
-#if USE_AQTION
+#ifdef USE_AQTION
 void generate_uuid();
 #endif
 //
@@ -1552,6 +1607,7 @@ void generate_uuid();
 //
 edict_t* SelectRandomDeathmatchSpawnPoint(void);
 edict_t* SelectFarthestDeathmatchSpawnPoint(void);
+edict_t* SelectDeathmatchSpawnPoint(void);
 float PlayersRangeFromSpot(edict_t* spot);
 void ClientLegDamage(edict_t* ent);
 void ClientFixLegs(edict_t *ent);
@@ -1575,9 +1631,10 @@ void ProduceShotgunDamageReport(edict_t*);
 
 //tng_stats.c
 void StatBotCheck(void);
-#ifdef USE_AQTION
+#if USE_AQTION
 void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker);
 void LogWorldKill(edict_t *self);
+void LogCapture(edict_t *capturer);
 void LogMatch();
 void LogAward(edict_t *ent, int award);
 void LogEndMatchStats();
@@ -1597,6 +1654,7 @@ void LogEndMatchStats();
 #define ANIM_REVERSE            -1
 
 #define MAX_SKINLEN				32
+#define MAX_TEAMNAMELEN			32
 
 #define MAX_GUNSTAT MOD_GRENADE //Max MOD to track
 
@@ -1675,7 +1733,7 @@ typedef struct
 	ignorelist_t ignorelist;
 	gitem_t *chosenItem2;		// Support for item kit mode
 
-	#ifdef USE_AQTION
+	#if USE_AQTION
 	char steamid[24];
 	char discordid[24];
 	#endif
@@ -1718,6 +1776,8 @@ typedef struct
  
   int motd_refreshes;
   int last_motd_refresh;
+  int gamemsg_refreshes;
+  int last_gamemsg_refresh;
   edict_t *last_chase_target;	// last person they chased, to resume at the same place later...
 
   // Number of team kills this game
@@ -1773,11 +1833,34 @@ typedef struct
   int	hud_type;
 #endif
 
+  int esp_state;
+  int esp_caps;						// How many times a player has captured the case
+  int esp_capstreak;				// As leader, how many caps in a row
+  int esp_capstreakbest;			// Best cap streak
+  int esp_leaderkillstreak;			// How many enemy leader kills a player has had in a row
+  int esp_leaderkillstreakbest;		// Best leader kill streak
+  int esp_leaderprotectcount;		// How many times a player has protected the leader
+  int esp_leaderfragcount;			// How many times this player has fragged a leader
+  int esp_capdefendercount;			// How many times a player has defended the capture point
+  
+  // timers
+  int esp_lastprotectcap;			// Last time this player protected the capture point (framenum)
+  int esp_lastprotectleader;		// Last time this player protected the leader (framenum)
+  int esp_lasthurtleader;			// Last time this player hurt the leader (framenum)
+  int esp_leadertime;				// Last time this player was leader (framenum) to prevent spamming
+  int esp_respawn_sounds;			// 3: Played Lights, 2: Played Camera, 1: Played Action, 0: Play nothing
+  qboolean is_volunteer;
+
+  int medkit_award_time;
+
   //PaTMaN's jmod
   int toggle_lca;
   int toggles;
 
-  //char skin[MAX_SKINLEN];
+  // Domination stats
+  int dom_caps;						// How many times a player captured a dom point
+  int dom_capstreak;				// How many times a player captured a dom point in a row
+  int dom_capstreakbest;			// Best cap streak for domination
 }
 client_respawn_t;
 
@@ -2217,6 +2300,11 @@ struct edict_s
 	vec3_t	lastPosition;
 	qboolean	nameused[NUMNAMES][NUMNAMES];
 	qboolean	newnameused[AQ2WTEAMSIZE];
+	#ifdef AQTION_EXTENSION
+	//AQTION - Reki: Entity indicators
+	edict_t		*obj_arrow;
+	#endif
+
 #endif
 };
 
@@ -2234,10 +2322,20 @@ typedef struct
 	int shotsTotal;
 	int hitsTotal;
 	int hitsLocations[LOC_MAX];
-	gunStats_t gunstats[MAX_GUNSTAT];
+	gunStats_t gunstats[MOD_TOTAL];
 	int team;
 	gitem_t *weapon;
 	gitem_t *item;
+	// Extended stats
+	#if USE_AQTION
+	char steamid[24];
+	char discordid[24];
+	#endif
+	int ctf_capstreak;
+	int team_kills;
+	int streakKillsHighest;
+	int streakHSHighest;
+
 }
 gghost_t;
 
@@ -2281,7 +2379,7 @@ void Drop_Spec (edict_t * ent, gitem_t * item);
 void SpecThink (edict_t * spec);
 void DeadDropSpec (edict_t * ent);
 
-void temp_think_specweap (edict_t * ent);	// p_weapons.c
+void SpecialWeaponRespawnTimer (edict_t * ent);	// p_weapons.c
 void ThinkSpecWeap (edict_t * ent);
 void DropExtraSpecial (edict_t * ent);
 void TransparentListSet (solid_t solid_type);
@@ -2341,7 +2439,7 @@ void Cmd_AutoRecord_f(edict_t * ent);
 
 typedef struct team_s
 {
-	char name[20];
+	char name[24];
 	char skin[MAX_SKINLEN];
 	char skin_index[MAX_QPATH];
 	int score, total;
@@ -2349,6 +2447,13 @@ typedef struct team_s
 	int pauses_used, wantReset;
 	cvar_t	*teamscore;
 	edict_t	*captain;
+	// Espionage
+	edict_t *leader;
+	int respawn_timer;
+	qboolean leader_dead;
+	char leader_name[MAX_SKINLEN];
+	char leader_skin[MAX_QPATH];
+	char leader_skin_index[MAX_QPATH];
 }team_t;
 
 extern team_t teams[TEAM_TOP];
@@ -2365,6 +2470,7 @@ extern int gameSettings;
 
 #include "a_ctf.h"
 #include "a_dom.h"
+#include "a_esp.h"
 
 #ifdef AQTION_EXTENSION
 #define HAS_CVARSYNC(ent) (Client_GetProtocol(ent) == 38 && Client_GetVersion(ent) >= 3013)
@@ -2414,3 +2520,15 @@ typedef enum {
 #ifndef NO_BOTS
 #include "acesrc/acebot.h"
 #endif
+
+typedef struct {
+    int teamNum;
+    edict_t *ent;
+    int seconds;
+    char *msg;
+    qboolean fired;
+} Message;
+extern Message *timedMessages;
+
+void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg);
+void FireTimedMessages();

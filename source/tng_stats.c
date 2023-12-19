@@ -490,7 +490,7 @@ void Cmd_Statmode_f(edict_t* ent)
 	stuffcmd(ent, stuff);
 }
 
-#if USE_AQTION
+#ifdef USE_AQTION
 
 // Revisit one day...
 
@@ -615,8 +615,8 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
 	int vt = 0; //Default victim team is 0 (no team)
 	int kt = 0; //Default killer team is 0 (no team)
 	int ttk = 0; //Default TTK (time to kill) is 0
-	int vl = 0; //Placeholder victimleader until Espionage gets ported
-	int kl = 0; //Placeholder killerleader until Espionage gets ported
+	int vl = 0; //Default victimleader is 0, 1 if leader
+	int kl = 0; //Default killerleader is 0, 1 if leader
 	char msg[1024]; // Whole stat line in JSON format
 	char v[24]; // Victim's Steam ID
 	char vn[128]; // Victim's name
@@ -653,6 +653,13 @@ void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker)
         if (oc == 1) // Only one opponent active, so don't log kills
             return;
     }
+
+	if (esp->value){
+		if (IS_LEADER(self))
+			vl = 1;
+		if (IS_LEADER(attacker))
+			kl = 1;
+	}
 
 	if ((team_round_going && !in_warmup) || (gameSettings & GS_DEATHMATCH)) // If round is active OR if deathmatch
 	{
@@ -760,7 +767,7 @@ void LogWorldKill(edict_t *self)
 	int eventtime;
 	int vt = 0; //Default victim team is 0 (no team)
 	int ttk = 0; //Default TTK (time to kill) is 0
-	int vl = 0; //Placeholder victimleader until Espionage gets ported
+	int vl = 0; //Is victim leader? 0 = false, 1 = true
 	char msg[1024];
 	char v[24];
 	char vn[128];
@@ -791,6 +798,10 @@ void LogWorldKill(edict_t *self)
         if (oc == 1) // Only one opponent active, so don't log kills
             return;
     }
+
+	if (esp->value && IS_LEADER(self)){
+		vl = 1;
+	}
 
 	if ((team_round_going && !in_warmup) || (gameSettings & GS_DEATHMATCH)) // If round is active OR if deathmatch
 	{
@@ -856,6 +867,65 @@ void LogWorldKill(edict_t *self)
 
 /*
 ==================
+LogCapture
+=================
+*/
+void LogCapture(edict_t *capturer)
+{
+	int eventtime;
+	char msg[1024];
+	eventtime = (int)time(NULL);
+	int caps, capstreak;
+	int ttc = current_round_length / 10; // TimeToCapture (how many seconds in the round)
+
+	// Check if there's an AI bot in the game, if so, do nothing
+	if (game.ai_ent_found) {
+		return;
+	}
+
+	int mode = Gamemode();
+	switch (mode) {
+		case GM_CTF:
+			caps = capturer->client->resp.ctf_caps;
+			capstreak = capturer->client->resp.ctf_capstreak;
+			break;
+		case GM_ESCORT_THE_VIP:
+			caps = capturer->client->resp.esp_caps;
+			capstreak = capturer->client->resp.esp_capstreak;
+			break;
+		case GM_DOMINATION:
+			caps = capturer->client->resp.dom_caps;
+			capstreak = capturer->client->resp.dom_capstreak;
+			break;
+		default:
+			// Safety measure in case something isn't right
+			caps = 0;
+			capstreak = 0;
+			break;
+	}
+
+	// (matchid,capturer,capturername,team,gamemode,gamemodeflag,cap,capstreak)
+	// (mid,steamid,cn,t,team,gm,gmf,c,cs,ttc)
+
+	Com_sprintf(
+		msg, sizeof(msg),
+		"{\"capture\":{\"mid\":\"%s\",\"steamid\":\"%s\",\"cn\":\"%s\",\"t\":\"%d\",\"team\":\"%i\",\"gm\":%i,\"gmf\":%i,\"c\":%i,\"cs\":%i,\"ttc\":%i}}\n",
+		game.matchid,
+		capturer->client->pers.steamid,
+		capturer->client->pers.netname,
+		eventtime,
+		capturer->client->resp.team,
+		Gamemode(),
+		Gamemodeflag(),
+		caps,
+		capstreak,
+		ttc
+	);
+	Write_Stats(msg);
+}
+
+/*
+==================
 LogMatch
 =================
 */
@@ -873,8 +943,8 @@ void LogMatch()
 		return;
 	}
 
-	// Check for scoreless teamplay, don't log, unless it's tourney mode
-	if ((t1 == 0 && t2 == 0 && t3 == 0) && (teamplay->value) && (!use_tourney->value)) {
+	// Check for scoreless teamplay, don't log
+	if (teamplay->value && t1 == 0 && t2 == 0 && t3 == 0) {
 		return;
 	}
 
@@ -932,42 +1002,34 @@ void LogAward(edict_t *ent, int award)
 
 /*
 ==================
-LogEndMatchStats
+WriteLogEndMatchStats
+
+This function is called from LogEndMatchStats because we're writing
+real clients and ghost clients, to reduce code duplication.
 =================
 */
-void LogEndMatchStats()
+
+void WriteLogEndMatchStats(gclient_t *cl)
 {
-	int i;
-	char msg[1024];
-	gclient_t *sortedClients[MAX_CLIENTS], *cl;
-	int totalClients, secs, shots;
+	int secs, shots;
 	double accuracy, fpm;
-	char steamid[24];
-	char discordid[24];
-	totalClients = G_SortedClients(sortedClients);
+	char msg[1024];
 
-	// Check if there's an AI bot in the game, if so, do nothing
-	if (game.ai_ent_found) {
-		return;
-	}
+	shots = min( cl->resp.shotsTotal, 9999 );
+	secs = (level.framenum - cl->resp.enterframe) / HZ;
 
-	for (i = 0; i < totalClients; i++){
-		cl = sortedClients[i];
-		shots = min( cl->resp.shotsTotal, 9999 );
-		secs = (level.framenum - cl->resp.enterframe) / HZ;
+	if (shots)
+			accuracy = (double)cl->resp.hitsTotal * 100.0 / (double)cl->resp.shotsTotal;
+		else
+			accuracy = 0;
+		if (secs > 0)
+			fpm = (double)cl->resp.score * 60.0 / (double)secs;
+		else
+			fpm = 0.0;
 
-		if (shots)
-				accuracy = (double)cl->resp.hitsTotal * 100.0 / (double)cl->resp.shotsTotal;
-			else
-				accuracy = 0;
-			if (secs > 0)
-				fpm = (double)cl->resp.score * 60.0 / (double)secs;
-			else
-				fpm = 0.0;
-
-		Com_sprintf(
+	Com_sprintf(
 			msg, sizeof(msg),
-			"{\"matchstats\":{\"sid\":\"%s\",\"mid\":\"%s\",\"s\":\"%s\",\"sc\":%i,\"sh\":%i,\"a\":%f,\"f\":%f,\"dd\":%i,\"d\":%i,\"k\":%i,\"ctfc\":%i,\"ctfcs\":%i,\"ht\":%i,\"tk\":%i,\"t\":%i,\"hks\":%i,\"hhs\":%i,\"dis\":\"%s\",\"pt\":%i,\"hlh\":%i,\"hlc\":%i,\"hls\":%i,\"hll\":%i,\"hlkh\":%i,\"hlkv\":%i,\"hln\":%i,\"gss1\":%i,\"gss2\":%i,\"gss3\":%i,\"gss4\":%i,\"gss5\":%i,\"gss6\":%i,\"gss7\":%i,\"gss8\":%i,\"gss9\":%i,\"gss13\":%i,\"gss14\":%i,\"gss35\":%i,\"gsh1\":%i,\"gsh2\":%i,\"gsh3\":%i,\"gsh4\":%i,\"gsh5\":%i,\"gsh6\":%i,\"gsh7\":%i,\"gsh8\":%i,\"gsh9\":%i,\"gsh13\":%i,\"gsh14\":%i,\"gsh35\":%i,\"gshs1\":%i,\"gshs2\":%i,\"gshs3\":%i,\"gshs4\":%i,\"gshs5\":%i,\"gshs6\":%i,\"gshs7\":%i,\"gshs8\":%i,\"gshs9\":%i,\"gshs13\":%i,\"gshs14\":%i,\"gshs35\":%i,\"gsk1\":%i,\"gsk2\":%i,\"gsk3\":%i,\"gsk4\":%i,\"gsk5\":%i,\"gsk6\":%i,\"gsk7\":%i,\"gsk8\":%i,\"gsk9\":%i,\"gsk13\":%i,\"gsk14\":%i,\"gsk35\":%i,\"gsd1\":%i,\"gsd2\":%i,\"gsd3\":%i,\"gsd4\":%i,\"gsd5\":%i,\"gsd6\":%i,\"gsd7\":%i,\"gsd8\":%i,\"gsd9\":%i,\"gsd13\":%i,\"gsd14\":%i,\"gsd35\":%i}}\n",
+			"{\"matchstats\":{\"sid\":\"%s\",\"mid\":\"%s\",\"s\":\"%s\",\"sc\":%i,\"sh\":%i,\"a\":%f,\"f\":%f,\"dd\":%i,\"d\":%i,\"k\":%i,\"ctfc\":%i,\"ctfcs\":%i,\"ht\":%i,\"tk\":%i,\"t\":%i,\"hks\":%i,\"hhs\":%i,\"dis\":\"%s\",\"pt\":%i,\"hlh\":%i,\"hlc\":%i,\"hls\":%i,\"hll\":%i,\"hlkh\":%i,\"hlkv\":%i,\"hln\":%i,\"gss1\":%i,\"gss2\":%i,\"gss3\":%i,\"gss4\":%i,\"gss5\":%i,\"gss6\":%i,\"gss7\":%i,\"gss8\":%i,\"gss9\":%i,\"gss13\":%i,\"gss14\":%i,\"gss35\":%i,\"gsh1\":%i,\"gsh2\":%i,\"gsh3\":%i,\"gsh4\":%i,\"gsh5\":%i,\"gsh6\":%i,\"gsh7\":%i,\"gsh8\":%i,\"gsh9\":%i,\"gsh13\":%i,\"gsh14\":%i,\"gsh35\":%i,\"gshs1\":%i,\"gshs2\":%i,\"gshs3\":%i,\"gshs4\":%i,\"gshs5\":%i,\"gshs6\":%i,\"gshs7\":%i,\"gshs8\":%i,\"gshs9\":%i,\"gshs13\":%i,\"gshs14\":%i,\"gshs35\":%i,\"gsk1\":%i,\"gsk2\":%i,\"gsk3\":%i,\"gsk4\":%i,\"gsk5\":%i,\"gsk6\":%i,\"gsk7\":%i,\"gsk8\":%i,\"gsk9\":%i,\"gsk13\":%i,\"gsk14\":%i,\"gsk35\":%i,\"gsd1\":%i,\"gsd2\":%i,\"gsd3\":%i,\"gsd4\":%i,\"gsd5\":%i,\"gsd6\":%i,\"gsd7\":%i,\"gsd8\":%i,\"gsd9\":%i,\"gsd13\":%i,\"gsd14\":%i,\"gsd35\":%i,\"ecdc\":%i,\"ecs\":%i,\"ecsb\":%i,\"elfc\":%i,\"elks\":%i,\"elksb\":%i,\"elpc\":%i}}\n",
 			server_id->string,
 			game.matchid,
 			cl->pers.steamid,
@@ -1053,9 +1115,97 @@ void LogEndMatchStats()
 			cl->resp.gunstats[MOD_KNIFE_THROWN].damage,
 			cl->resp.gunstats[MOD_HG_SPLASH].damage,
 			cl->resp.gunstats[MOD_PUNCH].damage,
-			cl->resp.gunstats[MOD_KICK].damage
-		);
-		Write_Stats(msg);
+			cl->resp.gunstats[MOD_KICK].damage,
+			cl->resp.esp_capdefendercount,
+			cl->resp.esp_capstreak,
+			cl->resp.esp_capstreakbest,
+			cl->resp.esp_leaderfragcount,
+			cl->resp.esp_leaderkillstreak,
+			cl->resp.esp_leaderkillstreakbest,
+			cl->resp.esp_leaderprotectcount
+	);
+	Write_Stats(msg);
+}
+
+
+/*
+=================
+LogEndMatchStats
+=================
+*/
+void LogEndMatchStats()
+{
+	int i;
+	gclient_t *sortedClients[MAX_CLIENTS], *cl;
+	int totalClients;
+	totalClients = G_SortedClients(sortedClients);
+
+	// Check if there's an AI bot in the game, if so, do nothing
+	if (game.ai_ent_found) {
+		return;
+	}
+
+	// Write out the stats for each client still connected to the server
+	for (i = 0; i < totalClients; i++){
+		cl = sortedClients[i];
+
+		//gi.dprintf("Writing real stats for %s\n", cl->pers.netname);
+		WriteLogEndMatchStats(cl);
+	}
+
+	// Write out the stats for each ghost client
+	if (!use_ghosts->value || num_ghost_players == 0) {
+		// Ghostbusters got em all
+		return;
+	} else {
+		gghost_t *ghost = NULL;
+		edict_t *ent = NULL;
+		gclient_t *ghlient = NULL;
+		
+		// Initialize the ghost client
+		ent = G_Spawn();
+		ent->client = gi.TagMalloc(sizeof(gclient_t), TAG_LEVEL);
+			if (!ent->client) {
+				gi.error("%s: Couldn't allocate client memory\n", __FUNCTION__);
+				return;
+			}
+		ghlient = ent->client;
+
+		for (i = 0, ghost = ghost_players; i < num_ghost_players; i++, ghost++) {
+			//gi.dprintf("I found %i ghosts, Writing ghost stats for %s\n", num_ghost_players, ghost->netname);
+
+			// Copy ghost data to this dummy entity
+			strcpy(ghlient->pers.ip, ghost->ip);
+			strcpy(ghlient->pers.netname, ghost->netname);
+			strcpy(ghlient->pers.steamid, ghost->steamid);
+			strcpy(ghlient->pers.discordid, ghost->discordid);
+
+			ghlient->resp.enterframe = ghost->enterframe;
+			ghlient->resp.score = ghost->score;
+			ghlient->resp.kills = ghost->kills;
+			ghlient->resp.deaths = ghost->deaths;
+			ghlient->resp.damage_dealt = ghost->damage_dealt;
+			ghlient->resp.ctf_caps = ghost->ctf_caps;
+			ghlient->resp.ctf_capstreak = ghost->ctf_capstreak;
+			ghlient->resp.team_kills = ghost->team_kills;
+			ghlient->resp.streakKillsHighest = ghost->streakKillsHighest;
+			ghlient->resp.streakHSHighest = ghost->streakHSHighest;
+			ghlient->resp.shotsTotal = ghost->shotsTotal;
+			ghlient->resp.hitsTotal = ghost->hitsTotal;
+
+			if (teamplay->value && ghost->team)
+				ghlient->resp.team = ghost->team;
+
+			// Copy all gunstats and hit locations to this dummy entity
+			memcpy(ghlient->resp.hitsLocations, ghost->hitsLocations, sizeof(ghlient->resp.hitsLocations));
+			memcpy(ghlient->resp.gunstats, ghost->gunstats, sizeof(ghlient->resp.gunstats));
+
+		WriteLogEndMatchStats(ghlient);
+		}
+		// Loop is over, set this to zero
+		num_ghost_players = 0;
+		// Be free, little dummy entity
+		G_FreeEdict(ent);
 	}
 }
 #endif

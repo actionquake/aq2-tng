@@ -1,8 +1,14 @@
-Changes in TNG 2.82
+Changes in TNG 2.83
 
 + = new feature
 - = bug fix
 * = major bug fix
+
+From 2.83
++ esp: Value [0/1], default 0, enables Espionage mode (ETV and ATL).  Review Espionage.md for details
++ printrules: Value [0/1], default 0 (disabled).  If enabled, a printout of the rules will display once the countdown begins in Teamplay modes
++ timedmsgs: Value [0/1], default 0 (disabled).  If enabled, messages will be printed in the game, determined by state and time in the round
++ auto_join 2: Added an option for automatically joining a team using the JoinTeamAuto logic.  Automatically disabled for matchmode.
 
 From 2.82
 + mapvote_next_limit: Value in seconds, restricts players from voting for a map at the very end of the match while still enabling mapvote_next features
@@ -113,7 +119,7 @@ From 2.81
 - When not using maplist.ini, votes are now saved as action.ini-votes instead of maplist.ini-votes.  This fixes vote storage with 'ininame' cvar.
 + Added 'empty_rotate' to rotate maps when empty for that many minutes, to prevent being stuck on an unpopular map.  Default 0 means disabled.
 + Added 'empty_exec' to optionally execute config with empty_rotate.  Useful to revert to default settings on servers with configvote.
-+ Enhanced Stealth Slippers addition (set 'e_enhancedSlippers 1')
++ Enhanced Stealth Slippers addition (set 'esp_enhancedslippers 1')
 + Added 'tourney_lca' server cvar to enable "Lights Camera Action" at the beginning of the round rather than silence.  Set to 0 for classic use, 1 for LCA.
 * Missing action.ini file no longer kills the server, it will default to CTF team names and skins (blue/red/green).  The presence of action.ini will still take precedence
 + Ability to change team names and skins during teamplay with sv t[i]name, sv t[i]skin and sv t[i]skin_index where i is the team number.

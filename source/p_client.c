@@ -350,27 +350,44 @@ static void FreeClientEdicts(gclient_t *client)
 #endif
 }
 
-void Announce_Reward(edict_t *ent, int rewardType){
-	char buf[256];
+void Announce_Reward(edict_t *ent, int rewardType) {
+    char buf[256];
+    char *soundFile;
+	  char *playername = ent->client->pers.netname;
 
-	if (rewardType == IMPRESSIVE) {
-		sprintf(buf, "IMPRESSIVE %s!", ent->client->pers.netname);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/impressive.wav"), 1.0, ATTN_NONE, 0.0);
-	} else if (rewardType == EXCELLENT) {
-		sprintf(buf, "EXCELLENT %s (%dx)!", ent->client->pers.netname,ent->client->resp.streakKills/12);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/excellent.wav"), 1.0, ATTN_NONE, 0.0);
-	} else if (rewardType == ACCURACY) {
-		sprintf(buf, "ACCURACY %s!", ent->client->pers.netname);
-		CenterPrintAll(buf);
-		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/accuracy.wav"), 1.0, ATTN_NONE, 0.0);
-	}
+    switch (rewardType) {
+        case IMPRESSIVE:
+            sprintf(buf, "IMPRESSIVE %s!", playername);
+            soundFile = "tng/impressive.wav";
+            break;
+        case EXCELLENT:
+            sprintf(buf, "EXCELLENT %s (%dx)!", playername, ent->client->resp.streakKills/12);
+            soundFile = "tng/excellent.wav";
+            break;
+        case ACCURACY:
+            sprintf(buf, "ACCURACY %s!", playername);
+            soundFile = "tng/accuracy.wav";
+            break;
+        case DOMINATING:
+            sprintf(buf, "%s IS DOMINATING!", playername);
+            soundFile = "radio/male/deliv3.wav";
+            break;
+        case UNSTOPPABLE:
+            sprintf(buf, "%s IS UNSTOPPABLE!", playername);
+            soundFile = "radio/male/deliv3.wav";
+            break;
+        default:
+			gi.dprintf("%s: Unknown reward type %d for %s\n", __FUNCTION__, rewardType, playername);
+            return;  // Something didn't jive here?
+    }
 
-	#ifdef USE_AQTION
-	if (stat_logs->value)
-		LogAward(ent, rewardType);
-	#endif
+    CenterPrintAll(buf);
+    gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex(soundFile), 1.0, ATTN_NONE, 0.0);
+
+    #ifdef USE_AQTION
+    if (stat_logs->value)
+        LogAward(ent, rewardType);
+    #endif
 }
 
 void Add_Frag(edict_t * ent, int mod)
@@ -702,6 +719,10 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 	int n;
 
 	self->client->resp.ctf_capstreak = 0;
+	self->client->resp.dom_capstreak = 0;
+
+	if (esp->value && IS_LEADER(self))
+		self->client->resp.esp_capstreak = 0;
 
 	friendlyFire = meansOfDeath & MOD_FRIENDLY_FIRE;
 	mod = meansOfDeath & ~MOD_FRIENDLY_FIRE;
@@ -838,7 +859,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(self->client->attacker, self);
 
-			#if USE_AQTION
+			#ifdef USE_AQTION
 			if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 				LogKill(self, inflictor, self->client->attacker);
 			}
@@ -876,7 +897,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 
 			self->enemy = NULL;
       
-			#if USE_AQTION
+			#ifdef USE_AQTION
 			if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 				LogWorldKill(self);
 			}
@@ -1217,7 +1238,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(attacker, self);
 
-			#if USE_AQTION
+			#ifdef USE_AQTION
 			if (stat_logs->value) {
 				LogKill(self, inflictor, attacker);
 			}
@@ -1247,7 +1268,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 	PrintDeathMessage(death_msg, self);
 	IRC_printf(IRC_T_DEATH, death_msg);
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	if (stat_logs->value) { // Only create stats logs if stat_logs is 1
 		LogWorldKill(self);
 	}
@@ -1286,7 +1307,7 @@ void EjectWeapon(edict_t * ent, gitem_t * item)
 		ent->client->v_angle[YAW] += spread;
 		drop->spawnflags = DROPPED_PLAYER_ITEM;
 		if (!in_warmup)
-			drop->think = temp_think_specweap;
+			drop->think = SpecialWeaponRespawnTimer;
 	}
 
 }
@@ -1316,8 +1337,12 @@ void EjectMedKit( edict_t *ent, int medkit )
 void TossItemsOnDeath(edict_t * ent)
 {
 	gitem_t *item;
-	qboolean quad;
+	qboolean quad = false;
 	int i;
+
+	// Don't drop items if leader, this is just a mess
+	if (esp->value && IS_LEADER(ent))
+		return;
 
 	// don't bother dropping stuff when allweapons/items is active
 	if (allitem->value) {
@@ -1465,6 +1490,9 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		if (ctf->value) {
 			self->client->respawn_framenum = level.framenum + CTFGetRespawnTime(self) * HZ;
 		}
+		else if (esp->value) {
+			self->client->respawn_framenum = level.framenum + EspGetRespawnTime(self) * HZ;
+		}
 		else if(teamdm->value) {
 			self->client->respawn_framenum = level.framenum + (int)(teamdm_respawn->value * HZ);
 		}
@@ -1476,6 +1504,10 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		ClientObituary(self, inflictor, attacker);
 		if (ctf->value)
 			CTFFragBonuses(self, inflictor, attacker);
+
+		// TODO: Make this work
+		if (esp->value)
+			EspScoreBonuses(self, attacker);
 
 		//TossClientWeapon (self);
 		TossItemsOnDeath(self);
@@ -1489,9 +1521,16 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		if (!teamplay->value)
 			Cmd_Help_f(self);	// show scores
 
-		// always reset chase to killer, even if NULL
-		if(limchasecam->value < 2 && attacker && attacker->client)
-			self->client->resp.last_chase_target = attacker;
+		/*
+		Updated chase cam calls
+		*/
+		if (limchasecam->value < 2 && attacker && attacker->client) {
+			// if (esp->value)
+			// 	EspionageChaseCam(self, attacker);
+			// else 
+			if (teamplay->value)
+				TeamplayChaseCam(self, attacker);
+		}
 	}
 	// remove powerups
 	self->client->quad_framenum = 0;
@@ -1598,6 +1637,12 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	// in ctf, when a player dies check if he should be moved to the other team
 	if(ctf->value)
 		CheckForUnevenTeams(self);
+
+	if (esp->value && IS_LEADER(self)) {
+		if (!in_warmup && team_round_going) {
+			EspReportLeaderDeath(self);
+		}
+	}
 }
 
 /*
@@ -1637,6 +1682,44 @@ float PlayersRangeFromSpot(edict_t * spot)
 	}
 
 	return bestplayerdistance;
+}
+
+/*
+================
+SelectAnyDeathmatchSpawnPoint
+
+I just need a spawnpoint, any spawnpoint...
+================
+*/
+edict_t *SelectAnyDeathmatchSpawnPoint(void)
+{
+    edict_t *spot = NULL;
+    edict_t **spots = NULL;
+    int count = 0;
+
+	gi.dprintf("Warning: too few spawnpoints in this map\n");
+
+    while ((spot = G_Find(spot, FOFS(classname), "info_player_deathmatch")) != NULL) {
+        spots = realloc(spots, sizeof(*spots) * (count + 1));
+        if (!spots) {
+            // Handle memory allocation error
+            return NULL;
+        }
+        spots[count++] = spot;
+    }
+
+    if (count == 0) {
+        // No DM spawns found, womp womp
+        return NULL;
+    }
+
+    // Select a random spot
+    spot = spots[rand() % count];
+
+    // Free the spots array
+    free(spots);
+
+    return spot;
 }
 
 /*
@@ -1733,10 +1816,72 @@ edict_t *SelectFarthestDeathmatchSpawnPoint(void)
 
 edict_t *SelectDeathmatchSpawnPoint(void)
 {
+	edict_t *spot = NULL;
+
 	if (DMFLAGS(DF_SPAWN_FARTHEST))
-		return SelectFarthestDeathmatchSpawnPoint();
+		spot = SelectFarthestDeathmatchSpawnPoint();
 	else
-		return SelectRandomDeathmatchSpawnPoint();
+		spot = SelectRandomDeathmatchSpawnPoint();
+
+	return spot;
+}
+
+/*
+UncommonSpawnPoint
+
+This is used when a map does not have the appropriate spawn points for the
+game mode being played.  This is used to prevent server crashes if a player
+cannot spawn.
+*/
+
+edict_t *UncommonSpawnPoint(void)
+{
+	edict_t *spot = NULL;
+
+	if (!spot) {
+		gi.dprintf("Warning: failed to find deathmatch spawn point, unexpected spawns will be utilized\n");
+
+		/*
+		Try all possible classes of spawn points, and use DM weapon spawns as a last resort.
+		*/
+		char* spawnpoints[] = {
+			"info_player_start",
+			"info_player_coop",
+			"info_player_team1",
+			"info_player_team2",
+			"info_player_team3",
+			"info_player_deathmatch",
+			"weapon_bfg",
+			"weapon_chaingun",
+			"weapon_machinegun",
+			"weapon_rocketlauncher",
+			"weapon_shotgun",
+			"weapon_supershotgun",
+			"weapon_railgun"
+		};
+		size_t num_spawnpoints = sizeof(spawnpoints) / sizeof(spawnpoints[0]);
+		int i;
+		for (i = 0; i < num_spawnpoints; ++i) {
+			while ((spot = G_Find(spot, FOFS(classname), spawnpoints[i])) != NULL) {
+				if (!game.spawnpoint[0] && !spot->targetname)
+					break;
+
+				if (!game.spawnpoint[0] || !spot->targetname)
+					continue;
+
+				if (Q_stricmp(game.spawnpoint, spot->targetname) == 0)
+					break;
+			}
+
+			if (spot) {
+				gi.dprintf("Warning: Uncommon spawn point of class %s\n", spawnpoints[i]);
+				gi.dprintf("**If you are the map author, you need to be utilizing MULTIPLE info_player_deathmatch or info_player_team entities**\n");
+				break;
+			}
+		}
+	}
+
+	return spot;
 }
 
 /*
@@ -1744,50 +1889,45 @@ edict_t *SelectDeathmatchSpawnPoint(void)
 SelectSpawnPoint
 
 Chooses a player start, deathmatch start, coop start, etc
+Espionage uses custom spawn points and custom respawns, but only
+once a round has started, otherwise it uses the normal deathmatch
+chosen ones
 ============
 */
 void SelectSpawnPoint(edict_t * ent, vec3_t origin, vec3_t angles)
 {
 	edict_t *spot = NULL;
+	//espsettings_t *es = &espsettings;
 
 	//FIREBLADE
-	if (ctf->value)
+	if (ctf->value) {
 		spot = SelectCTFSpawnPoint(ent);
-	else if (dom->value)
+	} else if (esp->value) {
+		// SelectEspSpawnPoint handles respawns as well as initial spawnpoints
+		spot = SelectEspSpawnPoint(ent);
+	} else if (dom->value) {
 		spot = SelectDeathmatchSpawnPoint();
-	else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup)
+	} else if (!(gameSettings & GS_DEATHMATCH) && ent->client->resp.team && !in_warmup) {
 		spot = SelectTeamplaySpawnPoint(ent);
-	else if (jump->value)
+	} else if (jump->value) {
 		spot = SelectFarthestDeathmatchSpawnPoint();
-	else
+	} else {
 		spot = SelectDeathmatchSpawnPoint();
-
-	// find a single player start spot
-	if (!spot) {
-		gi.dprintf("Warning: failed to find deathmatch spawn point\n");
-
-		while ((spot = G_Find(spot, FOFS(classname), "info_player_start")) != NULL) {
-			if (!game.spawnpoint[0] && !spot->targetname)
-				break;
-
-			if (!game.spawnpoint[0] || !spot->targetname)
-				continue;
-
-			if (Q_stricmp(game.spawnpoint, spot->targetname) == 0)
-				break;
-		}
-
-		if (!spot) {
-			if (!game.spawnpoint[0]) {	// there wasn't a spawnpoint without a target, so use any
-				spot = G_Find(spot, FOFS(classname), "info_player_start");
-			}
-			if (!spot) {
-				gi.error("Couldn't find spawn point %s\n", game.spawnpoint);
-				return;
-			}
-		}
 	}
 
+	// desperation mode, find a spawnpoint or the server will crash
+	if (!spot)
+		spot = UncommonSpawnPoint();
+
+	// Last resort, just choose any info_player_deathmatch even if it turns into
+	// a messy telefrag nightmare
+	if (!spot)
+		spot = SelectAnyDeathmatchSpawnPoint();
+
+	// If still no spot, then this map is just not playable, sorry
+	if (!spot)
+		Sys_Error("Couldn't find spawn point, map is not playable\n");
+			
 	VectorCopy(spot->s.origin, origin);
 	origin[2] += 9;
 	VectorCopy(spot->s.angles, angles);
@@ -1893,6 +2033,8 @@ void CleanBodies()
 
 void respawn(edict_t *self)
 {
+	//gi.dprintf("%s tried to respawn\n", self->client->pers.netname);
+
 	if (self->solid != SOLID_NOT || self->deadflag == DEAD_DEAD)
 		CopyToBodyQue(self);
 
@@ -1919,6 +2061,16 @@ void respawn(edict_t *self)
 	}
 
 	self->client->respawn_framenum = level.framenum + 2 * HZ;
+
+	
+	if (esp->value && team_round_going){
+		// Optional respawn invulnerability in Espionage
+		if (esp_respawn_uvtime->value){
+			if (esp_debug->value)
+				gi.dprintf("%s: Invuln activated\n", __FUNCTION__);
+			self->client->uvTime = (int)esp_respawn_uvtime->value;
+		}
+	}
 }
 
 //==============================================================
@@ -2288,6 +2440,11 @@ void ClientLegDamage(edict_t *ent)
 	ent->client->leg_damage = 1;
 	ent->client->leghits++;
 
+	if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM)) { // we don't limp with enhanced slippers, so just ignore this leg damage.
+		ent->client->leg_damage = 0;
+		return;
+	}
+
 	// Reki: limp_nopred behavior
 	switch (ent->client->pers.limp_nopred & 255)
 	{
@@ -2310,7 +2467,7 @@ void ClientLegDamage(edict_t *ent)
 				break;
 			ent->client->pers.limp_nopred |= 256;
 		case 1:
-			if (e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM)) // we don't limp with enhanced slippers, so just ignore this leg damage.
+			if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM)) // we don't limp with enhanced slippers, so just ignore this leg damage.
 				break;
 
 			ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
@@ -2694,6 +2851,45 @@ void PutClientInServer(edict_t * ent)
 	if (allweapon->value)
 		AllWeapons(ent);
 
+	/*
+	Team leaders in Espionage can receive different loadouts
+	0 - No different loadout
+	1 - Leaders get AllItems (default)
+	2 - Leaders get AllWeapons
+	3 - Leaders get AllItems and AllWeapons
+
+	With leaderenhance enabled, the leaders also get a medkit
+	*/
+	if (esp->value) {
+		if (esp_leaderequip->value){
+			for (i = TEAM1; i <= teamCount; i++){
+				if (ent == teams[i].leader) {
+					if (esp_leaderequip->value == 1) {
+						AllItems(ent);
+					} else if (esp_leaderequip->value == 2) {
+						AllWeapons(ent);
+					} else if (esp_leaderequip->value == 3) {
+						AllItems(ent);
+						AllWeapons(ent);
+					}
+				}
+			}
+		}
+		if (esp_leaderenhance->value){
+			for (i = TEAM1; i <= teamCount; i++){
+				if (ent == teams[i].leader) {
+					if (esp_leaderequip->value == 1) {
+						ent->client->medkit = 1;
+					}
+				}
+			}
+		}
+		// For respawn-on-leader, if leader is ducking, client should also be ducking
+		if (team_round_going && HAVE_LEADER(ent->client->resp.team)){
+			ent->client->ps.pmove.pm_flags |= (teams[ent->client->resp.team].leader->client->ps.pmove.pm_flags & PMF_DUCKED);
+		}
+	}
+
 	// force the current weapon up
 	client->newweapon = client->weapon;
 	ChangeWeapon(ent);
@@ -2769,9 +2965,9 @@ void ClientBeginDeathmatch(edict_t * ent)
 
 #ifndef NO_BOTS
     	ACEIT_RebuildPlayerList();
-#if USE_AQTION
+#ifdef USE_AQTION
 		StatBotCheck();
-		#if USE_AQTION
+		#ifdef USE_AQTION
 			if(am->value){
 				attract_mode_bot_check();
 		}
@@ -2798,8 +2994,10 @@ void ClientBeginDeathmatch(edict_t * ent)
 	IRC_printf(IRC_T_SERVER, "%n entered the game", ent->client->pers.netname);
 
 	// TNG:Freud Automaticly join saved teams.
-	if (saved_team && auto_join->value && teamplay->value)
+	if (saved_team && auto_join->value == 1 && teamplay->value)
 		JoinTeam(ent, saved_team, 1);
+	else if (auto_join->value == 2 && teamplay->value)
+		JoinTeamAutobalance(ent);
 
 
 	if (!level.intermission_framenum) {
@@ -3054,7 +3252,7 @@ qboolean ClientConnect(edict_t * ent, char *userinfo)
 	Q_strncpyz(ent->client->pers.ip, ipaddr_buf, sizeof(ent->client->pers.ip));
 	Q_strncpyz(ent->client->pers.userinfo, userinfo, sizeof(ent->client->pers.userinfo));
 
-	#ifdef USE_AQTION
+	#if USE_AQTION
 	value = Info_ValueForKey(userinfo, "steamid");
 	if (*value)
 		Q_strncpyz(ent->client->pers.steamid, value, sizeof(ent->client->pers.steamid));
@@ -3109,7 +3307,18 @@ void ClientDisconnect(edict_t * ent)
 	if (!ent->client)
 		return;
 
+	if (esp->value && matchmode->value) {
+		char tempmsg[128];
+		// We have to kill him first before he is removed as captain/leader
+		killPlayer(ent, false);
+		sprintf(tempmsg, "The captain of %s (%s) disconnected, the other team wins by default!", teams[ent->client->resp.team].name, ent->client->pers.netname);
+		CenterPrintAll(tempmsg);
+	}
+
 	MM_LeftTeam( ent );
+	if (esp->value)		
+		EspLeaderLeftTeam(ent);
+		
 	ent->client->resp.team = 0;
 
 	// drop items if they are alive/not observer
@@ -3175,10 +3384,10 @@ void ClientDisconnect(edict_t * ent)
 	ent->is_bot = false;
 	ent->think = NULL;
 	ACEIT_RebuildPlayerList();
-#if USE_AQTION
+#ifdef USE_AQTION
 	StatBotCheck();
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 		if(am->value){
 			attract_mode_bot_check();
 		}
@@ -3213,6 +3422,10 @@ void CreateGhost(edict_t * ent)
 
 	strcpy(ghost->ip, ent->client->pers.ip);
 	strcpy(ghost->netname, ent->client->pers.netname);
+	#if USE_AQTION
+	strcpy(ghost->steamid, ent->client->pers.steamid);
+	strcpy(ghost->discordid, ent->client->pers.discordid);
+	#endif
 
 	ghost->enterframe = ent->client->resp.enterframe;
 	ghost->disconnect_frame = level.framenum;
@@ -3223,6 +3436,10 @@ void CreateGhost(edict_t * ent)
 	ghost->kills = ent->client->resp.kills;
 	ghost->deaths = ent->client->resp.deaths;
 	ghost->ctf_caps = ent->client->resp.ctf_caps;
+	ghost->ctf_capstreak = ent->client->resp.ctf_capstreak;
+	ghost->team_kills = ent->client->resp.team_kills;
+	ghost->streakKillsHighest = ent->client->resp.streakKillsHighest;
+	ghost->streakHSHighest = ent->client->resp.streakHSHighest;
 
 	// Teamplay variables
 	if (teamplay->value) {
@@ -3382,8 +3599,8 @@ void ClientThink(edict_t * ent, usercmd_t * ucmd)
 		client->cmd_last = *ucmd;
 
 		// Stumbling movement with leg damage.
-		// darksaint ETE edit:  if e_enhancedSlippers are enabled/equipped, negate all stumbling
-		qboolean has_enhanced_slippers = e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM);
+		// darksaint ETE edit:  if esp_enhancedslippers are enabled/equipped, negate all stumbling
+		qboolean has_enhanced_slippers = esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM);
 		if( client->leg_damage && ent->groundentity && ! has_enhanced_slippers )
 		{
 			#ifdef AQTION_EXTENSION
@@ -3605,6 +3822,16 @@ void ClientBeginServerFrame(edict_t * ent)
 			client->resp.motd_refreshes++;
 			PrintMOTD( ent );
 		}
+	// This next message appears perpetually until the conditions to make the message go away are met
+	} else if (ent->client->layout != LAYOUT_MENU) {
+		if (printrules->value) { // Do not print rules unless printrules is 1
+			if (PrintGameMessage(ent)) {
+				if (client->resp.last_gamemsg_refresh + 2 * HZ < level.realFramenum) {
+					client->resp.last_gamemsg_refresh = level.realFramenum;
+					client->resp.gamemsg_refreshes++;
+				}
+			}
+		}
 	}
 
 	// show team or weapon menu immediately when connected
@@ -3654,7 +3881,7 @@ void ClientBeginServerFrame(edict_t * ent)
 		// wait for any button just going down
 		if (level.framenum > client->respawn_framenum)
 		{
-
+			// Special consideration here for Espionage, as we DO want to respawn in a GS_ROUNDBASED game
 			if (teamplay->value) {
 				going_observer = ((gameSettings & GS_ROUNDBASED) || !client->resp.team || client->resp.subteam);
 			}
@@ -3689,6 +3916,12 @@ void ClientBeginServerFrame(edict_t * ent)
 					ent->client->chase_mode = 0;
 					NextChaseMode( ent );
 				}
+
+				if (esp->value) {
+					// LCA countdown occurs below in EspRespawnLCA()
+					// then Action!
+					EspRespawnPlayer(ent);
+				}
 			}
 			else
 			{
@@ -3699,6 +3932,9 @@ void ClientBeginServerFrame(edict_t * ent)
 					client->latched_buttons = 0;
 				}
 			}
+		} else { // !(level.framenum > client->respawn_framenum)
+			if (esp->value)
+				EspRespawnLCA(ent);
 		}
 		return;
 	}
@@ -3712,9 +3948,9 @@ void ClientBeginServerFrame(edict_t * ent)
 		client->punch_desired = false;
 
 		if( (ppl_idletime->value > 0) && idleframes && (idleframes % (int)(ppl_idletime->value * HZ) == 0) )
-			//plays a random sound/insane sound, insane1-9.wav
+			//plays a random sound/insane sound, insane1-11.wav
 			if (!jump->value) // Don't play insane sounds in jmod
-				gi.sound( ent, CHAN_VOICE, gi.soundindex(va( "insane/insane%i.wav", rand() % 9 + 1 )), 1, ATTN_NORM, 0 );
+				gi.sound( ent, CHAN_VOICE, gi.soundindex(va( "insane/insane%i.wav", rand() % 11 + 1 )), 1, ATTN_NORM, 0 );
 
 		if( (sv_idleremove->value > 0) && (idleframes > (sv_idleremove->value * HZ)) && client->resp.team )
 		{
@@ -3752,8 +3988,7 @@ void ClientBeginServerFrame(edict_t * ent)
 							(client->resp.team == ctfgame.offence ?
 							"ATTACKING" : "DEFENDING"),
 							CTFOtherTeamName(ctfgame.offence));
-					}
-					else {
+					} else {
 						gi.centerprintf(ent, "ACTION!");
 					}
 				}

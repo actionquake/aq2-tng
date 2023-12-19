@@ -119,6 +119,9 @@ void BeginIntermission(edict_t *targ)
 	int i;
 	edict_t *ent;
 
+	// Clear all timed messages
+	free(timedMessages);
+
 	if (level.intermission_framenum)
 		return;			// already activated
 
@@ -129,7 +132,7 @@ void BeginIntermission(edict_t *targ)
 	} else if (teamplay->value) {
 		TallyEndOfLevelTeamScores();
 	}
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	// Generates stats for non-CTF, Teamplay or Matchmode
 	else if (stat_logs->value && !matchmode->value) {
 		LogMatch();
@@ -187,6 +190,92 @@ void BeginIntermission(edict_t *targ)
 	// Clear LTK bot names
 	LTKClearBotNames();
 	#endif
+}
+
+/*
+  ======================================================================
+  Point of Interest
+  
+  This isn't perfect, but it gets you in the 'area' of a point of interest
+  Could use some refactoring, but it works for now.
+  Works much like intermission, but it more or less 'teleports' spectators
+  and those who are not 'spawned in' to the point of interest.
+
+  Points of interest are generally on the ground, so this adds 25 units
+  to each axis to move the camera in the area without being directly 
+  on top of the point of interest.
+  ======================================================================
+*/
+void MoveClientToPOI(edict_t *ent, edict_t *poi)
+{
+    PMenu_Close(ent);
+
+    VectorCopy(level.poi_origin, ent->s.origin);
+    ent->s.origin[0] -= 25;
+    ent->s.origin[1] -= 25;
+    ent->s.origin[2] += 25;
+
+    ent->client->ps.pmove.origin[0] = (level.poi_origin[0] - 25) * 8;
+    ent->client->ps.pmove.origin[1] = (level.poi_origin[1] - 25) * 8;
+    ent->client->ps.pmove.origin[2] = (level.poi_origin[2] + 25) * 8;
+
+    vec3_t ownerv, o, ownerv_forward, ownerv_right;
+    vec3_t angles;
+
+    VectorCopy(level.poi_origin, ownerv);
+    ownerv[2] += poi->viewheight;
+
+    VectorCopy(ent->client->ps.viewangles, angles);
+    AngleVectors(angles, ownerv_forward, ownerv_right, NULL);
+
+    VectorNormalize(ownerv_forward);
+    VectorMA(ownerv, -75, ownerv_forward, o);
+
+    VectorCopy(o, ent->s.origin);
+    VectorCopy(o, ent->client->ps.pmove.origin);
+
+    VectorSubtract(level.poi_origin, ent->s.origin, ent->client->ps.viewangles);
+    vectoangles(ent->client->ps.viewangles, ent->client->ps.viewangles);
+
+    VectorClear(ent->client->ps.kick_angles);
+    ent->client->ps.gunindex = 0;
+	ent->client->ps.blend[3] = 0;
+	ent->client->ps.rdflags &= ~RDF_UNDERWATER;
+	ent->client->ps.stats[STAT_FLASHES] = 0;
+
+	// clean up powerup info
+	ent->client->quad_framenum = 0;
+	ent->client->invincible_framenum = 0;
+	ent->client->breather_framenum = 0;
+	ent->client->enviro_framenum = 0;
+	ent->client->grenade_blew_up = false;
+	ent->client->grenade_framenum = 0;
+
+	ent->watertype = 0;
+	ent->waterlevel = 0;
+	ent->viewheight = 0;
+	ent->s.modelindex = 0;
+	ent->s.modelindex2 = 0;
+	ent->s.modelindex3 = 0;
+	ent->s.modelindex4 = 0;
+	ent->s.effects = 0;
+	ent->s.renderfx = 0;
+	ent->s.sound = 0;
+	ent->s.event = 0;
+	ent->s.solid = 0;
+	ent->solid = SOLID_NOT;
+	ent->svflags = SVF_NOCLIENT;
+
+	ent->client->resp.sniper_mode = SNIPER_1X;
+	ent->client->desired_fov = 90;
+	ent->client->ps.fov = 90;
+	ent->client->ps.stats[STAT_SNIPER_ICON] = 0;
+	ent->client->pickup_msg_framenum = 0;
+
+#ifndef NO_BOTS
+	if( ent->is_bot )
+		return;
+#endif
 }
 
 /*
@@ -534,31 +623,41 @@ void G_SetStats (edict_t * ent)
 		//
 		// timers
 		//
-		if (ent->client->quad_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_quad");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->quad_framenum - level.framenum) / HZ;
-		}
-		else if (ent->client->invincible_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_invulnerability");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->invincible_framenum - level.framenum) / HZ;
-		}
-		else if (ent->client->enviro_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_envirosuit");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->enviro_framenum - level.framenum) / HZ;
-		}
-		else if (ent->client->breather_framenum > level.framenum)
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_rebreather");
-			ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / HZ;
-		}
-		else
-		{
-			ent->client->ps.stats[STAT_TIMER_ICON] = 0;
-			ent->client->ps.stats[STAT_TIMER] = 0;
-		}
+		// if (ent->client->quad_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_quad");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->quad_framenum - level.framenum) / HZ;
+		// }
+		// else if (ent->client->invincible_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_invulnerability");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->invincible_framenum - level.framenum) / HZ;
+		// }
+		// else if (ent->client->enviro_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_envirosuit");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->enviro_framenum - level.framenum) / HZ;
+		// }
+		// else if (ent->client->breather_framenum > level.framenum)
+		// {
+		// 	ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex ("p_rebreather");
+		// 	ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / HZ;
+		// }
+		// else
+		// if (esp->value) {
+		// 	if (!IS_LEADER(ent) && ent->client->respawn_framenum > 0 && ent->client->respawn_framenum > level.framenum > 0){
+		// 		ent->client->ps.stats[STAT_TIMER_ICON] = level.pic_esp_respawn_icon;
+		// 		ent->client->ps.stats[STAT_TIMER] = (ent->client->respawn_framenum - level.framenum) / HZ;
+		// 	} else {
+		// 		ent->client->ps.stats[STAT_TIMER_ICON] = 0;
+		// 		ent->client->ps.stats[STAT_TIMER] = 0;
+		// 	}
+		// }
+		// else
+		// {
+		ent->client->ps.stats[STAT_TIMER_ICON] = 0;
+		ent->client->ps.stats[STAT_TIMER] = 0;
+		//}
 
 		//
 		// selected item
@@ -639,6 +738,8 @@ void G_SetStats (edict_t * ent)
 		SetCTFStats (ent);
 	else if (dom->value)
 		SetDomStats (ent);
+	else if (esp->value)
+		SetEspStats (ent);
 	else if (teamplay->value)
 		A_Scoreboard (ent);
 	//FIREBLADE

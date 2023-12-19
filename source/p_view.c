@@ -638,6 +638,7 @@ void P_FallingDamage (edict_t * ent)
 		delta = ent->velocity[2] - oldvelocity[2];
 		ent->client->jumping = 0;
 	}
+
 	delta = delta * delta * 0.0001;
 
 	// never take damage if just release grapple or on grapple
@@ -698,6 +699,8 @@ void P_FallingDamage (edict_t * ent)
 			ent->s.event = EV_FALLFAR;
 		else			// all falls are far
 			ent->s.event = EV_FALLFAR;
+		if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM))
+			ent->s.event = EV_FALL;
 	}
 
 	ent->pain_debounce_framenum = KEYFRAME(FRAMEDIV);	// no normal pain sound
@@ -710,8 +713,8 @@ void P_FallingDamage (edict_t * ent)
 		// zucc scale this up
 		damage *= 10;
 
-		// darksaint - reduce damage if e_enhancedSlippers are on and equipped
-		if (e_enhancedSlippers->value && INV_AMMO(ent, SLIP_NUM))
+		// darksaint - reduce damage if esp_enhancedslippers are on and equipped
+		if (esp_enhancedslippers->value && INV_AMMO(ent, SLIP_NUM))
 			damage /= 2;
 
 		VectorSet (dir, 0, 0, 1);
@@ -1229,17 +1232,28 @@ void Do_MedKit( edict_t *ent )
 	if( ent->client->bandaging && (ent->client->bleeding || ent->client->leg_damage) )
 		return;
 
-	for( i = 0; i < 2; i ++ )
-	{
-		// Make sure we have any medkit and need to use it.
-		if( ent->client->medkit <= 0 )
+	// Don't use a medkit if ent doesn't have one, and don't use one if ent is at max_health
+	if( ent->client->medkit <= 0 )
 			return;
-		if( ent->health >= ent->max_health )
-			return;
+	if( ent->health >= ent->max_health )
+		return;
 
-		ent->health ++;
-		ent->client->medkit --;
+	// Espionage handles medkits differently, it uses medkits like healthpacks
+	if (!esp->value) {
+		for( i = 0; i < 2; i ++ ){
+			// One medkit == One health point, use all medkits in one bandage attempt
+			ent->health++;
+			ent->client->medkit--;
+		}
+	} else {
+		// Subtract one medkit, gain health per medkit_value
+		ent->health = ent->health + (int)medkit_value->value;
+		ent->client->medkit--;
 	}
+
+	// Handle overheals
+	if (ent->health > 100)
+		ent->health = 100;
 }
 
 
@@ -1398,7 +1412,7 @@ void ClientEndServerFrame (edict_t * ent)
 			|| video_check_glclear->value || darkmatch->value)
 		{
 			if (ent->client->resp.vidref && Q_stricmp(ent->client->resp.vidref, "soft"))
-				stuffcmd (ent, "%cpsi $gl_modulate $gl_lockpvs $gl_clear $gl_dynamic $gl_driver\n");
+				stuffcmd (ent, "%cpsi $gl_modulate $gl_lockpvs $gl_clear $gl_dynamic $gl_brightness $gl_driver\n");
 		}
 
 	}
