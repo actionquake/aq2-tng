@@ -2344,7 +2344,7 @@ static void StartLCA(void)
 	}
 	else
 	{
-		gi.bprintf(PRINT_LOW, "LIGHTS!\n");
+		gi.bprintf(PRINT_LOW, "LIGHTS...\n");
 		//CenterPrintAll ("LIGHTS...");
 		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, level.snd_lights, 1.0, ATTN_NONE, 0.0);
 		lights_camera_action = 43;	// TempFile changed from 41
