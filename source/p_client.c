@@ -352,8 +352,8 @@ static void FreeClientEdicts(gclient_t *client)
 
 void Announce_Reward(edict_t *ent, int rewardType) {
     char buf[256];
-    char *soundFile;
-	  char *playername = ent->client->pers.netname;
+	char *soundFile;
+	char *playername = ent->client->pers.netname;
 
     switch (rewardType) {
         case IMPRESSIVE:
@@ -381,7 +381,8 @@ void Announce_Reward(edict_t *ent, int rewardType) {
             return;  // Something didn't jive here?
     }
 
-    CenterPrintAll(buf);
+	gi.bprintf(PRINT_LOW, buf);
+    //CenterPrintAll(buf);
     gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex(soundFile), 1.0, ATTN_NONE, 0.0);
 
     #ifdef USE_AQTION
