@@ -3695,11 +3695,8 @@ void ClientThink(edict_t * ent, usercmd_t * ucmd)
 		// stop manipulating doors
 		client->doortoggle = 0;
 
-		if( client->jumping && (ent->solid != SOLID_NOT) && ! lights_camera_action && ! client->uvTime && ! jump->value )
-		{
-			kick_attack( ent );
-			client->punch_desired = false;
-		}
+		// Evaluate kick attack
+		melee_attack(ent, KICK_ATTACK);
 
 		// touch other objects
 		for (i = 0; i < pm.numtouch; i++) {
@@ -3943,9 +3940,8 @@ void ClientBeginServerFrame(edict_t * ent)
 	{
 		int idleframes = client->resp.idletime ? (level.framenum - client->resp.idletime) : 0;
 
-		if( client->punch_desired && ! client->jumping && ! lights_camera_action && ! client->uvTime )
-			punch_attack( ent );
-		client->punch_desired = false;
+		// Evaluate punch attack
+		melee_attack(ent, PUNCH_ATTACK);
 
 		if( (ppl_idletime->value > 0) && idleframes && (idleframes % (int)(ppl_idletime->value * HZ) == 0) )
 			//plays a random sound/insane sound, insane1-11.wav
