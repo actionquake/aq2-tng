@@ -721,15 +721,16 @@ void InitGame( void )
 #ifdef AQTION_EXTENSION
 	CvarSync_Set(clcvar_cl_antilag, "cl_antilag", "1");
 	CvarSync_Set(clcvar_cl_indicators, "cl_indicators", "1");
-	if (use_xerp->value)
+	if (use_xerp->value) {
 		if (force_cl_xerp->value == 1)
 			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "1");
 		else if (force_cl_xerp->value == 2)
 			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "2");
 		else
 			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
-	else
+	} else {
 			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	}
 	CvarSync_Set(clcvar_cl_spectatorhud, "cl_spectatorhud", "1");
 	CvarSync_Set(clcvar_cl_spectatorkillfeed, "cl_spectatorkillfeed", "0");
 #endif
