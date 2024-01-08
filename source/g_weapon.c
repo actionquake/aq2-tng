@@ -796,12 +796,8 @@ Uses melee_t enum to determine which melee attack to use
 */
 void melee_attack (edict_t *ent, int melee_attack)
 {
-	// gi.dprintf("Jump value: %d\n", jump->value);
-	// gi.dprintf("uvtime value: %d\n", ent->client->uvTime);
-	// gi.dprintf("lights_camera_action value: %d\n", lights_camera_action);
-
 	// No melee attacks while in jump mode, if int is in uvTime or we are still in LCA
-	if (jump->value && ent->client->uvTime && !lights_camera_action) {
+	if (jump->value || ent->client->uvTime || lights_camera_action) {
 		ent->client->punch_desired = false;
 		return;
 	}
@@ -811,15 +807,13 @@ void melee_attack (edict_t *ent, int melee_attack)
 	if (use_roundhouse->value && ent->client->jumping && ent->client->punch_desired && (ent->solid != SOLID_NOT)) {
 		kick_attack(ent, true);
 		ent->client->punch_desired = false;
-		gi.dprintf("Roundhouse kick\n");
 		return;
 	}
 
 	// Regular kick
 	if (ent->client->jumping && (ent->solid != SOLID_NOT)) {
-		ent->client->punch_desired = false;
 		kick_attack(ent, false);
-		gi.dprintf("Regular kick\n");
+		ent->client->punch_desired = false;
 		return;
 	}
 
@@ -832,13 +826,11 @@ void melee_attack (edict_t *ent, int melee_attack)
 	if (ent->client->punch_desired && ! ent->client->jumping) {
 		punch_attack(ent);
 		ent->client->punch_desired = false;
-		gi.dprintf("Regular punch\n");
 		return;
 	}
 
 	// Default return
 	ent->client->punch_desired = false;
-	//gi.dprintf("Nothing happened");
 	return;
 }
 
