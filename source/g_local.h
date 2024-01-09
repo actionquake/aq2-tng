@@ -572,6 +572,18 @@ bind 6 "use Sniper Rifle"
 #define KNIFE_NAME   "Combat Knife"
 #define GRENADE_NAME "M26 Fragmentation Grenade"
 
+#define MK23_SNAME			 "Single MK23"
+#define MP5_SNAME			 "MP5"
+#define M4_SNAME			 "M4"
+#define M3_SNAME			 "M3"
+#define HC_SNAME			 "HC"
+#define SNIPER_SNAME		 "Sniper"
+#define DUAL_SNAME			 "Dual MK23"
+#define KNIFE_SNAME			 "Knife"
+#define KNIFE_THROWN_SNAME	 "Thrown Knife"
+#define GRENADE_SNAME 		 "Grenade"
+#define KICK_SNAME			 "Kick"
+
 #define MK23_AMMO_NAME    "Pistol Magazine"
 #define MP5_AMMO_NAME     "MP5 Magazine"
 #define M4_AMMO_NAME      "M4 Magazine"
@@ -983,6 +995,7 @@ typedef enum {
     EXCELLENT,
 	DOMINATING,
 	UNSTOPPABLE,
+	LONG_DISTANCE_KILL,
 	AWARD_MAX
 } Awards;
 
@@ -1803,6 +1816,7 @@ typedef struct
   int streakHS;						//Headshots in a Row
   int streakKillsHighest;			//Highest kills in a row
   int streakHSHighest;				//Highest headshots in a Row
+  int longestKill;					//Record longest kill in units
 
   int hitsLocations[LOC_MAX];		//Number of hits for different locations
   gunStats_t gunstats[MOD_TOTAL]; //Number of shots/hits for different guns, adjusted to MOD_TOTAL to allow grenade, kick and punch stats

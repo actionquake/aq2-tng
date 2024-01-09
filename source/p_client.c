@@ -350,6 +350,24 @@ static void FreeClientEdicts(gclient_t *client)
 #endif
 }
 
+/*
+This returns an integer value of the distance between the attacker and the target
+*/
+int Kill_Distance(edict_t *attacker, edict_t *targ)
+{
+	vec3_t v;
+	float dist;
+
+	VectorSubtract(attacker->s.origin, targ->s.origin, v);
+	dist = VectorLength(v);
+
+	return (int) dist;
+}
+
+/*
+This consolidates all award functionality into one function
+except for Weapon awards, which are handled in Eval_Weapon_Award below
+*/
 void Announce_Reward(edict_t *ent, int rewardType) {
     char buf[256];
     char *soundFile;
@@ -376,6 +394,10 @@ void Announce_Reward(edict_t *ent, int rewardType) {
             sprintf(buf,"-------------------\n" "%s IS UNSTOPPABLE!\n" "-------------------\n", playername);
             soundFile = "radio/male/deliv3.wav";
             break;
+		case LONG_DISTANCE_KILL:
+			sprintf(buf,"-------------------\n" "LONGSHOT %s!\n" "-------------------\n", playername);
+			soundFile = "tng/long_distance.wav";
+			break;
         default:
 			gi.dprintf("%s: Unknown reward type %d for %s\n", __FUNCTION__, rewardType, playername);
             return;  // Something didn't jive here?
@@ -389,6 +411,95 @@ void Announce_Reward(edict_t *ent, int rewardType) {
         LogAward(ent, rewardType);
     #endif
 }
+
+
+// Weapon award distance values
+const int MK23_DIST_AWARD = 1250;
+const int MP5_DIST_AWARD = 1750;
+const int M4_DIST_AWARD = 2000;
+const int M3_DIST_AWARD = 2000;
+const int HC_DIST_AWARD = 2000;
+const int SNIPER_DIST_AWARD = 3000;
+const int DUAL_DIST_AWARD = 1250;
+const int KNIFE_DIST_AWARD = 2000;	 // Thrown knife only
+const int GRENADE_DIST_AWARD = 2000; // MOD_HG_SPLASH
+
+typedef struct {
+    int dist_award;
+    const char* short_name;
+} ModInfo;
+
+// Define the distance awards for each mod
+// Update this list if adding a new weapon, as well
+// as the above consts
+
+const ModInfo MOD_INFOS[] = {
+    [MOD_MK23] = {MK23_DIST_AWARD, MK23_SNAME},
+    [MOD_MP5] = {MP5_DIST_AWARD, MP5_SNAME},
+    [MOD_M4] = {M4_DIST_AWARD, M4_SNAME},
+    [MOD_HG_SPLASH] = {GRENADE_DIST_AWARD, GRENADE_SNAME},
+    [MOD_KNIFE_THROWN] = {KNIFE_DIST_AWARD, KNIFE_THROWN_SNAME},
+    [MOD_SNIPER] = {SNIPER_DIST_AWARD, SNIPER_SNAME},
+    [MOD_M3] = {M3_DIST_AWARD, M3_SNAME},
+    [MOD_HC] = {HC_DIST_AWARD, HC_SNAME},
+    [MOD_DUAL] = {DUAL_DIST_AWARD, DUAL_SNAME}
+};
+
+/*
+This consolidates all weapon award functionality into one function
+Use this for any weapons-based awards
+*/
+void Announce_Weapon_Reward(edict_t *ent, int rewardType, int mod) {
+    char buf[256];
+    char *soundFile;
+    char *playername = ent->client->pers.netname;
+
+    switch (rewardType) {
+		case LONG_DISTANCE_KILL:
+			sprintf(buf,"-----------------------------\n" "LONGSHOT %s! (%s)\n" "-----------------------------\n", 
+				playername, MOD_INFOS[mod].short_name);
+			soundFile = "tng/long_distance.wav";
+			break;
+        default:
+			gi.dprintf("%s: Unknown reward type %d for %s\n", __FUNCTION__, rewardType, playername);
+            return;  // Something didn't jive here?
+    }
+
+    CenterPrintAll(buf);
+    gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex(soundFile), 1.0, ATTN_NONE, 0.0);
+
+    #ifdef USE_AQTION
+    if (stat_logs->value)
+        LogAward(ent, rewardType);
+    #endif
+}
+
+void Eval_Weapon_Award(edict_t *attacker, edict_t *target, int mod)
+{
+	// Don't evaluate if the mod is not one of the above
+    if (mod < 0 || mod >= sizeof(MOD_INFOS) / sizeof(MOD_INFOS[0])) {
+        return;
+    }
+
+    // Don't award for suicides
+    if (!attacker || !target)
+        return;
+
+    int killDist = Kill_Distance(attacker, target);
+
+    gi.dprintf("Eval_Weapon_Award: %s with %s at distance %d\n",
+        attacker->client->pers.netname, MOD_INFOS[mod].short_name, killDist);
+    
+    // Update stat on longest kill if it's higher than the last one
+    if (attacker->client->resp.longestKill < killDist)
+        attacker->client->resp.longestKill = killDist;
+
+    // Long distance awards
+    if (killDist > MOD_INFOS[mod].dist_award) {
+        Announce_Weapon_Reward(attacker, LONG_DISTANCE_KILL, mod);
+    }
+}
+
 
 void Add_Frag(edict_t * ent, int mod)
 {
@@ -858,6 +969,7 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			PrintDeathMessage(death_msg, self);
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(self->client->attacker, self);
+			Eval_Weapon_Award(attacker, self, mod);
 
 			#ifdef USE_AQTION
 			if (stat_logs->value) { // Only create stats logs if stat_logs is 1
@@ -1237,7 +1349,8 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			PrintDeathMessage(death_msg, self);
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(attacker, self);
-
+			Eval_Weapon_Award(attacker, self, mod);
+			
 			#ifdef USE_AQTION
 			if (stat_logs->value) {
 				LogKill(self, inflictor, attacker);
