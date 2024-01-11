@@ -120,7 +120,8 @@ void lc_once_per_gameframe()
     request_t *request;
     int handles, remaining;
 
-    gi.dprintf("%s: current_requests = %d\n", __func__, current_requests);
+    // Debug request counts
+    //gi.dprintf("%s: current_requests = %d\n", __func__, current_requests);
     if (current_requests <= 0)
         return;
     if (curl_multi_perform(stack, &handles) != CURLM_OK)
