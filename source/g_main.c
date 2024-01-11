@@ -526,6 +526,12 @@ cvar_t *timedmsgs; // Toggles timed messages
 cvar_t *mm_captain_teamname; // Toggles if we want to use the captain's name for the team in matchmode
 cvar_t *sv_killgib; // Gibs on 'kill' command
 
+// 2024
+// cURL integration
+cvar_t *sv_curl_enable;
+cvar_t *sv_curl_status_api_url;
+cvar_t *sv_curl_discord_chat_url;
+
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;
 cvar_t *use_indicators;
@@ -1159,7 +1165,7 @@ void G_RunFrame (void)
 
 		//Run pending curl requests
 		lc_once_per_gameframe();
-		
+
 		//
 		// treat each object in turn
 		// even the world gets a chance to think

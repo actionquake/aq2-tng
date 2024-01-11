@@ -613,6 +613,11 @@ void InitGame( void )
 	mm_captain_teamname = gi.cvar("mm_captain_teamname", "0", 0);
 	sv_killgib = gi.cvar("sv_killgib", "0", 0);
 
+	// 2024
+	sv_curl_enable = gi.cvar("sv_curl_enable", "0", 0);
+	sv_curl_status_api_url = gi.cvar("sv_curl_status_api_url", "disabled", 0);
+	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
+
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION
 	use_newirvision = gi.cvar("use_newirvision", "1", 0);
@@ -639,8 +644,9 @@ void InitGame( void )
 	ltk_classic = gi.cvar( "ltk_classic", "1", 0);
 #endif
 
-	// Initialize libcurl
-	lc_init_function();
+	// Initialize libcurl if enabled
+	if (sv_curl_enable->value)
+		lc_init_function();
 
 	// items
 	InitItems();

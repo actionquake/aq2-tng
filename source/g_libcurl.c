@@ -8,7 +8,13 @@ void lc_discord_webhook(char* message)
     static request_t request;
     char json_payload[1024];
 
+    // Don't run this if curl is disabled or the webhook URL is set to "disabled"
+    if (!sv_curl_enable->value || strcmp(sv_curl_discord_chat_url->string, "disabled") == 0)
+        return;
+
+    // Use webhook.site to test curl, it's very handy!
     //char *url = "https://webhook.site/4de34388-9f3b-47fc-9074-7bdcd3cfa346";
+    char* url = sv_curl_discord_chat_url->string;
 
     memset(&request, 0, sizeof(request_t));
     request.url = url;

@@ -1262,6 +1262,12 @@ extern cvar_t *timedmsgs;
 extern cvar_t *mm_captain_teamname;
 extern cvar_t *sv_killgib;
 
+// 2024
+// cURL integration
+extern cvar_t *sv_curl_enable;
+extern cvar_t *sv_curl_status_api_url;
+extern cvar_t *sv_curl_discord_chat_url;
+
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
 extern int (*engine_Client_GetProtocol)(edict_t *ent);
