@@ -1,7 +1,8 @@
 #include <curl/curl.h>
 
-#define MAX_REQUESTS         16
 #define MAX_DATA_BYTES    16384
+#define MAX_REQUESTS        256 // Must be 1 or more
+
 
 typedef struct request_s {
     char* url;
@@ -11,6 +12,13 @@ typedef struct request_s {
     char data[MAX_DATA_BYTES];
 } request_t;
 
+typedef struct request_list_s {
+    struct request_list_s *next;
+    request_t request;
+} request_list_t;
+
+extern request_list_t *active_requests, *unused_requests;
+extern request_list_t request_nodes[MAX_REQUESTS];
 extern CURLM *stack;
 extern size_t current_requests;
 

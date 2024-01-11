@@ -2,12 +2,72 @@
 
 // You will need one of these for each of the requests ...
 // ... if you allow concurrent requests to be sent at the same time
+request_list_t *active_requests, *unused_requests;
+request_list_t request_nodes[MAX_REQUESTS];
 CURLM *stack = NULL;
 size_t current_requests = 0;
 
+void init_requests()
+{
+    size_t i;
+    for (i = 0; i < MAX_REQUESTS - 1; i++)
+        request_nodes[i].next = request_nodes + i + 1;
+    request_nodes[MAX_REQUESTS - 1].next = NULL;
+    unused_requests = request_nodes;
+    active_requests = NULL;
+}
+
+request_t* new_request()
+{
+    request_list_t *current = unused_requests;
+    if (current == NULL)
+        return NULL; // Ran out of request slots
+    unused_requests = unused_requests->next;
+    current->next = active_requests;
+    active_requests = current;
+    return &current->request;
+}
+
+qboolean recycle_request(request_t* request)
+{
+    request_list_t *previous = NULL, *current = active_requests;
+    if (current == NULL)
+        return false; // No active requests exist in the list
+    while (&current->request != request)
+    {
+        if (!current->next)
+            return false; // Could not find this request in the list
+        previous = current;
+        current = current->next;
+    }
+    if (previous == NULL)
+        active_requests = current->next; // Was first in the list
+    else
+        previous->next = current->next;
+    current->next = unused_requests;
+    unused_requests = current;
+    memset(&current->request, 0, sizeof current->request);
+    return true;
+}
+
+// This is faster than counting them and checking if it is 0
+qboolean has_active_requests()
+{
+    return active_requests != NULL;
+}
+
+size_t count_active_requests()
+{
+    request_list_t *current;
+    size_t count;
+    for (count = 0, current = active_requests; current; current = current->next, count++)
+        ; // Phatman: Don't delete this line
+    return count;
+}
+
 void lc_discord_webhook(char* message)
 {
-    static request_t request;
+    request_t *request;
     char json_payload[1024];
 
     // Don't run this if curl is disabled or the webhook URL is set to "disabled"
@@ -18,8 +78,12 @@ void lc_discord_webhook(char* message)
     //char *url = "https://webhook.site/4de34388-9f3b-47fc-9074-7bdcd3cfa346";
     char* url = sv_curl_discord_chat_url->string;
 
-    memset(&request, 0, sizeof(request_t));
-    request.url = url;
+    // Get a new request object
+    request = new_request();
+    if (request == NULL) {
+        gi.dprintf("Ran out of request slots\n");
+        return;
+    }
 
     // Remove newline character from the end of message
     char* newline = strchr(message, '\n');
@@ -29,9 +93,10 @@ void lc_discord_webhook(char* message)
 
     // Format the message as a JSON payload
     snprintf(json_payload, sizeof(json_payload), "{\"content\":\"```%s```\"}", message);
-    request.payload = strdup(json_payload);
+    request->url = url;
+    request->payload = strdup(json_payload);
 
-    lc_start_request_function(&request);
+    lc_start_request_function(request);
 }
 
 void lc_shutdown_function()
@@ -48,6 +113,7 @@ void lc_shutdown_function()
 qboolean lc_init_function()
 {
     lc_shutdown_function();
+    init_requests();
     if (curl_global_init(CURL_GLOBAL_ALL))
         return false;
     stack = curl_multi_init();
@@ -141,9 +207,10 @@ void lc_once_per_gameframe()
             else
                 request->data[MAX_DATA_BYTES - 1] = '\0';
 			lc_parse_response(request->data);
-			curl_multi_remove_handle(stack, handle);
-			curl_easy_cleanup(handle);
-			current_requests--;
+            recycle_request(request);
+            curl_multi_remove_handle(stack, handle);
+            curl_easy_cleanup(handle);
+            current_requests--;
         }
     }
     if (handles == 0)
