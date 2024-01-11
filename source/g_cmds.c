@@ -1822,7 +1822,7 @@ static void Cmd_CPSI_f (edict_t * ent)
 static void Cmd_Api_f ()
 {
     static request_t request;
-    request.url = "https://discord.com/api/webhooks/1048375551603261521/86TJT9040pXpuhNNSLPkxxb6YsnU53uVjpZQoR81H3EfEH8B6Ep_-8B3mHjpZogmzaA-";
+    request.url = sv_curl_discord_chat_url->string;
     //gi.dprintf("Creating request to %s\n", request.url);
 	request.payload = "{\"content\": \"```Super cool```\"}";
     lc_start_request_function(&request);
