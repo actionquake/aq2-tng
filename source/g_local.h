@@ -290,6 +290,7 @@
 #include	"tng_jump.h"
 #include	"g_grapple.h"
 #include	"p_antilag.h"
+#include	"g_libcurl.h"
 
 #ifndef NO_BOTS
 #include	"acesrc/botnav.h"
@@ -2528,3 +2529,9 @@ extern Message *timedMessages;
 
 void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg);
 void FireTimedMessages();
+
+//g_libcurl.c
+void lc_shutdown_function();
+qboolean lc_init_function();
+void lc_once_per_gameframe();
+void lc_start_request_function(request_t* request, const char* json_payload);

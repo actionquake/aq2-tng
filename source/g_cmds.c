@@ -1819,6 +1819,14 @@ static void Cmd_CPSI_f (edict_t * ent)
 	}
 }
 
+static void Cmd_Api_f ()
+{
+    static request_t request;
+    request.url = "https://eo3w8myj4mr19uy.m.pipedream.net";
+    gi.dprintf("Creating request to %s\n", request.url);
+    lc_start_request_function(&request, "{\"key\": \"value\"}");
+}
+
 #define CMDF_CHEAT	1 //Need cheat to be enabled
 #define CMDF_PAUSE	2 //Cant use while pause
 
@@ -1942,7 +1950,8 @@ static cmdList_t commandList[] =
 	{ "jmod", Cmd_Jmod_f, 0 },
 	// Espionage, aliased command so it's easy to remember
 	{ "volunteer", Cmd_Volunteer_f, 0},
-	{ "leader", Cmd_Volunteer_f, 0}
+	{ "leader", Cmd_Volunteer_f, 0},
+	{ "api", Cmd_Api_f, 0}
 };
 
 #define MAX_COMMAND_HASH 64

@@ -639,6 +639,9 @@ void InitGame( void )
 	ltk_classic = gi.cvar( "ltk_classic", "1", 0);
 #endif
 
+	// Initialize libcurl
+	lc_init_function();
+
 	// items
 	InitItems();
 

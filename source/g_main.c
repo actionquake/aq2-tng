@@ -1156,6 +1156,10 @@ void G_RunFrame (void)
 
 		CycleLights ();
 
+
+		//Run pending curl requests
+		lc_once_per_gameframe();
+		
 		//
 		// treat each object in turn
 		// even the world gets a chance to think
