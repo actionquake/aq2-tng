@@ -3,6 +3,29 @@
 // You will need one of these for each of the requests ...
 // ... if you allow concurrent requests to be sent at the same time
 
+void lc_discord_webhook(char* message)
+{
+    static request_t request;
+    char json_payload[1024];
+
+    //char *url = "https://webhook.site/4de34388-9f3b-47fc-9074-7bdcd3cfa346";
+
+    memset(&request, 0, sizeof(request_t));
+    request.url = url;
+
+    // Remove newline character from the end of message
+    char* newline = strchr(message, '\n');
+    if (newline != NULL) {
+        *newline = '\0';
+    }
+
+    // Format the message as a JSON payload
+    snprintf(json_payload, sizeof(json_payload), "{\"content\":\"```%s```\"}", message);
+    request.payload = strdup(json_payload);
+
+    lc_start_request_function(&request);
+}
+
 void lc_shutdown_function()
 {
     if (stack)
@@ -55,7 +78,7 @@ size_t lc_receive_data_function(char *data, size_t blocks, size_t bytes, void *p
 }
 
 // Requires that request->url already be set to the target URL
-void lc_start_request_function(request_t* request, const char* json_payload)
+void lc_start_request_function(request_t* request)
 {
     struct curl_slist *headers = NULL;
 
@@ -67,7 +90,7 @@ void lc_start_request_function(request_t* request, const char* json_payload)
     curl_easy_setopt(request->handle, CURLOPT_HTTPHEADER, headers);
 
     // Set the JSON payload
-    curl_easy_setopt(request->handle, CURLOPT_POSTFIELDS, json_payload);
+    curl_easy_setopt(request->handle, CURLOPT_POSTFIELDS, request->payload);
 
     curl_easy_setopt(request->handle, CURLOPT_WRITEFUNCTION, lc_receive_data_function);
     curl_easy_setopt(request->handle, CURLOPT_URL, request->url);

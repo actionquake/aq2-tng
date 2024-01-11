@@ -2534,4 +2534,5 @@ void FireTimedMessages();
 void lc_shutdown_function();
 qboolean lc_init_function();
 void lc_once_per_gameframe();
-void lc_start_request_function(request_t* request, const char* json_payload);
+void lc_discord_webhook(char* message);
+void lc_start_request_function(request_t* request);
