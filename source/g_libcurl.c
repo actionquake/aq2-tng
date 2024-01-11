@@ -2,6 +2,8 @@
 
 // You will need one of these for each of the requests ...
 // ... if you allow concurrent requests to be sent at the same time
+CURLM *stack = NULL;
+size_t current_requests = 0;
 
 void lc_discord_webhook(char* message)
 {

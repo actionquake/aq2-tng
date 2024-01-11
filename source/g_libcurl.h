@@ -11,6 +11,6 @@ typedef struct request_s {
     char data[MAX_DATA_BYTES];
 } request_t;
 
-CURLM *stack;
-size_t current_requests;
+extern CURLM *stack;
+extern size_t current_requests;
 
