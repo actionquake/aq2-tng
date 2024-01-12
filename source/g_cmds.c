@@ -1830,7 +1830,7 @@ static void Cmd_Api_f ()
 
 static void Cmd_Sid_f ()
 {
-	find_entity_by_steamid(gi.argv(1));
+	find_player_by_steamid(gi.argv(1));
 }
 
 #define CMDF_CHEAT	1 //Need cheat to be enabled

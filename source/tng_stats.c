@@ -490,7 +490,7 @@ void Cmd_Statmode_f(edict_t* ent)
 	stuffcmd(ent, stuff);
 }
 
-edict_t *find_entity_by_steamid(const char* steamid)
+edict_t *find_player_by_steamid(const char* steamid)
 {
     edict_t *ent;
 
