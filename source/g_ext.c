@@ -266,16 +266,11 @@ void G_CvarSync_Updated(int index, edict_t *clent)
 			char filename[MAX_QPATH];
 			int i;
 
-			// Clear the index when changing this value
-			if (strlen(val) == 0) {
-				level.pic_sniper_mode[1] = gi.imageindex("scopes/default/scope2x");
-				level.pic_sniper_mode[2] = gi.imageindex("scopes/default/scope4x");
-				level.pic_sniper_mode[3] = gi.imageindex("scopes/default/scope6x");
+			if (strlen(val) == 0) { // Default scope
 				break;
 			} else {
 				for (i = 1; i <= 3; i++) {
 					sprintf(filename, "scopes/%s/scope%dx", val, i * 2);
-					gi.dprintf("Loaded scope %s\n", filename);
 					level.pic_sniper_mode[i] = gi.imageindex(filename);
 				}
 				break;
