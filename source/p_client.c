@@ -2895,6 +2895,9 @@ void PutClientInServer(edict_t * ent)
 	// force the current weapon up
 	client->newweapon = client->weapon;
 	ChangeWeapon(ent);
+
+	// Tell the world!
+	//announce_to_discord();
 }
 
 /*

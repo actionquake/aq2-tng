@@ -132,6 +132,16 @@ SHLIBLIBS=-luuid -lcurl
 endif
 endif
 
+ifeq ($(USE_AQ_CURL),TRUE)
+ifneq (,$(findstring WIN32,$(TNG_BUILD_FOR))$(findstring WIN64,$(TNG_BUILD_FOR)))
+# Do nothing for Windows
+else
+# For non-Windows (Linux, Mac), link the Jansson library
+SHLIBLIBS+=-ljansson
+endif
+endif
+
+
 ifeq ($(ARCH),x86)
 CFLAGS+=-m32
 endif

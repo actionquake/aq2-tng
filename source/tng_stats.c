@@ -490,6 +490,30 @@ void Cmd_Statmode_f(edict_t* ent)
 	stuffcmd(ent, stuff);
 }
 
+edict_t *find_entity_by_steamid(const char* steamid)
+{
+    edict_t *ent;
+
+	// Don't do anything if steamid is null/emtpy/zero
+	if (steamid == NULL || steamid[0] == '\0' || strcmp(steamid, "0") == 0)
+		return;
+
+    for (int i = 0; i < game.maxclients; i++)
+    {
+        ent = &g_edicts[1 + i];
+		if( !ent->inuse || !ent->client || ent->is_bot)
+            continue;
+        if (strcmp(ent->client->pers.steamid, steamid) == 0)
+        {
+            // Found the entity with the matching steamid
+			gi.dprintf("I found %s!\n", ent->client->pers.netname);
+            return ent;
+        }
+    }
+    // No entity with the matching steamid was found
+    return NULL;
+}
+
 #ifdef USE_AQTION
 
 // Revisit one day...

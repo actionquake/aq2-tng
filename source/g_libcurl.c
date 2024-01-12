@@ -1,3 +1,4 @@
+#include <jansson.h>
 #include "g_local.h"
 
 // You will need one of these for each of the requests ...
@@ -65,6 +66,35 @@ size_t count_active_requests()
     return count;
 }
 
+/*
+*/
+void lc_get_player_stats(char* message)
+{
+    request_t *request;
+
+    // Don't run this if curl is disabled or the webhook URL is set to "disabled"
+    if (!sv_curl_enable->value || strcmp(sv_curl_status_api_url->string, "disabled") == 0)
+        return;
+
+    // Use webhook.site to test curl, it's very handy!
+    //char *url = "https://webhook.site/4de34388-9f3b-47fc-9074-7bdcd3cfa346";
+    char* url = sv_curl_status_api_url->string;
+
+    // Get a new request object
+    request = new_request();
+    if (request == NULL) {
+        gi.dprintf("Ran out of request slots\n");
+        return;
+    }
+
+    request->url = url;
+    lc_start_request_function(request);
+}
+
+/*
+Call this with a string containing the message you want to send to the webhook.
+Limited to 1024 chars.
+*/
 void lc_discord_webhook(char* message)
 {
     request_t *request;
@@ -163,8 +193,9 @@ void lc_start_request_function(request_t* request)
     headers = curl_slist_append(headers, "Content-Type: application/json");
     curl_easy_setopt(request->handle, CURLOPT_HTTPHEADER, headers);
 
-    // Set the JSON payload
-    curl_easy_setopt(request->handle, CURLOPT_POSTFIELDS, request->payload);
+    // Set the JSON payload if it exists
+    if (request->payload)
+        curl_easy_setopt(request->handle, CURLOPT_POSTFIELDS, request->payload);
 
     curl_easy_setopt(request->handle, CURLOPT_WRITEFUNCTION, lc_receive_data_function);
     curl_easy_setopt(request->handle, CURLOPT_URL, request->url);
@@ -174,9 +205,51 @@ void lc_start_request_function(request_t* request)
     current_requests++;
 }
 
+// void process_stats(json_t *stats_json)
+// {
+//     json_t *frags_json, *deaths_json;
+//     int frags, deaths;
+
+//     frags_json = json_object_get(stats_json, "frags");
+//     deaths_json = json_object_get(stats_json, "deaths");
+
+//     if(!json_is_integer(frags_json) || !json_is_integer(deaths_json))
+//     {
+//         gi.dprintf(stderr, "error: frags or deaths is not an integer\n");
+//         return;
+//     }
+
+//     frags = json_integer_value(frags_json);
+//     deaths = json_integer_value(deaths_json);
+
+//     GameStats stats;
+//     stats.frags = frags;
+//     stats.deaths = deaths;
+
+//     // Do something with stats
+// }
+
 void lc_parse_response(char* data)
 {
-	// Do something with the requested document data
+	json_error_t error;
+    json_t *root = json_loads(data, 0, &error);
+
+    if(!root)
+    {
+        gi.dprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+        return;
+    }
+
+    json_t *stats_json = json_object_get(root, "stats");
+    if(!json_is_object(stats_json))
+    {
+        // If the root is not "stats", do nothing
+        json_decref(root);
+        return;
+    } else {
+        //process_stats(stats_json);
+        json_decref(root);
+    }
 }
 
 void lc_once_per_gameframe()

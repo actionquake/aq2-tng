@@ -644,7 +644,7 @@ void InitGame( void )
 	ltk_classic = gi.cvar( "ltk_classic", "1", 0);
 #endif
 
-	// Initialize libcurl if enabled
+	// Initialize libcurl capabilities if enabled
 	if (sv_curl_enable->value)
 		lc_init_function();
 

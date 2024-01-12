@@ -436,6 +436,12 @@ typedef enum
 }
 ammo_t;
 
+//tng_net.c
+typedef enum {
+	NOTIFY_NONE,
+    SERVER_WARMING_UP,
+    NOTIFY_MAX
+} Discord_Notifications;
 
 //deadflag
 #define DEAD_NO                         0
@@ -851,6 +857,10 @@ typedef struct
   // Point of interest
   vec3_t poi_origin;
   vec3_t poi_angle;
+
+  // Libcurl enhancements
+  int lc_recently_sent[NOTIFY_MAX];	// Used to prevent spamming of the endpoint
+
 }
 level_locals_t;
 
@@ -2542,3 +2552,7 @@ qboolean lc_init_function();
 void lc_once_per_gameframe();
 void lc_discord_webhook(char* message);
 void lc_start_request_function(request_t* request);
+
+//tng_net.c
+qboolean announce_to_discord();
+qboolean evaluate_discord_announcement();
