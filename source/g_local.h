@@ -1717,6 +1717,7 @@ typedef struct
 #ifdef AQTION_EXTENSION
 	int cl_xerp;
 	int cl_indicators;
+	int cl_zoom_scope;
 #endif
 
 	int mk23_mode;		// firing mode, semi or auto
@@ -2495,6 +2496,7 @@ typedef enum {
 	clcvar_cl_xerp,
 	clcvar_cl_spectatorhud,
 	clcvar_cl_spectatorkillfeed,
+	clcvar_cl_zoom_scope,
 } clcvar_t;
 
 // UI flags from q2pro

@@ -261,6 +261,27 @@ void G_CvarSync_Updated(int index, edict_t *clent)
 			client->pers.cl_indicators = val_i;
 			break;
 
+		case clcvar_cl_zoom_scope:
+			client->pers.cl_zoom_scope = val;
+			char filename[MAX_QPATH];
+			int i;
+
+			// Clear the index when changing this value
+			if (strlen(val) == 0) {
+				level.pic_sniper_mode[1] = gi.imageindex("scopes/default/scope2x");
+				level.pic_sniper_mode[2] = gi.imageindex("scopes/default/scope4x");
+				level.pic_sniper_mode[3] = gi.imageindex("scopes/default/scope6x");
+				break;
+			} else {
+				for (i = 1; i <= 3; i++) {
+					sprintf(filename, "scopes/%s/scope%dx", val, i * 2);
+					gi.dprintf("Loaded scope %s\n", filename);
+					level.pic_sniper_mode[i] = gi.imageindex(filename);
+				}
+				break;
+			}
+			break;
+
 		case clcvar_cl_spectatorhud:
 			if (val_i)
 				client->pers.spec_flags |= (SPECFL_SPECHUD | SPECFL_SPECHUD_NEW);
