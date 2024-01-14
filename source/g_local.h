@@ -1697,6 +1697,12 @@ typedef struct gunStats_s
 	int damage;		//Damage dealt
 } gunStats_t;
 
+typedef struct
+{
+    int frags;
+    int deaths;
+    int64_t damage;
+} lt_stats_t;
 
 // client data that stays across multiple level loads
 typedef struct
@@ -1876,6 +1882,10 @@ typedef struct
   int dom_caps;						// How many times a player captured a dom point
   int dom_capstreak;				// How many times a player captured a dom point in a row
   int dom_capstreakbest;			// Best cap streak for domination
+
+  // Long term stats retreived from database
+  lt_stats_t* lt_stats; // Long-term stats
+
 }
 client_respawn_t;
 

@@ -203,31 +203,38 @@ void lc_start_request_function(request_t* request)
     curl_easy_setopt(request->handle, CURLOPT_PRIVATE, request); // Returned by curl_easy_getinfo with the CURLINFO_PRIVATE option
     curl_multi_add_handle(stack, request->handle);
     current_requests++;
+    free(request->payload); // Frees up the memory allocated by strdup
 }
 
-// void process_stats(json_t *stats_json)
-// {
-//     json_t *frags_json, *deaths_json;
-//     int frags, deaths;
+void process_stats(json_t *stats_json)
+{
+    if (!json_is_object(stats_json)) {
+        gi.dprintf(stderr, "error: stats is not a JSON object\n");
+        return;
+    }
 
-//     frags_json = json_object_get(stats_json, "frags");
-//     deaths_json = json_object_get(stats_json, "deaths");
+    json_t *frags_json = json_object_get(stats_json, "frags");
+    json_t *deaths_json = json_object_get(stats_json, "deaths");
 
-//     if(!json_is_integer(frags_json) || !json_is_integer(deaths_json))
-//     {
-//         gi.dprintf(stderr, "error: frags or deaths is not an integer\n");
-//         return;
-//     }
+    if (!frags_json || !deaths_json) {
+        gi.dprintf(stderr, "error: frags or deaths is missing\n");
+        return;
+    }
 
-//     frags = json_integer_value(frags_json);
-//     deaths = json_integer_value(deaths_json);
+    if (!json_is_integer(frags_json) || !json_is_integer(deaths_json)) {
+        gi.dprintf(stderr, "error: frags or deaths is not an integer\n");
+        return;
+    }
 
-//     GameStats stats;
-//     stats.frags = frags;
-//     stats.deaths = deaths;
+    int frags = json_integer_value(frags_json);
+    int deaths = json_integer_value(deaths_json);
 
-//     // Do something with stats
-// }
+    lt_stats_t stats;
+    stats.total_kills = frags;
+    stats.total_deaths = deaths;
+
+    // Do something with stats
+}
 
 void lc_parse_response(char* data)
 {
@@ -286,6 +293,7 @@ void lc_once_per_gameframe()
             current_requests--;
         }
     }
+    free(request->payload); // Frees up the memory allocated by strdup
     if (handles == 0)
 		current_requests = 0;
 }

@@ -490,6 +490,10 @@ void Cmd_Statmode_f(edict_t* ent)
 	stuffcmd(ent, stuff);
 }
 
+/*
+If player has a steamid, return the entity with the matching steamid
+else return NULL
+*/
 edict_t *find_player_by_steamid(const char* steamid)
 {
     edict_t *ent;
