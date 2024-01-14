@@ -203,7 +203,6 @@ void lc_start_request_function(request_t* request)
     curl_easy_setopt(request->handle, CURLOPT_PRIVATE, request); // Returned by curl_easy_getinfo with the CURLINFO_PRIVATE option
     curl_multi_add_handle(stack, request->handle);
     current_requests++;
-    free(request->payload); // Frees up the memory allocated by strdup
 }
 
 void process_stats(json_t *stats_json)
@@ -287,6 +286,7 @@ void lc_once_per_gameframe()
             else
                 request->data[MAX_DATA_BYTES - 1] = '\0';
 			lc_parse_response(request->data);
+            free(request->payload); // Frees up the memory allocated by strdup
             recycle_request(request);
             curl_multi_remove_handle(stack, handle);
             curl_easy_cleanup(handle);
