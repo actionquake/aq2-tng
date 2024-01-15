@@ -212,27 +212,31 @@ void process_stats(json_t *stats_json)
         return;
     }
 
-    json_t *frags_json = json_object_get(stats_json, "frags");
-    json_t *deaths_json = json_object_get(stats_json, "deaths");
-
-    if (!frags_json || !deaths_json) {
-        gi.dprintf(stderr, "error: frags or deaths is missing\n");
-        return;
-    }
-
-    if (!json_is_integer(frags_json) || !json_is_integer(deaths_json)) {
-        gi.dprintf(stderr, "error: frags or deaths is not an integer\n");
-        return;
-    }
-
-    int frags = json_integer_value(frags_json);
-    int deaths = json_integer_value(deaths_json);
+    const char *stat_names[] = {"frags", "deaths", "damage"};
+    int num_stats = sizeof(stat_names) / sizeof(stat_names[0]);
 
     lt_stats_t stats;
-    stats.total_kills = frags;
-    stats.total_deaths = deaths;
+    for (int i = 0; i < num_stats; i++) {
+        json_t *stat_json = json_object_get(stats_json, stat_names[i]);
+        if (!stat_json) {
+            gi.dprintf(stderr, "error: %s is missing\n", stat_names[i]);
+            return;
+        }
 
-    // Do something with stats
+        if (!json_is_integer(stat_json)) {
+            gi.dprintf(stderr, "error: %s is not an integer\n", stat_names[i]);
+            return;
+        }
+
+        int stat_value = json_integer_value(stat_json);
+        if (strcmp(stat_names[i], "frags") == 0) {
+            stats.frags = stat_value;
+        } else if (strcmp(stat_names[i], "deaths") == 0) {
+            stats.deaths = stat_value;
+        } else if (strcmp(stat_names[i], "damage") == 0) {
+            stats.damage = stat_value;
+        }
+    }
 }
 
 void lc_parse_response(char* data)
