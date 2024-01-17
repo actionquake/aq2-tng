@@ -590,6 +590,7 @@ void InitGame( void )
 	mapvote_next_limit = gi.cvar( "mapvote_next_limit", "0", 0);
 	stat_apikey = gi.cvar("stat_apikey", "none", 0); // Never include this in serverinfo!
 	stat_url = gi.cvar("stat_url", "https://apigateway.aq2world.com/api/v1/stats", 0);
+	server_announce_url = gi.cvar("server_announce_url", "disabled", 0);
 	gm = gi.cvar("gm", "dm", CVAR_SERVERINFO);
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
@@ -615,8 +616,11 @@ void InitGame( void )
 
 	// 2024
 	sv_curl_enable = gi.cvar("sv_curl_enable", "0", 0);
-	sv_curl_status_api_url = gi.cvar("sv_curl_status_api_url", "disabled", 0);
+	sv_curl_stat_api_url = gi.cvar("sv_curl_stat_api_url", "disabled", 0);
 	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
+	sv_curl_discord_server_url = gi.cvar("sv_curl_discord_server_url", "disabled", 0);
+	server_ip = gi.cvar("server_ip", "none", CVAR_NOSET); // Never include this in serverinfo!
+	server_port = gi.cvar("server_port", "none", CVAR_NOSET); // Never include this in serverinfo!
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION

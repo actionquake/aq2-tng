@@ -703,3 +703,15 @@ void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg) {
     timedMessages[numMessages].fired = false;
     numMessages++;
 }
+
+int CountRealPlayers(void)
+{
+	int i;
+	int count = 0;
+    for (i = 0; i < num_players; i++){
+        if (players[i]->is_bot)
+			continue;
+		count++;
+    }
+	return count;
+}

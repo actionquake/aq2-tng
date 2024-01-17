@@ -506,6 +506,7 @@ cvar_t *stat_logs;
 cvar_t *mapvote_next_limit;
 cvar_t *stat_apikey;
 cvar_t *stat_url;
+cvar_t *server_announce_url;
 cvar_t *gm;
 cvar_t *gmf;
 cvar_t *sv_idleremove;
@@ -529,8 +530,11 @@ cvar_t *sv_killgib; // Gibs on 'kill' command
 // 2024
 // cURL integration
 cvar_t *sv_curl_enable;
-cvar_t *sv_curl_status_api_url;
+cvar_t *sv_curl_stat_api_url;
 cvar_t *sv_curl_discord_chat_url;
+cvar_t *sv_curl_discord_server_url;
+cvar_t *server_ip;
+cvar_t *server_port;
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;

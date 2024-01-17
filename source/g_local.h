@@ -771,6 +771,9 @@ typedef struct
   int roundNum;
   qboolean ai_ent_found;
   int bot_count;
+
+  // API timeouts
+  int srv_announce_timeout;
 }
 game_locals_t;
 
@@ -1275,8 +1278,11 @@ extern cvar_t *sv_killgib;
 // 2024
 // cURL integration
 extern cvar_t *sv_curl_enable;
-extern cvar_t *sv_curl_status_api_url;
+extern cvar_t *sv_curl_stat_api_url;
 extern cvar_t *sv_curl_discord_chat_url;
+extern cvar_t *sv_curl_discord_server_url;
+extern cvar_t *server_ip;
+extern cvar_t *server_port;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -1325,6 +1331,7 @@ extern cvar_t *stat_logs; // Enables/disables logging of stats
 extern cvar_t *mapvote_next_limit; // Time left that disables map voting
 extern cvar_t *stat_apikey; // Stats URL key
 extern cvar_t *stat_url; // Stats URL endpoint
+extern cvar_t *server_announce_url; // Server announce URL endpoint
 extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags

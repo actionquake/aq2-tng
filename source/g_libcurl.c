@@ -73,12 +73,12 @@ void lc_get_player_stats(char* message)
     request_t *request;
 
     // Don't run this if curl is disabled or the webhook URL is set to "disabled"
-    if (!sv_curl_enable->value || strcmp(sv_curl_status_api_url->string, "disabled") == 0)
+    if (!sv_curl_enable->value || strcmp(sv_curl_stat_api_url->string, "disabled") == 0)
         return;
 
     // Use webhook.site to test curl, it's very handy!
     //char *url = "https://webhook.site/4de34388-9f3b-47fc-9074-7bdcd3cfa346";
-    char* url = sv_curl_status_api_url->string;
+    char* url = sv_curl_stat_api_url->string;
 
     // Get a new request object
     request = new_request();
@@ -125,6 +125,40 @@ void lc_discord_webhook(char* message)
     snprintf(json_payload, sizeof(json_payload), "{\"content\":\"```%s```\"}", message);
     request->url = url;
     request->payload = strdup(json_payload);
+
+    lc_start_request_function(request);
+}
+
+void lc_server_announce(char *path, char *message)
+{
+    request_t *request;
+    char full_url[1024];
+
+    // Don't run this if curl is disabled or the webhook URLs are set to "disabled" or empty, or if no server IP or port is set
+    if (!sv_curl_enable->value 
+    || strcmp(server_announce_url->string, "disabled") == 0 
+    || strcmp(server_announce_url->string, "") == 0 
+    || strcmp(sv_curl_discord_server_url->string, "disabled") == 0
+    || strcmp(sv_curl_discord_server_url->string, "") == 0
+    || !server_ip->string
+    || !server_port->string
+    )
+        return;
+
+    // Get a new request object
+    request = new_request();
+    if (request == NULL) {
+        gi.dprintf("Ran out of request slots\n");
+        return;
+    }
+
+    // Use webhook.site to test curl, it's very handy!
+    //char *url = "https://webhook.site/4de34388-9f3b-47fc-9074-7bdcd3cfa346";
+    char* url = server_announce_url->string;
+    // Concatenate url and path
+    sprintf(full_url, "%s%s", url, path);
+    request->url = full_url;
+    request->payload = strdup(message);
 
     lc_start_request_function(request);
 }
@@ -189,8 +223,9 @@ void lc_start_request_function(request_t* request)
     request->data_count = 0;
     request->handle = curl_easy_init();
 
-    // Set the headers to indicate we're sending JSON data
+    // Set the headers to indicate we're sending JSON data, and a custom one
     headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "x-aqtion-server: true");
     curl_easy_setopt(request->handle, CURLOPT_HTTPHEADER, headers);
 
     // Set the JSON payload if it exists
@@ -208,7 +243,7 @@ void lc_start_request_function(request_t* request)
 void process_stats(json_t *stats_json)
 {
     if (!json_is_object(stats_json)) {
-        gi.dprintf(stderr, "error: stats is not a JSON object\n");
+        gi.dprintf("error: stats is not a JSON object\n");
         return;
     }
 
@@ -219,12 +254,12 @@ void process_stats(json_t *stats_json)
     for (int i = 0; i < num_stats; i++) {
         json_t *stat_json = json_object_get(stats_json, stat_names[i]);
         if (!stat_json) {
-            gi.dprintf(stderr, "error: %s is missing\n", stat_names[i]);
+            gi.dprintf("error: %s is missing\n", stat_names[i]);
             return;
         }
 
         if (!json_is_integer(stat_json)) {
-            gi.dprintf(stderr, "error: %s is not an integer\n", stat_names[i]);
+            gi.dprintf("error: %s is not an integer\n", stat_names[i]);
             return;
         }
 
@@ -246,7 +281,7 @@ void lc_parse_response(char* data)
 
     if(!root)
     {
-        gi.dprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+        gi.dprintf("error: on line %d: %s\n", error.line, error.text);
         return;
     }
 

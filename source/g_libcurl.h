@@ -22,3 +22,4 @@ extern request_list_t request_nodes[MAX_REQUESTS];
 extern CURLM *stack;
 extern size_t current_requests;
 
+void lc_server_announce(char *path, char *message);

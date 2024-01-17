@@ -500,7 +500,7 @@ edict_t *find_player_by_steamid(const char* steamid)
 
 	// Don't do anything if steamid is null/emtpy/zero
 	if (steamid == NULL || steamid[0] == '\0' || strcmp(steamid, "0") == 0)
-		return;
+		return NULL;
 
     for (int i = 0; i < game.maxclients; i++)
     {
