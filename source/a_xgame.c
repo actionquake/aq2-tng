@@ -708,10 +708,12 @@ int CountRealPlayers(void)
 {
 	int i;
 	int count = 0;
-    for (i = 0; i < num_players; i++){
-        if (players[i]->is_bot)
+	edict_t *ent;
+
+	for (i = 0, ent = g_edicts + 1; i < game.maxclients; i++, ent++){
+		if (!ent->inuse || !ent->client || ent->is_bot)
 			continue;
 		count++;
-    }
+	}
 	return count;
 }

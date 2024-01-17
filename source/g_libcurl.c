@@ -95,11 +95,13 @@ void lc_get_player_stats(char* message)
 void announce_server_populating()
 {
     json_t *srv_announce = json_object();
+    int playercount = CountRealPlayers();
+
     json_object_set_new(srv_announce, "hostname", json_string(hostname->string));
     json_object_set_new(srv_announce, "server_ip", json_string(server_ip->string));
-    json_object_set_new(srv_announce, "server_port", json_integer(server_port->value));
-    json_object_set_new(srv_announce, "player_count", json_integer(CountRealPlayers()));
-    json_object_set_new(srv_announce, "maxclients", json_integer(maxclients->value));
+    json_object_set_new(srv_announce, "server_port", json_string(server_port->string));
+    json_object_set_new(srv_announce, "player_count", json_integer(playercount));
+    json_object_set_new(srv_announce, "maxclients", json_integer(game.maxclients));
     json_object_set_new(srv_announce, "mapname", json_string(level.mapname));
 
     json_t *root = json_object();
@@ -110,7 +112,6 @@ void announce_server_populating()
 
     lc_server_announce("/srv_announce_filling", message);
 
-    free(message);
     json_decref(root);
     game.srv_announce_timeout = level.framenum;
 }
@@ -183,6 +184,9 @@ void lc_server_announce(char *path, char *message)
     sprintf(full_url, "%s%s", url, path);
     request->url = full_url;
     request->payload = strdup(message);
+
+    gi.dprintf("Sending server announce to %s\n", full_url);
+    gi.dprintf("With payload: %s\n", message);
 
     lc_start_request_function(request);
 }
@@ -300,25 +304,25 @@ void process_stats(json_t *stats_json)
 
 void lc_parse_response(char* data)
 {
-	json_error_t error;
-    json_t *root = json_loads(data, 0, &error);
+	// json_error_t error;
+    // json_t *root = json_loads(data, 0, &error);
 
-    if(!root)
-    {
-        gi.dprintf("error: on line %d: %s\n", error.line, error.text);
-        return;
-    }
+    // if(!root)
+    // {
+    //     gi.dprintf("error: on line %d: %s\n", error.line, error.text);
+    //     return;
+    // }
 
-    json_t *stats_json = json_object_get(root, "stats");
-    if(!json_is_object(stats_json))
-    {
-        // If the root is not "stats", do nothing
-        json_decref(root);
-        return;
-    } else {
-        //process_stats(stats_json);
-        json_decref(root);
-    }
+    // json_t *stats_json = json_object_get(root, "stats");
+    // if(!json_is_object(stats_json))
+    // {
+    //     // If the root is not "stats", do nothing
+    //     json_decref(root);
+    //     return;
+    // } else {
+    //     //process_stats(stats_json);
+    //     json_decref(root);
+    // }
 }
 
 void lc_once_per_gameframe()
@@ -356,7 +360,6 @@ void lc_once_per_gameframe()
             current_requests--;
         }
     }
-    free(request->payload); // Frees up the memory allocated by strdup
     if (handles == 0)
 		current_requests = 0;
 }

@@ -773,7 +773,7 @@ typedef struct
   qboolean ai_ent_found;
   int bot_count;
 
-  // API timeouts
+  // API-related
   int srv_announce_timeout;
 }
 game_locals_t;

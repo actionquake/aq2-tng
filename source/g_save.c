@@ -598,9 +598,9 @@ void InitGame( void )
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);
-	am = gi.cvar("am", "0", CVAR_SERVERINFO);
-	am_newnames = gi.cvar("am_newnames", "1", 0);
-	am_botcount = gi.cvar("am_botcount", "6", CVAR_SERVERINFO);
+	am = gi.cvar("am", "0", CVAR_SERVERINFO | CVAR_LATCH);
+	am_newnames = gi.cvar("am_newnames", "1", CVAR_LATCH);
+	am_botcount = gi.cvar("am_botcount", "6", CVAR_SERVERINFO | CVAR_LATCH);
 	if (am_botcount->value < 0){
     	gi.cvar_forceset("am_botcount", "0");
 	}
@@ -619,8 +619,8 @@ void InitGame( void )
 	sv_curl_stat_api_url = gi.cvar("sv_curl_stat_api_url", "disabled", 0);
 	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
 	sv_curl_discord_server_url = gi.cvar("sv_curl_discord_server_url", "disabled", 0);
-	server_ip = gi.cvar("server_ip", "none", CVAR_NOSET); // Never include this in serverinfo!
-	server_port = gi.cvar("server_port", "none", CVAR_NOSET); // Never include this in serverinfo!
+	server_ip = gi.cvar("server_ip", "", 0); // Never include this in serverinfo!
+	server_port = gi.cvar("server_port", "", 0); // Never include this in serverinfo!
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION
