@@ -535,6 +535,8 @@ cvar_t *sv_curl_discord_chat_url;
 cvar_t *sv_curl_discord_server_url;
 cvar_t *server_ip;
 cvar_t *server_port;
+cvar_t *sv_last_announce_interval;
+cvar_t *sv_last_announce_time;
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;

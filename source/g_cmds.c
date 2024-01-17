@@ -1819,20 +1819,6 @@ static void Cmd_CPSI_f (edict_t * ent)
 	}
 }
 
-static void Cmd_Api_f ()
-{
-    static request_t request;
-    request.url = sv_curl_discord_chat_url->string;
-    //gi.dprintf("Creating request to %s\n", request.url);
-	request.payload = "{\"content\": \"```Super cool```\"}";
-    lc_start_request_function(&request);
-}
-
-static void Cmd_Sid_f ()
-{
-	find_player_by_steamid(gi.argv(1));
-}
-
 #define CMDF_CHEAT	1 //Need cheat to be enabled
 #define CMDF_PAUSE	2 //Cant use while pause
 
@@ -1957,8 +1943,6 @@ static cmdList_t commandList[] =
 	// Espionage, aliased command so it's easy to remember
 	{ "volunteer", Cmd_Volunteer_f, 0},
 	{ "leader", Cmd_Volunteer_f, 0},
-	{ "api", Cmd_Api_f, 0},
-	{ "sid", Cmd_Sid_f, 0}
 };
 
 #define MAX_COMMAND_HASH 64

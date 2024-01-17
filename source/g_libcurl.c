@@ -94,6 +94,15 @@ void lc_get_player_stats(char* message)
 
 void announce_server_populating()
 {
+    // Don't announce again before 30 minutes have passed
+    if ((int)time(NULL) - (int)sv_last_announce_time->value < (int)sv_last_announce_interval->value) {
+        return;
+    }
+
+    // Do not announce matchmode games
+    if (matchmode->value)
+        return;
+
     json_t *srv_announce = json_object();
     int playercount = CountRealPlayers();
 
@@ -113,7 +122,7 @@ void announce_server_populating()
     lc_server_announce("/srv_announce_filling", message);
 
     json_decref(root);
-    game.srv_announce_timeout = level.framenum;
+    sv_last_announce_time->value = (int)time(NULL);
 }
 
 /*

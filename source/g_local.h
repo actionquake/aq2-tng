@@ -1284,6 +1284,8 @@ extern cvar_t *sv_curl_discord_chat_url;
 extern cvar_t *sv_curl_discord_server_url;
 extern cvar_t *server_ip;
 extern cvar_t *server_port;
+extern cvar_t *sv_last_announce_interval;
+extern cvar_t *sv_last_announce_time;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
