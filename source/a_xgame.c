@@ -725,25 +725,33 @@ qboolean is_valid_ipv4(char *ip_str)
     int parts[4] = {0};
 
     if (ip_str == NULL) {
-		gi.dprintf("%s: ip was NULL\n", __FUNCTION__);
+        gi.dprintf("%s: ip was NULL\n", __FUNCTION__);
         return false;
-	}
+    }
 
-    ptr = strtok(ip_str, ".");
+    char *ip_copy = strdup(ip_str);
+    if (ip_copy == NULL) {
+        gi.dprintf("%s: failed to allocate memory for ip_copy\n", __FUNCTION__);
+        return false;
+    }
+
+    ptr = strtok(ip_copy, ".");
 
     if (ptr == NULL) {
-		gi.dprintf("%s: ip did not contain dots: %s\n", __FUNCTION__, ip_str);
+        gi.dprintf("%s: ip did not contain dots: %s\n", __FUNCTION__, ip_str);
+        free(ip_copy);
         return false;
-	}
+    }
 
     int part_count = 0;
     while (ptr) {
 
         /* after parsing string, it must contain only digits */
         if (!isdigit(*ptr)) {
-			gi.dprintf("%s: Not a valid digit: %s, IP: %s\n", __FUNCTION__, ptr, ip_str);
+            gi.dprintf("%s: Not a valid digit: %s, IP: %s\n", __FUNCTION__, ptr, ip_str);
+            free(ip_copy);
             return false;
-		}
+        }
 
         num = atoi(ptr);
 
@@ -757,25 +765,29 @@ qboolean is_valid_ipv4(char *ip_str)
                 part_count++;
             }
         } else {
-			gi.dprintf("%s: Not a valid octet: %i, IP: %s\n", __FUNCTION__, num, ip_str);
+            gi.dprintf("%s: Not a valid octet: %i, IP: %s\n", __FUNCTION__, num, ip_str);
+            free(ip_copy);
             return false;
-		}
+        }
     }
 
     /* valid IP string must contain 3 dots */
     if (dots != 3) {
-		gi.dprintf("%s: Not a valid IP: %s\n", __FUNCTION__, ip_str);
+        gi.dprintf("%s: Not a valid IP: %s\n", __FUNCTION__, ip_str);
+        free(ip_copy);
         return false;
-	}
+    }
 
     /* check for private IP ranges */
-	if ((parts[0] == 10) ||
-		(parts[0] == 172 && parts[1] >= 16 && parts[1] <= 31) ||
-		(parts[0] == 192 && parts[1] == 168) ||
-		(parts[0] == 127)) {
-		gi.dprintf("%s: Not a public IP\n", __FUNCTION__);
-		return false;
-	}
+    if ((parts[0] == 10) ||
+        (parts[0] == 172 && parts[1] >= 16 && parts[1] <= 31) ||
+        (parts[0] == 192 && parts[1] == 168) ||
+        (parts[0] == 127)) {
+        gi.dprintf("%s: Not a public IP\n", __FUNCTION__);
+        free(ip_copy);
+        return false;
+    }
 
+    free(ip_copy);
     return true;
 }

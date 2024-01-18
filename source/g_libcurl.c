@@ -117,9 +117,9 @@ void announce_server_populating()
     int playercount = CountRealPlayers();
 
     // Do not announce if player count is less than 25% of maxclients
-    // float threshold = fmax((game.maxclients * 0.2), 3);
-    // if (playercount < threshold)
-    //     return;
+    float threshold = fmax((game.maxclients * 0.2), 3);
+    if (playercount < threshold)
+        return;
 
     json_object_set_new(srv_announce, "hostname", json_string(hostname->string));
     json_object_set_new(srv_announce, "server_ip", json_string(server_ip->string));
