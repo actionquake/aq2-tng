@@ -94,17 +94,25 @@ void lc_get_player_stats(char* message)
 
 void announce_server_populating()
 {
-    // Don't announce again before 30 minutes have passed
-    if ((int)time(NULL) - (int)sv_last_announce_time->value < (int)sv_last_announce_interval->value) {
+    // Don't announce again before sv_last_announce_interval seconds have passed
+    if ((int)time(NULL) - (int)sv_last_announce_time->value < (int)sv_last_announce_interval->value)
         return;
-    }
 
     // Do not announce matchmode games
     if (matchmode->value)
         return;
 
+    // Minimum 10 maxclients
+    if (maxclients->value < 10)
+        return;
+
     json_t *srv_announce = json_object();
     int playercount = CountRealPlayers();
+
+    // Do not announce if player count is less than 25% of maxclients
+    // float threshold = fmax((game.maxclients * 0.2), 3);
+    // if (playercount < threshold)
+    //     return;
 
     json_object_set_new(srv_announce, "hostname", json_string(hostname->string));
     json_object_set_new(srv_announce, "server_ip", json_string(server_ip->string));
@@ -122,7 +130,9 @@ void announce_server_populating()
     lc_server_announce("/srv_announce_filling", message);
 
     json_decref(root);
-    sv_last_announce_time->value = (int)time(NULL);
+    
+    // Update the cvar so we don't announce again for sv_last_announce_interval seconds
+    gi.cvar_forceset("sv_last_announce_time", va("%d", (int)time(NULL)));
 }
 
 /*
@@ -234,8 +244,10 @@ qboolean lc_init_function()
 size_t lc_receive_data_function(char *data, size_t blocks, size_t bytes, void *pvt)
 {
 	request_t *request;
-    if (bytes <= 0)
+    if (bytes <= 0){
         return 0;
+    }
+
 	request = (request_t*) pvt;
 	if (!request)
 	{
