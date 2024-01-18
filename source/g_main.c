@@ -530,6 +530,7 @@ cvar_t *sv_killgib; // Gibs on 'kill' command
 // 2024
 // cURL integration
 cvar_t *sv_curl_enable;
+cvar_t *sv_discord_announce_enable;
 cvar_t *sv_curl_stat_api_url;
 cvar_t *sv_curl_discord_chat_url;
 cvar_t *sv_curl_discord_server_url;

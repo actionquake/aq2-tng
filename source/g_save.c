@@ -616,6 +616,7 @@ void InitGame( void )
 
 	// 2024
 	sv_curl_enable = gi.cvar("sv_curl_enable", "0", 0);
+	sv_discord_announce_enable = gi.cvar("sv_discord_announce_enable", "0", 0);
 	sv_curl_stat_api_url = gi.cvar("sv_curl_stat_api_url", "disabled", 0);
 	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
 	sv_curl_discord_server_url = gi.cvar("sv_curl_discord_server_url", "disabled", 0);

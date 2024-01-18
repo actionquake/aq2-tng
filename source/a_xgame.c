@@ -717,3 +717,65 @@ int CountRealPlayers(void)
 	}
 	return count;
 }
+
+qboolean is_valid_ipv4(char *ip_str)
+{
+    int num, dots = 0;
+    char *ptr;
+    int parts[4] = {0};
+
+    if (ip_str == NULL) {
+		gi.dprintf("%s: ip was NULL\n", __FUNCTION__);
+        return false;
+	}
+
+    ptr = strtok(ip_str, ".");
+
+    if (ptr == NULL) {
+		gi.dprintf("%s: ip did not contain dots: %s\n", __FUNCTION__, ip_str);
+        return false;
+	}
+
+    int part_count = 0;
+    while (ptr) {
+
+        /* after parsing string, it must contain only digits */
+        if (!isdigit(*ptr)) {
+			gi.dprintf("%s: Not a valid digit: %s, IP: %s\n", __FUNCTION__, ptr, ip_str);
+            return false;
+		}
+
+        num = atoi(ptr);
+
+        /* check for valid IP */
+        if (num >= 0 && num <= 255) {
+            /* parse remaining string */
+            ptr = strtok(NULL, ".");
+            if (ptr != NULL) {
+                dots++;
+                parts[part_count] = num;
+                part_count++;
+            }
+        } else {
+			gi.dprintf("%s: Not a valid octet: %i, IP: %s\n", __FUNCTION__, num, ip_str);
+            return false;
+		}
+    }
+
+    /* valid IP string must contain 3 dots */
+    if (dots != 3) {
+		gi.dprintf("%s: Not a valid IP: %s\n", __FUNCTION__, ip_str);
+        return false;
+	}
+
+    /* check for private IP ranges */
+	if ((parts[0] == 10) ||
+		(parts[0] == 172 && parts[1] >= 16 && parts[1] <= 31) ||
+		(parts[0] == 192 && parts[1] == 168) ||
+		(parts[0] == 127)) {
+		gi.dprintf("%s: Not a public IP\n", __FUNCTION__);
+		return false;
+	}
+
+    return true;
+}

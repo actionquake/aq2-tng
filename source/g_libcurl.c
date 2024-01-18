@@ -106,6 +106,13 @@ void announce_server_populating()
     if (maxclients->value < 10)
         return;
 
+    // Do not send if IP is invalid or private
+    if (!is_valid_ipv4(server_ip->string)) {
+        gi.dprintf("Server IP is invalid, deactivating announcements\n");
+        gi.cvar_forceset("sv_discord_announce_enable", "0");
+        return;
+    }
+
     json_t *srv_announce = json_object();
     int playercount = CountRealPlayers();
 

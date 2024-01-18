@@ -2897,7 +2897,8 @@ void PutClientInServer(edict_t * ent)
 	ChangeWeapon(ent);
 
 	// Tell the world!
-	announce_server_populating();
+	if (sv_discord_announce_enable->value)
+		announce_server_populating();
 }
 
 /*
