@@ -58,6 +58,9 @@
 //FIREBLADE
 #include <stddef.h>
 //FIREBLADE
+//Protocol extension support
+#include <stdint.h>
+
 
 // legacy ABI support for Windows
 #if defined(__GNUC__) && defined(WIN32) && ! defined(WIN64)
@@ -187,14 +190,26 @@ typedef enum { qfalse = 0, qtrue } qboolean;
 //
 // per-level limits
 //
-#define MAX_CLIENTS                     256	// absolute limit
-#define MAX_EDICTS                      1024	// must change protocol to increase more
-#define MAX_LIGHTSTYLES                 256
-#define MAX_MODELS                      256	// these are sent over the net as bytes
-#define MAX_SOUNDS                      256	// so they cannot be blindly increased
-#define MAX_IMAGES                      256
-#define MAX_ITEMS                       256
-#define MAX_GENERAL                     (MAX_CLIENTS*2)	// general config strings (from 3.20 -FB)
+#define MAX_CLIENTS         256     // absolute limit
+#define MAX_EDICTS_OLD      1024    // must change protocol to increase more
+#define MAX_MODELS_OLD      256     // these are sent over the net as bytes
+#define MAX_SOUNDS_OLD      256     // so they cannot be blindly increased
+#define MAX_IMAGES_OLD      256
+#define MAX_LIGHTSTYLES     256
+#define MAX_ITEMS           256
+#define MAX_GENERAL         (MAX_CLIENTS * 2) // general config strings
+
+#if USE_PROTOCOL_EXTENSIONS
+#define MAX_EDICTS          8192    // sent as ENTITYNUM_BITS, can't be increased
+#define MAX_MODELS          8192    // half is reserved for inline BSP models
+#define MAX_SOUNDS          2048
+#define MAX_IMAGES          2048
+#else
+#define MAX_EDICTS          MAX_EDICTS_OLD
+#define MAX_MODELS          MAX_MODELS_OLD
+#define MAX_SOUNDS          MAX_SOUNDS_OLD
+#define MAX_IMAGES          MAX_IMAGES_OLD
+#endif
 
 
 // game print flags
@@ -257,6 +272,7 @@ typedef int fixed16_t;
 #define DEG2RAD( a ) (a * M_PI_DIV_180)
 #define RAD2DEG( a ) (a * M_180_DIV_PI)
 
+#define BIT(n)          (1U << (n))
 
 #ifndef max
 # define max(a,b) ((a) > (b) ? (a) : (b))
@@ -1349,26 +1365,80 @@ temp_event_t;
 #define CS_SKYROTATE            4
 #define CS_STATUSBAR            5	// display program string
 
-// FROM 3.20 -FB
-#define CS_AIRACCEL             29	// air acceleration control
-// ^^^
-#define CS_MAXCLIENTS           30
-#define CS_MAPCHECKSUM          31	// for catching cheater maps
+#define CS_AIRACCEL_OLD         29      // air acceleration control
+#define CS_MAXCLIENTS_OLD       30
+#define CS_MAPCHECKSUM_OLD      31      // for catching cheater maps
+#define CS_MODELS_OLD           32
+#define CS_SOUNDS_OLD           (CS_MODELS_OLD + MAX_MODELS_OLD)
+#define CS_IMAGES_OLD           (CS_SOUNDS_OLD + MAX_SOUNDS_OLD)
+#define CS_LIGHTS_OLD           (CS_IMAGES_OLD + MAX_IMAGES_OLD)
+#define CS_ITEMS_OLD            (CS_LIGHTS_OLD + MAX_LIGHTSTYLES)
+#define CS_PLAYERSKINS_OLD      (CS_ITEMS_OLD + MAX_ITEMS)
+#define CS_GENERAL_OLD          (CS_PLAYERSKINS_OLD + MAX_CLIENTS)
+#define MAX_CONFIGSTRINGS_OLD   (CS_GENERAL_OLD + MAX_GENERAL)
 
-#define CS_MODELS           32
+#if USE_PROTOCOL_EXTENSIONS
+#define CS_AIRACCEL         59
+#define CS_MAXCLIENTS       60
+#define CS_MAPCHECKSUM      61
+#define CS_MODELS           62
 #define CS_SOUNDS           (CS_MODELS + MAX_MODELS)
 #define CS_IMAGES           (CS_SOUNDS + MAX_SOUNDS)
 #define CS_LIGHTS           (CS_IMAGES + MAX_IMAGES)
 #define CS_ITEMS            (CS_LIGHTS + MAX_LIGHTSTYLES)
 #define CS_PLAYERSKINS      (CS_ITEMS + MAX_ITEMS)
-#define CS_GENERAL          (CS_PLAYERSKINS + MAX_CLIENTS)  //1568
-#define MAX_CONFIGSTRINGS   (CS_GENERAL + MAX_GENERAL)      //2080
+#define CS_GENERAL          (CS_PLAYERSKINS + MAX_CLIENTS)
+#define MAX_CONFIGSTRINGS   (CS_GENERAL + MAX_GENERAL)
+#else
+#define CS_AIRACCEL         CS_AIRACCEL_OLD
+#define CS_MAXCLIENTS       CS_MAXCLIENTS_OLD
+#define CS_MAPCHECKSUM      CS_MAPCHECKSUM_OLD
+#define CS_MODELS           CS_MODELS_OLD
+#define CS_SOUNDS           CS_SOUNDS_OLD
+#define CS_IMAGES           CS_IMAGES_OLD
+#define CS_LIGHTS           CS_LIGHTS_OLD
+#define CS_ITEMS            CS_ITEMS_OLD
+#define CS_PLAYERSKINS      CS_PLAYERSKINS_OLD
+#define CS_GENERAL          CS_GENERAL_OLD
+#define MAX_CONFIGSTRINGS   MAX_CONFIGSTRINGS_OLD
+
+#endif
+
+#if USE_PROTOCOL_EXTENSIONS
+typedef struct cs_remap_s {
+    qboolean    extended;
+
+    uint16_t    max_edicts;
+    uint16_t    max_models;
+    uint16_t    max_sounds;
+    uint16_t    max_images;
+
+    uint16_t    airaccel;
+    uint16_t    maxclients;
+    uint16_t    mapchecksum;
+
+    uint16_t    models;
+    uint16_t    sounds;
+    uint16_t    images;
+    uint16_t    lights;
+    uint16_t    items;
+    uint16_t    playerskins;
+    uint16_t    general;
+
+    uint16_t    end;
+} cs_remap_t;
+
+#endif
+
 
 //QW// The 2080 magic number comes from q_shared.h of the original game.
 // No game mod can go over this 2080 limit.
-#if (MAX_CONFIGSTRINGS > 2080)
-#error MAX_CONFIGSTRINGS > 2080
-#endif
+
+//Protocol extensions made this check obsolete
+
+// #if (MAX_CONFIGSTRINGS > 2080)
+// #error MAX_CONFIGSTRINGS > 2080
+// #endif
 
 //==============================================
 

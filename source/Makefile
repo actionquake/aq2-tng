@@ -140,6 +140,10 @@ ifdef NO_BOTS
 CFLAGS+=-DNO_BOTS
 endif
 
+ifdef USE_PROTOCOL_EXTENSIONS
+CFLAGS+=-DUSE_PROTOCOL_EXTENSIONS
+endif
+
 ## Use this to build on older glibc/gcc for older dedicated servers
 ifdef C99COMPAT
 CFLAGS+=-std=c99

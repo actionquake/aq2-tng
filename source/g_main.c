@@ -347,6 +347,7 @@ cvar_t *password;
 cvar_t *maxclients;
 cvar_t *maxentities;
 cvar_t *g_select_empty;
+cvar_t *g_protocol_extensions;
 cvar_t *dedicated;
 cvar_t *steamid;
 cvar_t *filterban;

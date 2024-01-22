@@ -530,6 +530,7 @@ void InitGame( void )
 	CGF_SFX_InstallGlassSupport();	// william for CGF (glass fx)
 
 	g_select_empty = gi.cvar( "g_select_empty", "0", CVAR_ARCHIVE );
+	g_protocol_extensions = gi.cvar("g_protocol_extensions", "0", CVAR_LATCH);
 
 	run_pitch = gi.cvar( "run_pitch", "0.002", 0 );
 	run_roll = gi.cvar( "run_roll", "0.005", 0 );
@@ -666,6 +667,13 @@ void InitGame( void )
 
 		if (game.serverfeatures & GMF_CLIENTNUM) {
 			gi.dprintf( "...server supports GMF_CLIENTNUM\n" );
+		}
+
+		if (game.serverfeatures & GMF_PROTOCOL_EXTENSIONS && (int)g_protocol_extensions->value) {
+			gi.dprintf( "...server supports GMF_PROTOCOL_EXTENSIONS\n" );
+			game.csr = cs_remap_new;
+		} else {
+			game.csr = cs_remap_old;
 		}
 	}
 
