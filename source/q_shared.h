@@ -1434,11 +1434,16 @@ typedef struct cs_remap_s {
 //QW// The 2080 magic number comes from q_shared.h of the original game.
 // No game mod can go over this 2080 limit.
 
-//Protocol extensions made this check obsolete
+//Protocol extensions adjusted this check
 
-// #if (MAX_CONFIGSTRINGS > 2080)
-// #error MAX_CONFIGSTRINGS > 2080
-// #endif
+#ifndef USE_PROTOCOL_EXTENSIONS
+#if (MAX_CONFIGSTRINGS > 2080)
+#error MAX_CONFIGSTRINGS > 2080
+#endif
+#else
+#if (MAX_CONFIGSTRINGS > 13962)
+#error MAX_CONFIGSTRINGS > 13962
+#endif
 
 //==============================================
 
