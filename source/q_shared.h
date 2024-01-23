@@ -48,6 +48,7 @@
 
 #ifndef __Q_SHARED_H
 #define __Q_SHARED_H
+#endif
 
 #include <math.h>
 #include <stdio.h>
