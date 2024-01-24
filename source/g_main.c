@@ -1116,7 +1116,7 @@ void CycleLights (void)
 		}
 		temp[0] = brightness[day_cycle_at];
 		temp[1] = 0;
-		gi.configstring (CS_LIGHTS + 0, temp);
+		gi.configstring (game.csr.lights + 0, temp);
 		day_next_cycle = level.time + day_cycle->value;
 	}
 }

@@ -62,6 +62,7 @@
 //Protocol extension support
 #include <stdint.h>
 
+#define q_countof(a)        (sizeof(a) / sizeof(a[0]))
 
 // legacy ABI support for Windows
 #if defined(__GNUC__) && defined(WIN32) && ! defined(WIN64)

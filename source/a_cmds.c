@@ -918,7 +918,7 @@ void SetIDView(edict_t * ent)
 	if (ent->client->chase_mode) {
 		if (ent->client->chase_target && ent->client->chase_target->inuse) {
 			ent->client->ps.stats[STAT_ID_VIEW] =
-			    CS_PLAYERSKINS + (ent->client->chase_target - g_edicts - 1);
+			    game.csr.playerskins + (ent->client->chase_target - g_edicts - 1);
 		}
 		return;
 	}
@@ -934,7 +934,7 @@ void SetIDView(edict_t * ent)
 	tr = gi.trace(ent->s.origin, NULL, NULL, forward, ent, MASK_SOLID);
 	POSTTRACE();
 	if (tr.fraction < 1 && tr.ent && tr.ent->client) {
-		ent->client->ps.stats[STAT_ID_VIEW] = CS_PLAYERSKINS + (ent - g_edicts - 1);
+		ent->client->ps.stats[STAT_ID_VIEW] = game.csr.playerskins + (ent - g_edicts - 1);
 		return;
 	}
 
@@ -958,7 +958,7 @@ void SetIDView(edict_t * ent)
 		}
 	}
 	if (best != NULL && bd > 0.90) {
-		ent->client->ps.stats[STAT_ID_VIEW] = CS_PLAYERSKINS + (best - g_edicts - 1);
+		ent->client->ps.stats[STAT_ID_VIEW] = game.csr.playerskins + (best - g_edicts - 1);
 	}
 }
 
