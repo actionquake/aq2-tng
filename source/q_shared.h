@@ -48,7 +48,6 @@
 
 #ifndef __Q_SHARED_H
 #define __Q_SHARED_H
-#endif
 
 #include <math.h>
 #include <stdio.h>
@@ -201,7 +200,7 @@ typedef enum { qfalse = 0, qtrue } qboolean;
 #define MAX_ITEMS           256
 #define MAX_GENERAL         (MAX_CLIENTS * 2) // general config strings
 
-#if USE_PROTOCOL_EXTENSIONS
+#ifdef USE_PROTOCOL_EXTENSIONS
 #define MAX_EDICTS          8192    // sent as ENTITYNUM_BITS, can't be increased
 #define MAX_MODELS          8192    // half is reserved for inline BSP models
 #define MAX_SOUNDS          2048
@@ -1400,7 +1399,7 @@ temp_event_t;
 #define CS_GENERAL_OLD          (CS_PLAYERSKINS_OLD + MAX_CLIENTS)
 #define MAX_CONFIGSTRINGS_OLD   (CS_GENERAL_OLD + MAX_GENERAL)
 
-#if USE_PROTOCOL_EXTENSIONS
+#ifdef USE_PROTOCOL_EXTENSIONS
 #define CS_AIRACCEL         59
 #define CS_MAXCLIENTS       60
 #define CS_MAPCHECKSUM      61
@@ -1427,7 +1426,7 @@ temp_event_t;
 
 #endif
 
-#if USE_PROTOCOL_EXTENSIONS
+#ifdef USE_PROTOCOL_EXTENSIONS
 typedef struct cs_remap_s {
     qboolean    extended;
 
@@ -1460,12 +1459,13 @@ typedef struct cs_remap_s {
 //Protocol extensions adjusted this check
 
 #ifndef USE_PROTOCOL_EXTENSIONS
-#if (MAX_CONFIGSTRINGS > 2080)
-#error MAX_CONFIGSTRINGS > 2080
-#endif
+    #if (MAX_CONFIGSTRINGS > 2080)
+        #error MAX_CONFIGSTRINGS > 2080
+    #endif
 #else
-#if (MAX_CONFIGSTRINGS > 13962)
-#error MAX_CONFIGSTRINGS > 13962
+    #if (MAX_CONFIGSTRINGS > 13962)
+        #error MAX_CONFIGSTRINGS > 13962
+    #endif
 #endif
 
 //==============================================
@@ -1475,20 +1475,20 @@ typedef struct cs_remap_s {
 // ertity events are for effects that take place reletive
 // to an existing entities origin.  Very network efficient.
 // All muzzle flashes really should be converted to events...
-typedef enum
-{
-  EV_NONE,
-  EV_ITEM_RESPAWN,
-  EV_FOOTSTEP,
-  EV_FALLSHORT,
-  EV_FALL,
-  EV_FALLFAR,
-  EV_PLAYER_TELEPORT,
-  // FROM 3.20 -FB
-  EV_OTHER_TELEPORT
-    // ^^^
-}
-entity_event_t;
+typedef enum {
+    EV_NONE,
+    EV_ITEM_RESPAWN,
+    EV_FOOTSTEP,
+    EV_FALLSHORT,
+    EV_FALL,
+    EV_FALLFAR,
+    EV_PLAYER_TELEPORT,
+    EV_OTHER_TELEPORT,
+// KEX
+    EV_OTHER_FOOTSTEP,
+    EV_LADDER_STEP,
+// KEX
+} entity_event_t;
 
 
 // entity_state_t is the information conveyed from the server

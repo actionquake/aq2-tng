@@ -3252,7 +3252,7 @@ qboolean ClientConnect(edict_t * ent, char *userinfo)
 	Q_strncpyz(ent->client->pers.ip, ipaddr_buf, sizeof(ent->client->pers.ip));
 	Q_strncpyz(ent->client->pers.userinfo, userinfo, sizeof(ent->client->pers.userinfo));
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	value = Info_ValueForKey(userinfo, "steamid");
 	if (*value)
 		Q_strncpyz(ent->client->pers.steamid, value, sizeof(ent->client->pers.steamid));
@@ -3422,7 +3422,7 @@ void CreateGhost(edict_t * ent)
 
 	strcpy(ghost->ip, ent->client->pers.ip);
 	strcpy(ghost->netname, ent->client->pers.netname);
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	strcpy(ghost->steamid, ent->client->pers.steamid);
 	strcpy(ghost->discordid, ent->client->pers.discordid);
 	#endif

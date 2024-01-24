@@ -25,7 +25,7 @@
 #define SVF_DEADMONSTER         BIT(1)      // treat as CONTENTS_DEADMONSTER for collision
 #define SVF_MONSTER             BIT(2)      // treat as CONTENTS_MONSTER for collision
 
-#if USE_PROTOCOL_EXTENSIONS
+#ifdef USE_PROTOCOL_EXTENSIONS
 #define SVF_PLAYER              BIT(3)
 #define SVF_BOT                 BIT(4)
 #define SVF_NOBOTS              BIT(5)

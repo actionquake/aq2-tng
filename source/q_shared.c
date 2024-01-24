@@ -1264,7 +1264,7 @@ void Info_SetValueForKey (char *s, const char *key, const char *value)
 
 //====================================================================
 
-#if USE_PROTOCOL_EXTENSIONS
+#ifdef USE_PROTOCOL_EXTENSIONS
 
 const cs_remap_t cs_remap_old = {
     .extended    = false,
