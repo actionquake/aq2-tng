@@ -816,44 +816,65 @@ pmove_t;
 
 #define EF_GREEN_LIGHT   0x04000040
 
-// entity_state_t->renderfx flags
-#define RF_MINLIGHT             1	// allways have some light (viewmodel)
-#define RF_VIEWERMODEL          2	// don't draw through eyes, only mirrors
-#define RF_WEAPONMODEL          4	// only draw through eyes
-#define RF_FULLBRIGHT           8	// allways draw full intensity
-#define RF_DEPTHHACK            16	// for view weapon Z crunching
-#define RF_TRANSLUCENT          32
-#define RF_FRAMELERP            64
-#define RF_BEAM                 128
-#define RF_CUSTOMSKIN           256	// skin is an index in image_precache
-#define RF_GLOW                 512	// pulse lighting for bonus items
-#define RF_SHELL_RED            1024
-#define RF_SHELL_GREEN          2048
-#define RF_SHELL_BLUE           4096
+// entity_state_t->morefx flags
+//KEX
+#define EFX_DUALFIRE            BIT(0)
+#define EFX_HOLOGRAM            BIT(1)
+#define EFX_FLASHLIGHT          BIT(2)
+#define EFX_BARREL_EXPLODING    BIT(3)
+#define EFX_TELEPORTER2         BIT(4)
+#define EFX_GRENADE_LIGHT       BIT(5)
+//KEX
 
-//ROGUE (FROM 3.20)
-#define RF_IR_VISIBLE           0x00008000	// 32768
-#define RF_SHELL_DOUBLE         0x00010000	// 65536
-#define RF_SHELL_HALF_DAM       0x00020000
-#define RF_USE_DISGUISE         0x00040000
+// entity_state_t->renderfx flags
+#define RF_MINLIGHT         BIT(0)      // allways have some light (viewmodel)
+#define RF_VIEWERMODEL      BIT(1)      // don't draw through eyes, only mirrors
+#define RF_WEAPONMODEL      BIT(2)      // only draw through eyes
+#define RF_FULLBRIGHT       BIT(3)      // allways draw full intensity
+#define RF_DEPTHHACK        BIT(4)      // for view weapon Z crunching
+#define RF_TRANSLUCENT      BIT(5)
+#define RF_FRAMELERP        BIT(6)
+#define RF_BEAM             BIT(7)
+#define RF_CUSTOMSKIN       BIT(8)      // skin is an index in image_precache
+#define RF_GLOW             BIT(9)      // pulse lighting for bonus items
+#define RF_SHELL_RED        BIT(10)
+#define RF_SHELL_GREEN      BIT(11)
+#define RF_SHELL_BLUE       BIT(12)
+#define RF_NOSHADOW         BIT(13)     // used by YQ2
+#define RF_CASTSHADOW       BIT(14)     // used by KEX
+
 //ROGUE
+#define RF_IR_VISIBLE       BIT(15)
+#define RF_SHELL_DOUBLE     BIT(16)
+#define RF_SHELL_HALF_DAM   BIT(17)
+#define RF_USE_DISGUISE     BIT(18)
+//ROGUE
+
+//KEX
+#define RF_SHELL_LITE_GREEN BIT(19)
+#define RF_CUSTOM_LIGHT     BIT(20)
+#define RF_FLARE            BIT(21)
+#define RF_OLD_FRAME_LERP   BIT(22)
+#define RF_DOT_SHADOW       BIT(23)
+#define RF_LOW_PRIORITY     BIT(24)
+#define RF_NO_LOD           BIT(25)
+#define RF_STAIR_STEP       BIT(26)
+
+#define RF_NO_STEREO        RF_WEAPONMODEL
+#define RF_FLARE_LOCK_ANGLE RF_MINLIGHT
+#define RF_BEAM_LIGHTNING   (RF_BEAM | RF_GLOW)
+//KEX
 
 // player_state_t->refdef flags
-#define RDF_UNDERWATER          1	// warp the screen as apropriate
-#define RDF_NOWORLDMODEL        2	// used for player configuration screen
+#define RDF_UNDERWATER      BIT(0)      // warp the screen as apropriate
+#define RDF_NOWORLDMODEL    BIT(1)      // used for player configuration screen
 
 //ROGUE
-#define RDF_IRGOGGLES           4
-#define RDF_UVGOGGLES           8
-//ROGUE
+#define RDF_IRGOGGLES       BIT(2)
+#define RDF_UVGOGGLES       BIT(3)
 
 #define RF_INDICATOR			(RF_TRANSLUCENT | RF_FULLBRIGHT | RF_DEPTHHACK)
 #define IS_INDICATOR(rflags)	((rflags & RF_INDICATOR) == RF_INDICATOR)
-
-
-// player_state_t->refdef flags
-#define RDF_UNDERWATER          1	// warp the screen as apropriate
-#define RDF_NOWORLDMODEL        2	// used for player configuration screen
 
 //
 // muzzle flashes / player effects
@@ -1487,7 +1508,7 @@ typedef struct entity_state_s
   int frame;
   int skinnum;
   // FROM 3.20 -FB
-  unsigned int effects;
+  uint64_t effects;
   // ^^^
   int renderfx;
   int solid;			// for client side prediction, 8*(bits 0-4) is x/y radius
