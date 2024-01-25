@@ -1508,7 +1508,7 @@ typedef struct entity_state_s
   int frame;
   int skinnum;
   // FROM 3.20 -FB
-  uint64_t effects;
+  unsigned int effects;
   // ^^^
   int renderfx;
   int solid;			// for client side prediction, 8*(bits 0-4) is x/y radius
