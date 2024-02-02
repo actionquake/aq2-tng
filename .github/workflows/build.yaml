@@ -141,7 +141,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install curl ossp-uuid
+          brew install curl ossp-uuid jansson
 
       - name: Build TNG (Darwin x86_64)
         working-directory: build/source
