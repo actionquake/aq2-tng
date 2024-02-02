@@ -497,12 +497,13 @@ else return NULL
 edict_t *find_player_by_steamid(const char* steamid)
 {
     edict_t *ent;
+    int i;
 
 	// Don't do anything if steamid is null/emtpy/zero
 	if (steamid == NULL || steamid[0] == '\0' || strcmp(steamid, "0") == 0)
 		return NULL;
 
-    for (int i = 0; i < game.maxclients; i++)
+    for (i = 0; i < game.maxclients; i++)
     {
         ent = &g_edicts[1 + i];
 		if( !ent->inuse || !ent->client || ent->is_bot)

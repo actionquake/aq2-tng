@@ -300,6 +300,7 @@ void lc_start_request_function(request_t* request)
 
 void process_stats(json_t *stats_json)
 {
+    int i;
     if (!json_is_object(stats_json)) {
         gi.dprintf("error: stats is not a JSON object\n");
         return;
@@ -309,7 +310,7 @@ void process_stats(json_t *stats_json)
     int num_stats = sizeof(stat_names) / sizeof(stat_names[0]);
 
     lt_stats_t stats;
-    for (int i = 0; i < num_stats; i++) {
+    for (i = 0; i < num_stats; i++) {
         json_t *stat_json = json_object_get(stats_json, stat_names[i]);
         if (!stat_json) {
             gi.dprintf("error: %s is missing\n", stat_names[i]);
