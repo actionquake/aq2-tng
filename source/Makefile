@@ -38,9 +38,9 @@ BASE_CFLAGS += -Wextra
 else
 # Temporary fix to hide a few warnings that haven't been fixed yet.
 BASE_CFLAGS += -Wno-unused-result
-ifneq ($(TNG_BUILD_FOR),DARWIN)
-BASE_CFLAGS += -Wno-format-truncation
-endif
+# ifneq ($(TNG_BUILD_FOR),DARWIN)
+# BASE_CFLAGS += -Wno-format-truncation
+# endif
 endif
 
 #use these cflags to optimize it
@@ -128,7 +128,11 @@ else # Linux + Mac
 CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
 CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS) 
-SHLIBLIBS=-luuid -lcurl -ljansson
+SHLIBLIBS += -luuid -lcurl
+ifneq ($(TNG_BUILD_FOR),M1) # Do not build ljansson with M1
+SHLIBLIBS += -ljansson
+GAME_OBJS += g_libcurl.o
+endif
 endif
 endif
 
@@ -162,7 +166,7 @@ GAME_OBJS = \
 	g_utils.o g_weapon.o \
 	p_antilag.o p_client.o p_hud.o p_view.o p_weapon.o q_shared.o \
 	tng_stats.o tng_flashlight.o tng_irc.o tng_ini.o tng_balancer.o \
-	g_grapple.o a_dom.o tng_jump.o a_esp.o g_libcurl.o
+	g_grapple.o a_dom.o tng_jump.o a_esp.o
 
 ifndef NO_BOTS
 GAME_OBJS += acesrc/acebot_ai.o acesrc/acebot_nodes.o acesrc/bot_combat.o \
