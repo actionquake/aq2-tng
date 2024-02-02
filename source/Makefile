@@ -128,19 +128,9 @@ else # Linux + Mac
 CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
 CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS) 
-SHLIBLIBS=-luuid -lcurl
+SHLIBLIBS=-luuid -lcurl -ljansson
 endif
 endif
-
-ifeq ($(USE_AQ_CURL),TRUE)
-ifneq (,$(findstring WIN32,$(TNG_BUILD_FOR))$(findstring WIN64,$(TNG_BUILD_FOR)))
-# Do nothing for Windows
-else
-# For non-Windows (Linux, Mac), link the Jansson library
-SHLIBLIBS+=-ljansson
-endif
-endif
-
 
 ifeq ($(ARCH),x86)
 CFLAGS+=-m32
