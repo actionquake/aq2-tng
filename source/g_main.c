@@ -1171,7 +1171,9 @@ void G_RunFrame (void)
 
 
 		//Run pending curl requests
+		#ifdef USE_AQ_CURL
 		lc_once_per_gameframe();
+		#endif
 
 		//
 		// treat each object in turn

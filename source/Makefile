@@ -131,9 +131,12 @@ CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS)
 SHLIBLIBS += -luuid -lcurl
 ifneq ($(TNG_BUILD_FOR),M1) # Do not build ljansson with M1
 SHLIBLIBS += -ljansson
+endif
+endif
+endif
+
+ifeq ($(USE_AQ_CURL),TRUE)
 GAME_OBJS += g_libcurl.o
-endif
-endif
 endif
 
 ifeq ($(ARCH),x86)

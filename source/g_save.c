@@ -652,8 +652,10 @@ void InitGame( void )
 #endif
 
 	// Initialize libcurl capabilities if enabled
+	#ifdef USE_AQ_CURL
 	if (sv_curl_enable->value)
 		lc_init_function();
+	#endif
 
 	// items
 	InitItems();

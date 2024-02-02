@@ -67,6 +67,7 @@ jobs:
         env:
           CC: "gcc"
           USE_AQTION: "TRUE"
+          USE_AQ_CURL: "TRUE"
 
       - name: Generate Linux x86 archive
         uses: actions/upload-artifact@v3
@@ -123,6 +124,7 @@ jobs:
         env:
           CC: "gcc"
           USE_AQTION: "TRUE"
+          USE_AQ_CURL: "TRUE"
 
       - name: Generate archive
         uses: actions/upload-artifact@v3
