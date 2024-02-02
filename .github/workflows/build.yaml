@@ -76,36 +76,37 @@ jobs:
             build/gamex86_64.so
 
   # The toil on keeping this stupid VM online is too much work
-  x86_lin_compat_build_tng:
-    runs-on: [self-hosted, X64, compat]
-    steps:
-      - name: 'Cleanup build folder'
-        run: |
-          ls -la ./
-          rm -rf ./* || true
-          rm -rf ./.??* || true
-          ls -la ./
+  # GH runners no longer support this version of Ubuntu
+  # x86_lin_compat_build_tng:
+  #   runs-on: [self-hosted, X64, compat]
+  #   steps:
+  #     - name: 'Cleanup build folder'
+  #       run: |
+  #         ls -la ./
+  #         rm -rf ./* || true
+  #         rm -rf ./.??* || true
+  #         ls -la ./
 
-      - uses: actions/checkout@v3
-        with:
-          # repository: aq2-tng/aq2-tng  ## Official repository
-          repository: actionquake/aq2-tng
-          ref: ${{ github.ref }}
-          path: build
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         # repository: aq2-tng/aq2-tng  ## Official repository
+  #         repository: actionquake/aq2-tng
+  #         ref: ${{ github.ref }}
+  #         path: build
 
-      - name: Build TNG (Linux 64-bit)
-        working-directory: build/source
-        run: make -j2 V=1 && mv gamex86_64.so ../gamex86_64.so
-        env:
-          CC: "gcc"
-          USE_AQTION: "TRUE"
+  #     - name: Build TNG (Linux 64-bit)
+  #       working-directory: build/source
+  #       run: make -j2 V=1 && mv gamex86_64.so ../gamex86_64.so
+  #       env:
+  #         CC: "gcc"
+  #         USE_AQTION: "TRUE"
 
-      - name: Generate Linux compat x86 archive
-        uses: actions/upload-artifact@v3
-        with:
-          name: tng-lin-x86_64-compat
-          path: |
-            build/gamex86_64.so
+  #     - name: Generate Linux compat x86 archive
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: tng-lin-x86_64-compat
+  #         path: |
+  #           build/gamex86_64.so
 
   arm64_build_tng:
     runs-on: [self-hosted, ARM64]
@@ -130,7 +131,7 @@ jobs:
           path: |
             build/gamearm64.so
 
-  darwin_build_tng:
+  darwin_x86_build_tng:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
