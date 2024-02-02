@@ -262,6 +262,7 @@
 //-----------------------------------------------------------------------------
 
 #include <ctype.h>
+#include <stdint.h>
 
 #include "q_shared.h"
 #include "q_ghud.h"
