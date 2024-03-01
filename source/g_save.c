@@ -341,7 +341,8 @@ void InitGame( void )
 	sv_gravity = gi.cvar( "sv_gravity", "800", 0 );
 
 	dedicated = gi.cvar( "dedicated", "0", CVAR_NOSET );
-	steamid = gi.cvar( "steamid", "0", CVAR_NOSET );
+	steamid = gi.cvar( "steamid", "0", CVAR_NOSET ); //legacy, moved to cl_steamid
+	cl_steamid = gi.cvar( "cl_steamid", "0", CVAR_NOSET );
 
 	sv_cheats = gi.cvar( "cheats", "0", CVAR_SERVERINFO | CVAR_LATCH );
 	gi.cvar( "gamename", GAMEVERSION, CVAR_SERVERINFO | CVAR_NOSET ); 	// Removed it from Serverinfo, we already have game and gamedir
@@ -590,6 +591,7 @@ void InitGame( void )
 	mapvote_next_limit = gi.cvar( "mapvote_next_limit", "0", 0);
 	stat_apikey = gi.cvar("stat_apikey", "none", 0); // Never include this in serverinfo!
 	stat_url = gi.cvar("stat_url", "https://apigateway.aq2world.com/api/v1/stats", 0);
+	server_announce_url = gi.cvar("server_announce_url", "disabled", 0);
 	gm = gi.cvar("gm", "dm", CVAR_SERVERINFO);
 	gmf = gi.cvar("gmf", "0", CVAR_SERVERINFO);
 	sv_idleremove = gi.cvar("sv_idleremove", "0", 0);
@@ -597,9 +599,9 @@ void InitGame( void )
 
 	// 2023
 	use_killcounts = gi.cvar("use_killcounts", "0", 0);
-	am = gi.cvar("am", "0", CVAR_SERVERINFO);
-	am_newnames = gi.cvar("am_newnames", "1", 0);
-	am_botcount = gi.cvar("am_botcount", "6", CVAR_SERVERINFO);
+	am = gi.cvar("am", "0", CVAR_SERVERINFO | CVAR_LATCH);
+	am_newnames = gi.cvar("am_newnames", "1", CVAR_LATCH);
+	am_botcount = gi.cvar("am_botcount", "6", CVAR_SERVERINFO | CVAR_LATCH);
 	if (am_botcount->value < 0){
     	gi.cvar_forceset("am_botcount", "0");
 	}
@@ -612,6 +614,17 @@ void InitGame( void )
 	timedmsgs = gi.cvar("timedmsgs", "0", 0);
 	mm_captain_teamname = gi.cvar("mm_captain_teamname", "0", 0);
 	sv_killgib = gi.cvar("sv_killgib", "0", 0);
+
+	// 2024
+	sv_curl_enable = gi.cvar("sv_curl_enable", "0", 0);
+	sv_discord_announce_enable = gi.cvar("sv_discord_announce_enable", "0", 0);
+	sv_curl_stat_api_url = gi.cvar("sv_curl_stat_api_url", "disabled", 0);
+	sv_curl_discord_chat_url = gi.cvar("sv_curl_discord_chat_url", "disabled", 0);
+	sv_curl_discord_server_url = gi.cvar("sv_curl_discord_server_url", "disabled", 0);
+	server_ip = gi.cvar("server_ip", "", 0); // Never include this in serverinfo!
+	server_port = gi.cvar("server_port", "", 0); // Never include this in serverinfo!
+	sv_last_announce_time = gi.cvar("sv_last_announce_time", "0", 0);
+	sv_last_announce_interval = gi.cvar("sv_last_announce_interval", "1800", 0);
 
 	// new AQtion Extension cvars
 #ifdef AQTION_EXTENSION
@@ -638,6 +651,12 @@ void InitGame( void )
 	ltk_loadbots = gi.cvar( "ltk_loadbots", "1", 0);
 	ltk_classic = gi.cvar( "ltk_classic", "1", 0);
 #endif
+
+	// Initialize libcurl capabilities if enabled
+	#ifdef USE_AQ_CURL
+	if (sv_curl_enable->value)
+		lc_init_function();
+	#endif
 
 	// items
 	InitItems();

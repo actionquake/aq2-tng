@@ -348,7 +348,8 @@ cvar_t *maxclients;
 cvar_t *maxentities;
 cvar_t *g_select_empty;
 cvar_t *dedicated;
-cvar_t *steamid;
+cvar_t *steamid; // legacy, moved to cl_steamid
+cvar_t *cl_steamid;
 cvar_t *filterban;
 cvar_t *silenceban; //rekkie -- silence ban
 cvar_t *sv_maxvelocity;
@@ -506,6 +507,7 @@ cvar_t *stat_logs;
 cvar_t *mapvote_next_limit;
 cvar_t *stat_apikey;
 cvar_t *stat_url;
+cvar_t *server_announce_url;
 cvar_t *gm;
 cvar_t *gmf;
 cvar_t *sv_idleremove;
@@ -525,6 +527,18 @@ cvar_t *printrules;  // Centerprint game rules when the countdown begins
 cvar_t *timedmsgs; // Toggles timed messages
 cvar_t *mm_captain_teamname; // Toggles if we want to use the captain's name for the team in matchmode
 cvar_t *sv_killgib; // Gibs on 'kill' command
+
+// 2024
+// cURL integration
+cvar_t *sv_curl_enable;
+cvar_t *sv_discord_announce_enable;
+cvar_t *sv_curl_stat_api_url;
+cvar_t *sv_curl_discord_chat_url;
+cvar_t *sv_curl_discord_server_url;
+cvar_t *server_ip;
+cvar_t *server_port;
+cvar_t *sv_last_announce_interval;
+cvar_t *sv_last_announce_time;
 
 #ifdef AQTION_EXTENSION
 cvar_t *use_newirvision;
@@ -1155,6 +1169,12 @@ void G_RunFrame (void)
 		int updateStatMode = (level.framenum % (80 * FRAMEDIV)) ? 0 : 1;
 
 		CycleLights ();
+
+
+		//Run pending curl requests
+		#ifdef USE_AQ_CURL
+		lc_once_per_gameframe();
+		#endif
 
 		//
 		// treat each object in turn

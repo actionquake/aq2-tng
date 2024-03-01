@@ -1952,7 +1952,7 @@ static cmdList_t commandList[] =
 	{ "jmod", Cmd_Jmod_f, 0 },
 	// Espionage, aliased command so it's easy to remember
 	{ "volunteer", Cmd_Volunteer_f, 0},
-	{ "leader", Cmd_Volunteer_f, 0}
+	{ "leader", Cmd_Volunteer_f, 0},
 };
 
 #define MAX_COMMAND_HASH 64

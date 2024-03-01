@@ -888,6 +888,8 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 		{
 			sprintf( death_msg, "%s %s\n", self->client->pers.netname, message );
 			PrintDeathMessage(death_msg, self );
+			//Example: Using discord webhook for death messaging
+			//lc_discord_webhook(death_msg);
 			IRC_printf( IRC_T_DEATH, death_msg );
 
 			if (!teamplay->value || team_round_going || !ff_afterround->value)  {
@@ -1235,6 +1237,8 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			sprintf(death_msg, "%s%s %s%s\n", self->client->pers.netname,
 			message, attacker->client->pers.netname, message2);
 			PrintDeathMessage(death_msg, self);
+			//Example: Using discord webhook for death messaging
+			//lc_discord_webhook(death_msg);
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(attacker, self);
 
@@ -2893,6 +2897,12 @@ void PutClientInServer(edict_t * ent)
 	// force the current weapon up
 	client->newweapon = client->weapon;
 	ChangeWeapon(ent);
+
+	// Tell the world!
+	#ifdef USE_AQ_CURL
+	if (sv_discord_announce_enable->value)
+		announce_server_populating();
+	#endif
 }
 
 /*

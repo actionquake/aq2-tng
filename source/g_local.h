@@ -262,6 +262,7 @@
 //-----------------------------------------------------------------------------
 
 #include <ctype.h>
+#include <stdint.h>
 
 #include "q_shared.h"
 #include "q_ghud.h"
@@ -290,6 +291,8 @@
 #include	"tng_jump.h"
 #include	"g_grapple.h"
 #include	"p_antilag.h"
+#include	"g_libcurl.h"
+#include 	"tng_net.h"
 
 #ifndef NO_BOTS
 #include	"acesrc/botnav.h"
@@ -435,6 +438,12 @@ typedef enum
 }
 ammo_t;
 
+//tng_net.c
+typedef enum {
+	NOTIFY_NONE,
+    SERVER_WARMING_UP,
+    NOTIFY_MAX
+} Discord_Notifications;
 
 //deadflag
 #define DEAD_NO                         0
@@ -764,6 +773,9 @@ typedef struct
   int roundNum;
   qboolean ai_ent_found;
   int bot_count;
+
+  // API-related
+  int srv_announce_timeout;
 }
 game_locals_t;
 
@@ -850,6 +862,10 @@ typedef struct
   // Point of interest
   vec3_t poi_origin;
   vec3_t poi_angle;
+
+  // Libcurl enhancements
+  int lc_recently_sent[NOTIFY_MAX];	// Used to prevent spamming of the endpoint
+
 }
 level_locals_t;
 
@@ -1164,7 +1180,8 @@ extern cvar_t *capturelimit;
 extern cvar_t *password;
 extern cvar_t *g_select_empty;
 extern cvar_t *dedicated;
-extern cvar_t *steamid;
+extern cvar_t *steamid; // Legacy, moved to cl_steamid
+extern cvar_t *cl_steamid;
 
 extern cvar_t *filterban;
 extern cvar_t* silenceban; //rekkie -- silence ban
@@ -1261,6 +1278,18 @@ extern cvar_t *timedmsgs;
 extern cvar_t *mm_captain_teamname;
 extern cvar_t *sv_killgib;
 
+// 2024
+// cURL integration
+extern cvar_t *sv_curl_enable;
+extern cvar_t *sv_discord_announce_enable;
+extern cvar_t *sv_curl_stat_api_url;
+extern cvar_t *sv_curl_discord_chat_url;
+extern cvar_t *sv_curl_discord_server_url;
+extern cvar_t *server_ip;
+extern cvar_t *server_port;
+extern cvar_t *sv_last_announce_interval;
+extern cvar_t *sv_last_announce_time;
+
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
 extern int (*engine_Client_GetProtocol)(edict_t *ent);
@@ -1308,6 +1337,7 @@ extern cvar_t *stat_logs; // Enables/disables logging of stats
 extern cvar_t *mapvote_next_limit; // Time left that disables map voting
 extern cvar_t *stat_apikey; // Stats URL key
 extern cvar_t *stat_url; // Stats URL endpoint
+extern cvar_t *server_announce_url; // Server announce URL endpoint
 extern cvar_t *g_spawn_items; // Enables item spawning in GS_WEAPONCHOOSE games
 extern cvar_t *gm; // Gamemode
 extern cvar_t *gmf; // Gamemodeflags
@@ -1680,6 +1710,12 @@ typedef struct gunStats_s
 	int damage;		//Damage dealt
 } gunStats_t;
 
+typedef struct
+{
+    int frags;
+    int deaths;
+    int64_t damage;
+} lt_stats_t;
 
 // client data that stays across multiple level loads
 typedef struct
@@ -1859,6 +1895,10 @@ typedef struct
   int dom_caps;						// How many times a player captured a dom point
   int dom_capstreak;				// How many times a player captured a dom point in a row
   int dom_capstreakbest;			// Best cap streak for domination
+
+  // Long term stats retreived from database
+  lt_stats_t* lt_stats; // Long-term stats
+
 }
 client_respawn_t;
 
@@ -2528,3 +2568,10 @@ extern Message *timedMessages;
 
 void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg);
 void FireTimedMessages();
+
+//g_libcurl.c
+void lc_shutdown_function();
+qboolean lc_init_function();
+void lc_once_per_gameframe();
+void lc_discord_webhook(char* message);
+void lc_start_request_function(request_t* request);

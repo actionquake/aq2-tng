@@ -38,9 +38,9 @@ BASE_CFLAGS += -Wextra
 else
 # Temporary fix to hide a few warnings that haven't been fixed yet.
 BASE_CFLAGS += -Wno-unused-result
-ifneq ($(TNG_BUILD_FOR),DARWIN)
-BASE_CFLAGS += -Wno-format-truncation
-endif
+# ifneq ($(TNG_BUILD_FOR),DARWIN)
+# BASE_CFLAGS += -Wno-format-truncation
+# endif
 endif
 
 #use these cflags to optimize it
@@ -128,8 +128,15 @@ else # Linux + Mac
 CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
 CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS) 
-SHLIBLIBS=-luuid -lcurl
+SHLIBLIBS += -luuid -lcurl
+ifneq ($(TNG_BUILD_FOR),M1) # Do not build ljansson with M1
+SHLIBLIBS += -ljansson
 endif
+endif
+endif
+
+ifeq ($(USE_AQ_CURL),TRUE)
+GAME_OBJS += g_libcurl.o
 endif
 
 ifeq ($(ARCH),x86)
