@@ -1180,7 +1180,8 @@ extern cvar_t *capturelimit;
 extern cvar_t *password;
 extern cvar_t *g_select_empty;
 extern cvar_t *dedicated;
-extern cvar_t *steamid;
+extern cvar_t *steamid; // Legacy, moved to cl_steamid
+extern cvar_t *cl_steamid;
 
 extern cvar_t *filterban;
 extern cvar_t* silenceban; //rekkie -- silence ban

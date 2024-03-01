@@ -341,7 +341,8 @@ void InitGame( void )
 	sv_gravity = gi.cvar( "sv_gravity", "800", 0 );
 
 	dedicated = gi.cvar( "dedicated", "0", CVAR_NOSET );
-	steamid = gi.cvar( "steamid", "0", CVAR_NOSET );
+	steamid = gi.cvar( "steamid", "0", CVAR_NOSET ); //legacy, moved to cl_steamid
+	cl_steamid = gi.cvar( "cl_steamid", "0", CVAR_NOSET );
 
 	sv_cheats = gi.cvar( "cheats", "0", CVAR_SERVERINFO | CVAR_LATCH );
 	gi.cvar( "gamename", GAMEVERSION, CVAR_SERVERINFO | CVAR_NOSET ); 	// Removed it from Serverinfo, we already have game and gamedir
