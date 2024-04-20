@@ -539,6 +539,8 @@ void InitGame( void )
 	bob_up = gi.cvar( "bob_up", "0.005", 0 );
 	bob_pitch = gi.cvar( "bob_pitch", "0.002", 0 );
 	bob_roll = gi.cvar( "bob_roll", "0.002", 0 );
+    bob_gunbob = gi.cvar( "bob_gunbob", "1", 0 );
+    bob_gun_mousemovement = gi.cvar( "bob_gun_mousemovement", "1", 0 );
 
 	// flood control
 	flood_threshold = gi.cvar( "flood_threshold", "4", 0 );

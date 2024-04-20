@@ -391,15 +391,15 @@ void SV_CalcGunOffset (edict_t * ent)
 		return;
 
 	// gun angles from bobbing
-	ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005;
-	ent->client->ps.gunangles[YAW] = xyspeed * bobfracsin * 0.01;
+	ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005 * bob_gunbob->value;
+	ent->client->ps.gunangles[YAW] = xyspeed * bobfracsin * 0.01 * bob_gunbob->value;
 	if (bobcycle & 1)
 	{
 		ent->client->ps.gunangles[ROLL] = -ent->client->ps.gunangles[ROLL];
 		ent->client->ps.gunangles[YAW] = -ent->client->ps.gunangles[YAW];
 	}
 
-	ent->client->ps.gunangles[PITCH] = xyspeed * bobfracsin * 0.005;
+	ent->client->ps.gunangles[PITCH] = xyspeed * bobfracsin * 0.005 * bob_gunbob->value;
 
 	// gun angles from delta movement
 	for (i = 0; i < 3; i++)
@@ -414,6 +414,9 @@ void SV_CalcGunOffset (edict_t * ent)
 			delta = 45;
 		if (delta < -45)
 			delta = -45;
+
+        delta *= bob_gun_mousemovement->value;
+
 		if (i == YAW)
 			ent->client->ps.gunangles[ROLL] += 0.1 * delta;
 		ent->client->ps.gunangles[i] += 0.2 * delta;

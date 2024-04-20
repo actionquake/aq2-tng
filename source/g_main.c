@@ -363,6 +363,8 @@ cvar_t *run_roll;
 cvar_t *bob_up;
 cvar_t *bob_pitch;
 cvar_t *bob_roll;
+cvar_t *bob_gunbob;
+cvar_t *bob_gun_mousemovement;
 cvar_t *sv_cheats;
 cvar_t *flood_threshold;
 cvar_t *unique_weapons;
