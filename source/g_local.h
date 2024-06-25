@@ -839,6 +839,7 @@ typedef struct
   float matchTime;
   float emptyTime;
   int weapon_sound_framenum;
+  int teamcount[MAX_TEAMS];
   int pic_teamplay_timer_icon;
 
   int pic_leaderskin[TEAM_TOP];  
@@ -1257,6 +1258,7 @@ extern cvar_t *am_delay;
 extern cvar_t *am_team;
 extern cvar_t *zoom_comp;
 extern cvar_t *item_kit_mode;
+extern cvar_t *highlander;
 extern cvar_t *gun_dualmk23_enhance;
 extern cvar_t *printrules;
 extern cvar_t *timedmsgs;
@@ -2070,6 +2072,8 @@ struct gclient_s
 
 	// visiblity mask
 	unsigned int dimension_observe;
+
+	int 		curr_menu;  // Used to determine which menu a player is currently in
 };
 
 
