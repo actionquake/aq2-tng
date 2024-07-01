@@ -791,11 +791,54 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 	}
 }
 
+/*
+Uses melee_t enum to determine which melee attack to use
+*/
+void melee_attack (edict_t *ent, int melee_attack)
+{
+	// No melee attacks while in jump mode, if int is in uvTime or we are still in LCA
+	if (jump->value || ent->client->uvTime || lights_camera_action) {
+		ent->client->punch_desired = false;
+		return;
+	}
+
+	//Evaluate roundhouse kicks first, then regular kicks, then punches
+	// Roundhouse kick
+	if (use_roundhouse->value && ent->client->jumping && ent->client->punch_desired && (ent->solid != SOLID_NOT)) {
+		kick_attack(ent, true);
+		ent->client->punch_desired = false;
+		return;
+	}
+
+	// Regular kick
+	if (ent->client->jumping && (ent->solid != SOLID_NOT)) {
+		kick_attack(ent, false);
+		ent->client->punch_desired = false;
+		return;
+	}
+
+	// Regular punch
+	// No punch attack if we're in the middle of a jump and roundhouse is off
+	if (!use_roundhouse->value && ent->client->jumping) {
+		ent->client->punch_desired = false;
+		return;
+	}
+	if (ent->client->punch_desired && ! ent->client->jumping) {
+		punch_attack(ent);
+		ent->client->punch_desired = false;
+		return;
+	}
+
+	// Default return
+	ent->client->punch_desired = false;
+	return;
+}
+
 
 void P_ProjectSource (gclient_t *client, vec3_t point, vec3_t distance,
 		      vec3_t forward, vec3_t right, vec3_t result);
 
-void kick_attack (edict_t *ent)
+void kick_attack (edict_t *ent, qboolean roundhouse)
 {
 	vec3_t start;
 	vec3_t forward, right;
@@ -805,6 +848,11 @@ void kick_attack (edict_t *ent)
 	vec3_t end;
 	char *genderstr;
 
+	// More damage and kick for roundhouse
+	if (roundhouse) {
+		damage = 40;
+		kick = 600;
+	}
 
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
 
@@ -854,10 +902,11 @@ void kick_attack (edict_t *ent)
 		// zucc stop powerful upwards kicking
 		//forward[2] = 0;
 		// glass fx
-		if (Q_stricmp(tr.ent->classname, "func_explosive") == 0)
+		if (Q_stricmp(tr.ent->classname, "func_explosive") == 0) {
 			CGF_SFX_ShootBreakableGlass(tr.ent, ent, &tr, MOD_KICK);
-		else
+		} else {
 			T_Damage(tr.ent, ent, ent, forward, tr.endpos, tr.plane.normal, damage, kick, 0, MOD_KICK);
+		}
 
 		// Stat add
 		Stats_AddHit(ent, MOD_KICK, LOC_NO);

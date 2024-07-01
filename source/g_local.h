@@ -411,6 +411,13 @@ damage_t;
 
 typedef enum
 {
+	KICK_ATTACK,		// Player attempting a kick attack
+	PUNCH_ATTACK		// Player attempting a punch attack
+}
+melee_t;
+
+typedef enum
+{
   WEAPON_READY,
   WEAPON_ACTIVATING,
   WEAPON_DROPPING,
@@ -1262,6 +1269,7 @@ extern cvar_t *printrules;
 extern cvar_t *timedmsgs;
 extern cvar_t *mm_captain_teamname;
 extern cvar_t *sv_killgib;
+extern cvar_t *use_roundhouse;
 
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
@@ -1498,7 +1506,8 @@ void fire_grenade2 (edict_t * self, vec3_t start, vec3_t aimdir, int damage,
 	int speed, int timer, float damage_radius,
 		    qboolean held);
 
-void kick_attack(edict_t *ent);
+void melee_attack(edict_t *ent, int melee_attack);
+void kick_attack (edict_t *ent, qboolean roundhouse);
 void punch_attack(edict_t *ent);
 int knife_attack(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
 void knife_throw(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed);
