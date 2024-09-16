@@ -347,6 +347,7 @@ cvar_t *password;
 cvar_t *maxclients;
 cvar_t *maxentities;
 cvar_t *g_select_empty;
+cvar_t *g_protocol_extensions;
 cvar_t *dedicated;
 cvar_t *steamid;
 cvar_t *filterban;
@@ -1117,7 +1118,7 @@ void CycleLights (void)
 		}
 		temp[0] = brightness[day_cycle_at];
 		temp[1] = 0;
-		gi.configstring (CS_LIGHTS + 0, temp);
+		gi.configstring (game.csr.lights + 0, temp);
 		day_next_cycle = level.time + day_cycle->value;
 	}
 }

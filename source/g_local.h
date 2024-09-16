@@ -298,13 +298,22 @@
 #define		getEnt(entnum)	(edict_t *)((char *)globals.edicts + (globals.edict_size * entnum))	//AQ:TNG Slicer - This was missing
 #define		GAMEVERSION			"action"	// the "gameversion" client command will print this plus compile date
 
+// features this game supports
 
-#define GMF_CLIENTNUM				0x00000001
-#define GMF_PROPERINUSE             0x00000002
-#define GMF_MVDSPEC					0x00000004
-#define GMF_WANT_ALL_DISCONNECTS    0x00000008
-#define GMF_VARIABLE_FPS			0x00000800
-#define GMF_EXTRA_USERINFO			0x00001000
+// R1Q2 and Q2PRO specific
+#define GMF_CLIENTNUM               BIT(0)      // game sets clientNum gclient_s field
+#define GMF_PROPERINUSE             BIT(1)      // game maintains edict_s inuse field properly
+#define GMF_MVDSPEC                 BIT(2)      // game is dummy MVD client aware
+#define GMF_WANT_ALL_DISCONNECTS    BIT(3)      // game wants ClientDisconnect() for non-spawned clients
+
+// Q2PRO specific
+#define GMF_ENHANCED_SAVEGAMES      BIT(10)     // game supports safe/portable savegames
+#define GMF_VARIABLE_FPS            BIT(11)     // game supports variable server FPS
+#define GMF_EXTRA_USERINFO          BIT(12)     // game wants extra userinfo after normal userinfo
+#define GMF_IPV6_ADDRESS_AWARE      BIT(13)     // game supports IPv6 addresses
+#define GMF_ALLOW_INDEX_OVERFLOW    BIT(14)     // game wants PF_FindIndex() to return 0 on overflow
+#define GMF_PROTOCOL_EXTENSIONS     BIT(15)     // game supports protocol extensions
+
 
 #ifndef NO_FPS
 #define G_GMF_VARIABLE_FPS GMF_VARIABLE_FPS
@@ -312,7 +321,13 @@
 #define G_GMF_VARIABLE_FPS 0
 #endif
 
-#define G_FEATURES (GMF_CLIENTNUM | GMF_PROPERINUSE | GMF_MVDSPEC | GMF_WANT_ALL_DISCONNECTS | G_GMF_VARIABLE_FPS)
+#ifdef USE_PROTOCOL_EXTENSIONS
+#define G_GMF_PROTOCOL_EXTENSIONS GMF_PROTOCOL_EXTENSIONS
+#else
+#define G_GMF_PROTOCOL_EXTENSIONS 0
+#endif
+
+#define G_FEATURES (GMF_CLIENTNUM | GMF_PROPERINUSE | GMF_MVDSPEC | GMF_WANT_ALL_DISCONNECTS | G_GMF_VARIABLE_FPS | G_GMF_PROTOCOL_EXTENSIONS)
 
 // protocol bytes that can be directly added to messages
 #define svc_muzzleflash         1
@@ -728,7 +743,6 @@ typedef struct gitem_s
 }
 gitem_t;
 
-
 //
 // this structure is left intact through an entire game
 // it should be initialized at dll load time, and read/written to
@@ -756,7 +770,10 @@ typedef struct
 
   // items
   int num_items;
-	
+
+  //q2pro protocol extensions
+  cs_remap_t  csr;
+
   // stats
   char matchid[MAX_QPATH];
   int gamemode;
@@ -1165,6 +1182,7 @@ extern cvar_t *maptime;
 extern cvar_t *capturelimit;
 extern cvar_t *password;
 extern cvar_t *g_select_empty;
+extern cvar_t *g_protocol_extensions;
 extern cvar_t *dedicated;
 extern cvar_t *steamid;
 
@@ -2072,6 +2090,63 @@ struct gclient_s
 	unsigned int dimension_observe;
 };
 
+#ifdef USE_PROTOCOL_EXTENSIONS
+
+
+#define ENTITYNUM_BITS      13
+#define ENTITYNUM_MASK      (BIT(ENTITYNUM_BITS) - 1)
+
+#define GUNINDEX_BITS       13  // upper 3 bits are skinnum
+#define GUNINDEX_MASK       (BIT(GUNINDEX_BITS) - 1)
+
+typedef struct {
+    int         morefx;
+    float       alpha;
+    float       scale;
+    float       loop_volume;
+    float       loop_attenuation;
+} entity_state_extension_t;
+
+
+typedef union {
+    struct {
+        entity_state_t state;
+        entity_state_extension_t state_extension;
+    };
+    struct {
+        entity_state_t s;
+        entity_state_extension_t x;
+    };
+} centity_state_t;
+
+typedef struct centity_s {
+    centity_state_t     current;
+    centity_state_t     prev;           // will always be valid, but might just be a copy of current
+
+    vec3_t          mins, maxs;
+    float           radius;             // from mid point
+
+    int             serverframe;        // if not current, this ent isn't in the frame
+
+    int             trailcount;         // for diminishing grenade trails
+    vec3_t          lerp_origin;        // for trails (variable hz)
+
+#ifdef USE_FPS
+    int             prev_frame;
+    int             anim_start;
+
+    int             event_frame;
+#endif
+
+    int             fly_stoptime;
+
+    float           flashlightfrac;
+} centity_t;
+
+extern centity_t    cl_entities[MAX_EDICTS];
+
+#endif
+
 
 struct edict_s
 {
@@ -2101,7 +2176,7 @@ struct edict_s
 	int			clipmask;
 	edict_t		*owner;
 
-
+	entity_state_extension_t    x;
 	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
 	// EXPECTS THE FIELDS IN THAT ORDER!
 
@@ -2530,3 +2605,18 @@ extern Message *timedMessages;
 
 void addTimedMessage(int teamNum, edict_t *ent, int seconds, char *msg);
 void FireTimedMessages();
+
+/*
+=====================================================================
+
+  CONFIG STRING REMAPPING
+
+=====================================================================
+*/
+
+#ifdef USE_PROTOCOL_EXTENSIONS
+
+extern const cs_remap_t     cs_remap_old;
+extern const cs_remap_t     cs_remap_new;
+
+#endif

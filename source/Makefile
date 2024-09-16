@@ -112,7 +112,7 @@ endif
 
 
 ifeq ($(USE_AQTION),TRUE)
-CFLAGS += -DUSE_AQTION -DAQTION_EXTENSION
+CFLAGS += -DUSE_AQTION -DAQTION_EXTENSION -DUSE_AQ_CURL
 
 ifneq (,$(findstring WIN32,$(TNG_BUILD_FOR))$(findstring WIN64,$(TNG_BUILD_FOR)))
 CFLAGS += -I../q2pro-mgw-sdk/inc -DCURL_STATICLIB
@@ -138,6 +138,10 @@ endif
 
 ifdef NO_BOTS
 CFLAGS+=-DNO_BOTS
+endif
+
+ifndef NO_PROTOCOL_EXTENSIONS
+CFLAGS+=-DUSE_PROTOCOL_EXTENSIONS
 endif
 
 ## Use this to build on older glibc/gcc for older dedicated servers
