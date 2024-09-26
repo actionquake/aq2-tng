@@ -1319,6 +1319,7 @@ extern cvar_t *sv_idleremove; // Remove idlers
 extern cvar_t *use_newirvision;		// enable new irvision (only highlight baddies)
 extern cvar_t *use_indicators;		// enable/allow indicators
 extern cvar_t *use_xerp;			// allow clients to use cl_xerp
+extern cvar_t *force_cl_xerp;		// force clients to use cl_xerp value (0,1,2)
 #endif
 
 // Discord SDK integration with Q2Pro

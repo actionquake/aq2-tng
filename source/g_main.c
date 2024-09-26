@@ -532,6 +532,7 @@ cvar_t *sv_killgib; // Gibs on 'kill' command
 cvar_t *use_newirvision;
 cvar_t *use_indicators;
 cvar_t *use_xerp;
+cvar_t *force_cl_xerp;
 #endif
 
 // Discord SDK integration with Q2Pro
