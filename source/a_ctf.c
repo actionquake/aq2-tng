@@ -1409,5 +1409,7 @@ void CTFCapReward(edict_t * ent)
 	}
 	else	gi.cprintf(ent, PRINT_MEDIUM, "CAPTURED!\n\nYou have been rewarded.\n\nNow go get some more!");
 
+	#ifdef USE_AQTION
 	LogCapture(ent);
+	#endif
 }

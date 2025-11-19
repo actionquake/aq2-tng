@@ -406,9 +406,9 @@ void ED_CallSpawn (edict_t * ent)
 		}
 	}
 
-	/*if(strcmp (ent->classname, "freed") != 0) {
-		gi.dprintf ("%s doesn't have a spawn function\n", ent->classname);
-	}*/
+	// if(strcmp (ent->classname, "freed") != 0) {
+	// 	gi.dprintf ("%s doesn't have a spawn function\n", ent->classname);
+	// }
 
 	G_FreeEdict( ent );
 }

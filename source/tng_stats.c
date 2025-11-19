@@ -870,6 +870,7 @@ void LogWorldKill(edict_t *self)
 LogCapture
 =================
 */
+
 void LogCapture(edict_t *capturer)
 {
 	int eventtime;

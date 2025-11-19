@@ -20,7 +20,7 @@ jobs:
           rm -rf ./.??* || true
           ls -la ./
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # repository: aq2-tng/aq2-tng  ## Official repository
           repository: actionquake/aq2-tng
@@ -86,7 +86,7 @@ jobs:
   #         rm -rf ./.??* || true
   #         ls -la ./
 
-  #     - uses: actions/checkout@v3
+  #     - uses: actions/checkout@v4
   #       with:
   #         # repository: aq2-tng/aq2-tng  ## Official repository
   #         repository: actionquake/aq2-tng
@@ -110,7 +110,7 @@ jobs:
   arm64_build_tng:
     runs-on: [self-hosted, ARM64]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: actionquake/aq2-tng
           ref: ${{ github.ref }}
@@ -133,7 +133,7 @@ jobs:
   darwin_build_tng:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: actionquake/aq2-tng
           ref: ${{ github.ref }}

@@ -1151,6 +1151,8 @@ extern cvar_t *hc_single;
 extern cvar_t *wp_flags;
 extern cvar_t *itm_flags;
 extern cvar_t *use_classic;	// Use_classic resets weapon balance to 1.52
+extern cvar_t *breakableglass;
+extern cvar_t *glassfragmentlimit;
 
 extern cvar_t *warmup;
 extern cvar_t *warmup_bots;
@@ -1317,6 +1319,7 @@ extern cvar_t *sv_idleremove; // Remove idlers
 extern cvar_t *use_newirvision;		// enable new irvision (only highlight baddies)
 extern cvar_t *use_indicators;		// enable/allow indicators
 extern cvar_t *use_xerp;			// allow clients to use cl_xerp
+extern cvar_t *force_cl_xerp;		// force clients to use cl_xerp value (0,1,2)
 #endif
 
 // Discord SDK integration with Q2Pro
@@ -1629,7 +1632,7 @@ void ProduceShotgunDamageReport(edict_t*);
 
 //tng_stats.c
 void StatBotCheck(void);
-#if USE_AQTION
+#ifdef USE_AQTION
 void LogKill(edict_t *self, edict_t *inflictor, edict_t *attacker);
 void LogWorldKill(edict_t *self);
 void LogCapture(edict_t *capturer);
@@ -1731,7 +1734,7 @@ typedef struct
 	ignorelist_t ignorelist;
 	gitem_t *chosenItem2;		// Support for item kit mode
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	char steamid[24];
 	char discordid[24];
 	#endif
@@ -2323,7 +2326,7 @@ typedef struct
 	gitem_t *weapon;
 	gitem_t *item;
 	// Extended stats
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	char steamid[24];
 	char discordid[24];
 	#endif

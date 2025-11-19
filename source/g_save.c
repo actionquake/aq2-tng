@@ -527,8 +527,11 @@ void InitGame( void )
 	use_flashlight = gi.cvar( "use_flashlight", "0", 0 );
 	use_classic = gi.cvar( "use_classic", "0", 0 ); // Reset Grenade Strength to 1.52
 
-	CGF_SFX_InstallGlassSupport();	// william for CGF (glass fx)
-
+	//CGF_SFX_InstallGlassSupport();	// william for CGF (glass fx)
+	// Breakable glass support
+	breakableglass = gi.cvar("breakableglass", "0", 0);
+  glassfragmentlimit = gi.cvar("glassfragmentlimit", "30", 0);
+  
 	g_select_empty = gi.cvar( "g_select_empty", "0", CVAR_ARCHIVE );
 
 	run_pitch = gi.cvar( "run_pitch", "0.002", 0 );
@@ -558,7 +561,7 @@ void InitGame( void )
 	esp_atl = gi.cvar( "esp_atl", "0", 0 ); // This forces ATL mode even if ETV mode is set in the .esp file
 	esp_punish = gi.cvar("esp_punish", "0", 0);
 	esp_etv_halftime = gi.cvar("esp_etv_halftime", "0", CVAR_LATCH);
-	if (esp_etv_halftime->value && roundlimit->value < 4) {
+	if (esp->value && esp_etv_halftime->value && roundlimit->value < 4) {
 		// Disabling halftime because roundlimit is not set
 		disablecvar(esp_etv_halftime, "Roundlimit set too low for halftime, minimum is 4 rounds");
 	}
@@ -618,6 +621,7 @@ void InitGame( void )
 	use_newirvision = gi.cvar("use_newirvision", "1", 0);
 	use_indicators = gi.cvar("use_indicators", "1", 0);
 	use_xerp = gi.cvar("use_xerp", "1", 0);
+	force_cl_xerp = gi.cvar("force_cl_xerp", "0", 0);
 #endif
 
 	// Discord SDK integration with Q2Pro
@@ -720,7 +724,16 @@ void InitGame( void )
 #ifdef AQTION_EXTENSION
 	CvarSync_Set(clcvar_cl_antilag, "cl_antilag", "1");
 	CvarSync_Set(clcvar_cl_indicators, "cl_indicators", "1");
-	CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	if (use_xerp->value) {
+		if (force_cl_xerp->value == 1)
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "1");
+		else if (force_cl_xerp->value == 2)
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "2");
+		else
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	} else {
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	}
 	CvarSync_Set(clcvar_cl_spectatorhud, "cl_spectatorhud", "1");
 	CvarSync_Set(clcvar_cl_spectatorkillfeed, "cl_spectatorkillfeed", "0");
 #endif

@@ -1707,7 +1707,7 @@ static void Cmd_PrintSettings_f( edict_t * ent )
 	Com_sprintf( text + length, sizeof( text ) - length, "\n"
 		"timelimit   %2d roundlimit  %2d roundtimelimit %2d\n"
 		"limchasecam %2d tgren       %2d antilag_interp %2d\n"
-		"use_xerp    %2d llsound     %2d\n",
+		"llsound     %2d\n",
 		(int)timelimit->value, (int)roundlimit->value, (int)roundtimelimit->value,
 		(int)limchasecam->value, (int)tgren->value, (int)sv_antilag_interp->value,
 		(int)llsound->value );

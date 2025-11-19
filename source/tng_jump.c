@@ -358,6 +358,16 @@ void Cmd_Goto_f (edict_t *ent)
 	
 }
 
+void Cmd_GotoP_f_compat (edict_t *ent,  pmenu_t *p)
+{
+	Cmd_GotoP_f(ent);
+}
+
+void Cmd_GotoPC_f_compat (edict_t *ent,  pmenu_t *p)
+{
+	Cmd_GotoPC_f(ent);
+}
+
 void Cmd_GotoP_f (edict_t *ent)
 {
 	edict_t 	*spot = NULL;

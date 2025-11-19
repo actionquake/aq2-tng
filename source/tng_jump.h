@@ -12,6 +12,8 @@ void Cmd_Jmod_f (edict_t *ent);
 void Cmd_PMLCA_f (edict_t *ent);
 void Cmd_RHS_f (edict_t *ent);
 void Cmd_Goto_f (edict_t *ent);
+void Cmd_GotoP_f_compat (edict_t *ent,  pmenu_t *p);
+void Cmd_GotoPC_f_compat (edict_t *ent,  pmenu_t *p);
 void Cmd_GotoP_f (edict_t *ent);
 void Cmd_GotoPC_f (edict_t *ent);
 void Cmd_Clear_f (edict_t *ent);

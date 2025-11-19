@@ -356,17 +356,25 @@ void Announce_Reward(edict_t *ent, int rewardType) {
     char *playername = ent->client->pers.netname;
 
     switch (rewardType) {
+        case ACCURACY:
+            if (ent->client->resp.streakHS/3 >= 2) {
+                sprintf(buf,"ACCURACY %s (%dx)!", playername, ent->client->resp.streakHS/3);
+            } else {
+                sprintf(buf,"ACCURACY %s!", playername);
+            }
+            soundFile = "tng/accuracy.wav";
+            break;
         case IMPRESSIVE:
-            sprintf(buf,"IMPRESSIVE %s (%dx)!", playername, ent->client->resp.streakKills/5);
+            if (ent->client->resp.streakKills/5 >= 2) {
+                sprintf(buf,"IMPRESSIVE %s (%dx)!", playername, ent->client->resp.streakKills/5);
+            } else {
+                sprintf(buf,"IMPRESSIVE %s!", playername);
+            }
             soundFile = "tng/impressive.wav";
             break;
         case EXCELLENT:
             sprintf(buf,"EXCELLENT %s (%dx)!", playername, ent->client->resp.streakKills/12);
             soundFile = "tng/excellent.wav";
-            break;
-        case ACCURACY:
-            sprintf(buf,"ACCURACY %s (%dx)!", playername, ent->client->resp.streakHS/3);
-            soundFile = "tng/accuracy.wav";
             break;
         case DOMINATING:
             sprintf(buf,"%s IS DOMINATING!", playername);
@@ -3252,7 +3260,7 @@ qboolean ClientConnect(edict_t * ent, char *userinfo)
 	Q_strncpyz(ent->client->pers.ip, ipaddr_buf, sizeof(ent->client->pers.ip));
 	Q_strncpyz(ent->client->pers.userinfo, userinfo, sizeof(ent->client->pers.userinfo));
 
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	value = Info_ValueForKey(userinfo, "steamid");
 	if (*value)
 		Q_strncpyz(ent->client->pers.steamid, value, sizeof(ent->client->pers.steamid));
@@ -3422,7 +3430,7 @@ void CreateGhost(edict_t * ent)
 
 	strcpy(ghost->ip, ent->client->pers.ip);
 	strcpy(ghost->netname, ent->client->pers.netname);
-	#if USE_AQTION
+	#ifdef USE_AQTION
 	strcpy(ghost->steamid, ent->client->pers.steamid);
 	strcpy(ghost->discordid, ent->client->pers.discordid);
 	#endif

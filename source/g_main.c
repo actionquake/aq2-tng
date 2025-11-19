@@ -456,6 +456,8 @@ cvar_t *radio_repeat;		// same as radio_max, only for repeats
 cvar_t *radio_repeat_time;
 
 cvar_t *use_classic;		// Used to reset spread/gren strength to 1.52
+cvar_t *breakableglass;		// Enables breakable glass
+cvar_t *glassfragmentlimit; // Max glass fragments
 
 cvar_t *warmup;
 cvar_t *warmup_bots;
@@ -530,6 +532,7 @@ cvar_t *sv_killgib; // Gibs on 'kill' command
 cvar_t *use_newirvision;
 cvar_t *use_indicators;
 cvar_t *use_xerp;
+cvar_t *force_cl_xerp;
 #endif
 
 // Discord SDK integration with Q2Pro
