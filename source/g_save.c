@@ -621,6 +621,7 @@ void InitGame( void )
 	use_newirvision = gi.cvar("use_newirvision", "1", 0);
 	use_indicators = gi.cvar("use_indicators", "1", 0);
 	use_xerp = gi.cvar("use_xerp", "1", 0);
+	force_cl_xerp = gi.cvar("force_cl_xerp", "0", 0);
 #endif
 
 	// Discord SDK integration with Q2Pro
@@ -723,7 +724,16 @@ void InitGame( void )
 #ifdef AQTION_EXTENSION
 	CvarSync_Set(clcvar_cl_antilag, "cl_antilag", "1");
 	CvarSync_Set(clcvar_cl_indicators, "cl_indicators", "1");
-	CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	if (use_xerp->value) {
+		if (force_cl_xerp->value == 1)
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "1");
+		else if (force_cl_xerp->value == 2)
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "2");
+		else
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	} else {
+			CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
+	}
 	CvarSync_Set(clcvar_cl_spectatorhud, "cl_spectatorhud", "1");
 	CvarSync_Set(clcvar_cl_spectatorkillfeed, "cl_spectatorkillfeed", "0");
 #endif
