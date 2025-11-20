@@ -123,12 +123,19 @@ else ifeq ($(TNG_BUILD_FOR),WIN64)
 CFLAGS += -L../q2pro-mgw-sdk/lib64
 endif
 
-else # Linux + Mac
+ifeq ($(SYSTEM),Darwin) # Mac
+CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
+CURL_LIBS ?= $(shell pkg-config libcurl --libs)
+CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS) 
+SHLIBLIBS=-lcurl
+
+else # Linux
 
 CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
 CURL_LIBS ?= $(shell pkg-config libcurl --libs)
 CFLAGS += -DUSE_CURL=1 $(CURL_CFLAGS) 
 SHLIBLIBS=-luuid -lcurl
+endif
 endif
 endif
 
