@@ -145,7 +145,7 @@ jobs:
 
       - name: Build TNG (Darwin x86_64)
         working-directory: build/source
-        run: make -j4 V=1 && mv gamex86_64.dylib ../gamex86_64.dylib
+        run: make -j4 V=1 && mv gamearm.dylib ../gamearm.dylib
         env:
           CC: "gcc"
           USE_AQTION: "TRUE"
@@ -156,7 +156,7 @@ jobs:
         with:
           name: tng-darwin-x86_64
           path: |
-            build/gamex86_64.dylib
+            build/gamearm.dylib
 
       - name: Build TNG (Darwin ARM64)
         working-directory: build/source
