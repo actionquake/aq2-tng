@@ -817,6 +817,43 @@ void G_LoadLocations( void )
 	gi.dprintf( "Found %d locations.\n", ml_count );
 }
 
+static char *const lightstyles[] = {
+    // 0 normal
+    "m",
+
+    // 1 FLICKER (first variety)
+    "mmnmmommommnonmmonqnmmo",
+
+    // 2 SLOW STRONG PULSE
+    "abcdefghijklmnopqrstuvwxyzyxwvutsrqponmlkjihgfedcba",
+
+    // 3 CANDLE (first variety)
+    "mmmmmaaaaammmmmaaaaaabcdefgabcdefg",
+
+    // 4 FAST STROBE
+    "mamamamamama",
+
+    // 5 GENTLE PULSE 1
+    "jklmnopqrstuvwxyzyxwvutsrqponmlkj",
+
+    // 6 FLICKER (second variety)
+    "nmonqnmomnmomomno",
+
+    // 7 CANDLE (second variety)
+    "mmmaaaabcdefgmmmmaaaammmaamm",
+
+    // 8 CANDLE (third variety)
+    "mmmaaammmaaammmabcdefaaaammmmabcdefmmmaaaa",
+
+    // 9 SLOW STROBE (fourth variety)
+    "aaaaaaaazzzzzzzz",
+
+    // 10 FLUORESCENT FLICKER
+    "mmamammmmammamamaaamammma",
+
+    // 11 SLOW PULSE NOT FADE TO BLACK
+    "abcdefghijklmnopqrrqponmlkjihgfedcba",
+};
 
 /*
 These are distinct game modes; you cannot have a teamdm tourney mode, for example
@@ -1652,7 +1689,7 @@ void SP_worldspawn (edict_t * ent)
 	gi.configstring(CS_SKYROTATE, va("%f", st.skyrotate));
 	gi.configstring(CS_SKYAXIS, va("%f %f %f", st.skyaxis[0], st.skyaxis[1], st.skyaxis[2]));
 	gi.configstring(CS_CDTRACK, va("%i", ent->sounds));
-	gi.configstring(CS_MAXCLIENTS, va("%i", game.maxclients));
+	gi.configstring(game.csr.maxclients, va("%i", game.maxclients));
 
 	G_SetupStatusbar();
 	gi.configstring(CS_STATUSBAR, level.statusbar);
@@ -1877,25 +1914,15 @@ void SP_worldspawn (edict_t * ent)
 		3 - using the day_cycle to change the lights every xx seconds as defined by day_cycle
 	*/
 	if (darkmatch->value == 1)
-		gi.configstring (CS_LIGHTS + 0, "a");	// Pitch Black
+		gi.configstring (game.csr.lights + 0, "a");	// Pitch Black
 	else if (darkmatch->value == 2)
-		gi.configstring (CS_LIGHTS + 0, "b");	// Dusk
+		gi.configstring (game.csr.lights + 0, "b");	// Dusk
 	else
-		gi.configstring (CS_LIGHTS + 0, "m");	// 0 normal
+		gi.configstring (game.csr.lights + 0, "m");	// 0 normal
 
-	gi.configstring(CS_LIGHTS + 1, "mmnmmommommnonmmonqnmmo");	// 1 FLICKER (first variety)
-	gi.configstring(CS_LIGHTS + 2, "abcdefghijklmnopqrstuvwxyzyxwvutsrqponmlkjihgfedcba");	// 2 SLOW STRONG PULSE
-	gi.configstring(CS_LIGHTS + 3, "mmmmmaaaaammmmmaaaaaabcdefgabcdefg");	// 3 CANDLE (first variety)
-	gi.configstring(CS_LIGHTS + 4, "mamamamamama");	// 4 FAST STROBE
-	gi.configstring(CS_LIGHTS + 5, "jklmnopqrstuvwxyzyxwvutsrqponmlkj");	// 5 GENTLE PULSE 1
-	gi.configstring(CS_LIGHTS + 6, "nmonqnmomnmomomno");	// 6 FLICKER (second variety)
-	gi.configstring(CS_LIGHTS + 7, "mmmaaaabcdefgmmmmaaaammmaamm");	// 7 CANDLE (second variety)
-	gi.configstring(CS_LIGHTS + 8, "mmmaaammmaaammmabcdefaaaammmmabcdefmmmaaaa");	// 8 CANDLE (third variety)
-	gi.configstring(CS_LIGHTS + 9, "aaaaaaaazzzzzzzz");	// 9 SLOW STROBE (fourth variety)
-	gi.configstring(CS_LIGHTS + 10, "mmamammmmammamamaaamammma");	// 10 FLUORESCENT FLICKER
-	gi.configstring(CS_LIGHTS + 11, "abcdefghijklmnopqrrqponmlkjihgfedcba");	// 11 SLOW PULSE NOT FADE TO BLACK
-	// styles 32-62 are assigned by the light program for switchable lights
-	gi.configstring(CS_LIGHTS + 63, "a");	// 63 testing
+	for (int i = 0; i < q_countof(lightstyles); i++)
+        gi.configstring(game.csr.lights + i, lightstyles[i]);
+	gi.configstring(game.csr.lights + 63, "a");
 }
 
 int LoadFlagsFromFile (const char *mapname)

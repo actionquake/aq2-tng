@@ -1311,7 +1311,7 @@ void AssignSkin (edict_t * ent, const char *s, qboolean nickChanged)
 		}
 	}
 
-	gi.configstring(CS_PLAYERSKINS + playernum, skin);
+	gi.configstring(game.csr.playerskins + playernum, skin);
 }
 
 /*
