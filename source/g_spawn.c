@@ -1124,6 +1124,35 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 			gi.cvar_forceset(use_tourney->name, "0");
 		}
 	}
+	else if (highlander)
+	{
+		gi.cvar_forceset(gm->name, "tp");
+		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
+
+		if (!teamplay->value)
+		{
+			gi.dprintf ("Highlander Enabled - Forcing teamplay on\n");
+			gi.cvar_forceset(teamplay->name, "1");
+		}
+		if (use_tourney->value)
+		{
+			gi.dprintf ("Highlander Enabled - Forcing Tourney off\n");
+			gi.cvar_forceset(use_tourney->name, "0");
+		}
+		// We can't play Highlander mode with more than 7 players per team
+		if (teamCount == TEAM2 && maxclients->value > 14){
+			gi.dprintf ("Highlander Enabled - Maxclient setting too high: Forcing maxclients to %d\n", 14);
+			gi.cvar_forceset(maxclients->name, va("%d", 14));
+		} else if (teamCount == TEAM3 && maxclients->value > 21){
+			gi.dprintf ("Highlander Enabled - Maxclient setting too high: Forcing maxclients to %d\n", 21);
+			gi.cvar_forceset(maxclients->name, va("%d", 21));
+		}
+		if (ltk_loadbots->value || am->value){
+			gi.dprintf ("Highlander Enabled - Forcing bots off\n");
+			gi.cvar_forceset(ltk_loadbots->name, "0");
+			gi.cvar_forceset(am->name, "0");
+		}
+	}
 	else if (matchmode->value)
 	{
 		gameSettings |= (GS_ROUNDBASED | GS_WEAPONCHOOSE);
@@ -1609,7 +1638,7 @@ Only used for the world.
 
 void SP_worldspawn (edict_t * ent)
 {
-	int i, bullets, shells;
+	int i, j, bullets, shells;
 	char *picname;
 
 	ent->movetype = MOVETYPE_PUSH;
@@ -1896,6 +1925,14 @@ void SP_worldspawn (edict_t * ent)
 	gi.configstring(CS_LIGHTS + 11, "abcdefghijklmnopqrrqponmlkjihgfedcba");	// 11 SLOW PULSE NOT FADE TO BLACK
 	// styles 32-62 are assigned by the light program for switchable lights
 	gi.configstring(CS_LIGHTS + 63, "a");	// 63 testing
+
+	if (highlander->value){
+    for (i = 0; i < WEAPON_MAX; i++) {
+        for (j = 0; j < TEAM_TOP; j++) {
+            weapon_status[i][j].owner = NULL;
+        }
+    }
+}
 }
 
 int LoadFlagsFromFile (const char *mapname)

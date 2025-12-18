@@ -610,6 +610,7 @@ void InitGame( void )
 	am_team = gi.cvar("am_team", "0", 0);
 	zoom_comp = gi.cvar("zoom_comp", "0", 0);
 	item_kit_mode = gi.cvar("item_kit_mode", "0", CVAR_LATCH);
+	highlander = gi.cvar("highlander", "0", CVAR_LATCH);
 	gun_dualmk23_enhance = gi.cvar("gun_dualmk23_enhance", "0", 0);
 	printrules = gi.cvar("printrules", "0", 0);
 	timedmsgs = gi.cvar("timedmsgs", "0", 0);
