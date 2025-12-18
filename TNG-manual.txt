@@ -674,6 +674,15 @@ Features
   esp_leaderequip [0/1/2/3] - Adjusts the loadout of all leaders, see Espionage.md for details
   esp_enhancedslippers [0|1] (default: "0") to remove limping from leg damage (falling and shooting), and 50% damage reduction when falling long distances
   
+* cvarsync
+  For AQtion-enhanced clients (protocol 38), this allows the server to sync cvars with the client, as well as allowing the player to have 
+  normally server-enforced settings be clientside.
+  
+  cl_zoom_scope [string] - Default is empty "".  Setting this value will load different sniper scopes, if they are available.  New scope directory
+  is `action/pics/scopes/YOURSCOPE`, where YOURSCOPE is the value of this cvar.  If you wish to use the default scope after setting this value, Set
+  cl_zoom_scope to "default" (without quotes).  Setting this to a string value that is not a valid scope will result in a big ugly red blob, so
+  test your scope selection before using it in a match.
+
 --------------------------------------------------------------------------------------------------------------------
 Contact Information
   If you wish to contact the TNG team, to report a bug, suggest a new feature, or offer JBravo your
